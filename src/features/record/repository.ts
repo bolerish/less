@@ -47,3 +47,11 @@ export function getRecordsByPage(
 export function getRecordsBySiteLayout(origin: string): Promise<HiddenElementRecord[]> {
   return db.records.where({ scope: "site-layout", "pageContext.origin": origin }).toArray();
 }
+
+export function countRecordsByOrigin(origin: string): Promise<number> {
+  return db.records.where("pageContext.origin").equals(origin).count();
+}
+
+export async function deleteRecordsByOrigin(origin: string): Promise<void> {
+  await db.records.where("pageContext.origin").equals(origin).delete();
+}

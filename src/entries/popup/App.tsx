@@ -35,6 +35,10 @@ function App() {
     try {
       await deleteRecordsByOrigin(origin);
       setRefreshKey((k) => k + 1);
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id !== undefined) {
+        await browser.tabs.sendMessage(tab.id, { type: "REFRESH_HIDING" }).catch(() => {});
+      }
     } catch (error) {
       console.warn("[pare] reset failed", error);
     } finally {

@@ -56,6 +56,14 @@ export async function deleteRecordsByOrigin(origin: string): Promise<void> {
   await db.records.where("pageContext.origin").equals(origin).delete();
 }
 
+export async function getRecord(id: string): Promise<HiddenElementRecord | undefined> {
+  return db.records.get(id);
+}
+
 export async function addRecord(record: HiddenElementRecord): Promise<void> {
   await db.records.add(record);
+}
+
+export async function deleteRecord(id: string): Promise<void> {
+  await db.records.delete(id);
 }

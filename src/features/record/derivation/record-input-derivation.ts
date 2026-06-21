@@ -17,6 +17,9 @@ export function deriveHiddenElementRecord(
   const treeAnchor = deriveTreeAnchorInput(element, documentRef);
 
   const matchPlan = deriveMatchPlan(uniqueAttribute !== undefined, treeAnchor !== undefined);
+  const cssSelector = uniqueAttribute
+    ? `[${uniqueAttribute.attributeName}="${CSS.escape(uniqueAttribute.attributeValue)}"]`
+    : undefined;
 
   return {
     id: crypto.randomUUID(),
@@ -37,6 +40,7 @@ export function deriveHiddenElementRecord(
       tree,
       treeAnchor,
     },
+    cssSelector,
   };
 }
 

@@ -98,6 +98,7 @@ export const HiddenElementRecordSchema = z.object({
 
   matchPlan: z.array(MatchStrategySchema),
   matchInputs: MatchInputsSchema,
+  cssSelector: z.optional(z.string()),
 });
 
 export type HiddenElementRecord = z.infer<typeof HiddenElementRecordSchema>;

@@ -2,6 +2,7 @@ import {
   applyHiddenElement,
   applyRecordsHiding,
   restoreAllHiddenElements,
+  restoreHiddenElement,
 } from "~features/element-hiding";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
@@ -9,10 +10,10 @@ import { deriveHiddenElementRecord } from "~features/record/derivation/record-in
 import type { HiddenElementRecord } from "~features/record/schema";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 
-const HIGHLIGHT_ATTR = "data-pare-highlight";
-const STATUS_BAR_ATTR = "data-pare-ui";
-const SHIELD_ATTR = "data-pare-iframe-shield";
-const HIDING_KEY_PREFIX = "pare:hiding-enabled:";
+const HIGHLIGHT_ATTR = "data-bare-highlight";
+const STATUS_BAR_ATTR = "data-bare-ui";
+const SHIELD_ATTR = "data-bare-iframe-shield";
+const HIDING_KEY_PREFIX = "bare:hiding-enabled:";
 
 export default defineContentScript({
   matches: ["*://*/*"],
@@ -26,16 +27,24 @@ async function bootstrap(): Promise<void> {
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
   const enabled = await getSiteHidingEnabled(origin);
-  if (enabled) await applyStoredHiding();
+  if (enabled) {
+    await applyStoredHiding();
+    watchAndReapplyHiding();
+  }
 
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !(hidingKey in changes)) return;
     const nowEnabled = changes[hidingKey].newValue !== false;
-    if (nowEnabled) void applyStoredHiding();
-    else restoreAllHiddenElements(document);
+    if (nowEnabled) {
+      void applyStoredHiding();
+      watchAndReapplyHiding();
+    } else {
+      stopReapplyWatcher();
+      restoreAllHiddenElements(document);
+    }
   });
 
-  browser.runtime.onMessage.addListener((message: unknown) => {
+  browser.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
     if (!isMessage(message)) return;
 
     if (message.type === "SET_SELECTION_ENABLED") {
@@ -44,8 +53,20 @@ async function bootstrap(): Promise<void> {
     }
 
     if (message.type === "REFRESH_HIDING") {
+      document.getElementById("__bare_preload__")?.remove();
       restoreAllHiddenElements(document);
       void applyStoredHiding();
+      watchAndReapplyHiding();
+    }
+
+    if (message.type === "GET_UNDO_COUNT") {
+      sendResponse({ count: undoStack.length });
+      return true;
+    }
+
+    if (message.type === "RESTORE_LAST") {
+      void restoreLastHidden().then(() => sendResponse({ count: undoStack.length }));
+      return true;
     }
   });
 }
@@ -73,6 +94,41 @@ let statusBarEl: HTMLDivElement | null = null;
 let hoveredEl: HTMLElement | null = null;
 let sessionHiddenCount = 0;
 
+const undoStack: Array<{ element: HTMLElement; recordId: string }> = [];
+let statusInfoEl: HTMLSpanElement | null = null;
+let statusRestoreWrapperEl: HTMLDivElement | null = null;
+
+// --- Deferred hiding (SPA / dynamic content) ---
+
+let reapplyObserver: MutationObserver | null = null;
+let reapplyStopTimer: ReturnType<typeof setTimeout> | null = null;
+
+function watchAndReapplyHiding(): void {
+  if (reapplyObserver) return;
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  reapplyObserver = new MutationObserver(() => {
+    if (debounceTimer !== null) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => void applyStoredHiding(), 300);
+  });
+
+  reapplyObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+  reapplyStopTimer = setTimeout(stopReapplyWatcher, 8_000);
+}
+
+function stopReapplyWatcher(): void {
+  reapplyObserver?.disconnect();
+  reapplyObserver = null;
+  if (reapplyStopTimer !== null) {
+    clearTimeout(reapplyStopTimer);
+    reapplyStopTimer = null;
+  }
+}
+
+// --- Iframe shields ---
+
 const iframeShields = new Map<HTMLIFrameElement, HTMLDivElement>();
 const iframeOriginalPointerEvents = new Map<HTMLIFrameElement, string>();
 let shieldObserver: MutationObserver | null = null;
@@ -81,6 +137,7 @@ function startSelectionMode(): void {
   if (selectionActive) return;
   selectionActive = true;
   sessionHiddenCount = 0;
+  undoStack.length = 0;
 
   highlightEl = createHighlightOverlay();
   document.documentElement.appendChild(highlightEl);
@@ -112,6 +169,8 @@ function stopSelectionMode(): void {
   highlightEl = null;
   statusBarEl?.remove();
   statusBarEl = null;
+  statusInfoEl = null;
+  statusRestoreWrapperEl = null;
 
   unshieldAllIframes();
 }
@@ -152,10 +211,25 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   try {
     await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
     sessionHiddenCount++;
-    if (statusBarEl) updateStatusBarContent(statusBarEl);
+    undoStack.push({ element, recordId: record.id });
+    updateStatusBarContent();
   } catch {
-    console.warn("[pare] failed to save record");
+    console.warn("[bare] failed to save record");
   }
+}
+
+async function restoreLastHidden(): Promise<void> {
+  const last = undoStack.pop();
+  if (!last) return;
+  removePreloadCSSForElement(last.element);
+  restoreHiddenElement(last.element);
+  sessionHiddenCount = Math.max(0, sessionHiddenCount - 1);
+  try {
+    await browser.runtime.sendMessage({ type: "DELETE_RECORD", id: last.recordId });
+  } catch {
+    console.warn("[bare] failed to delete record");
+  }
+  updateStatusBarContent();
 }
 
 function resolveTarget(x: number, y: number): HTMLElement | null {
@@ -164,10 +238,8 @@ function resolveTarget(x: number, y: number): HTMLElement | null {
 
 function isOverlayOrHidden(el: HTMLElement): boolean {
   return (
-    el.hasAttribute(HIGHLIGHT_ATTR) ||
-    el.hasAttribute(STATUS_BAR_ATTR) ||
-    el.hasAttribute(SHIELD_ATTR) ||
-    el.getAttribute("data-pare-hidden") === "true"
+    el.closest(`[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}]`) !== null ||
+    el.getAttribute("data-bare-hidden") === "true"
   );
 }
 
@@ -211,10 +283,9 @@ function createHighlightOverlay(): HTMLDivElement {
 }
 
 function createStatusBar(): HTMLDivElement {
-  const el = document.createElement("div");
-  el.setAttribute(STATUS_BAR_ATTR, "true");
-  el.setAttribute("aria-hidden", "true");
-  Object.assign(el.style, {
+  const container = document.createElement("div");
+  container.setAttribute(STATUS_BAR_ATTR, "true");
+  Object.assign(container.style, {
     position: "fixed",
     bottom: "24px",
     left: "50%",
@@ -231,16 +302,133 @@ function createStatusBar(): HTMLDivElement {
     whiteSpace: "nowrap",
     boxShadow: "0 4px 16px rgba(0,0,0,0.32)",
     pointerEvents: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
   });
-  updateStatusBarContent(el);
-  return el;
+
+  const infoEl = document.createElement("span");
+  container.appendChild(infoEl);
+  statusInfoEl = infoEl;
+
+  container.appendChild(makeSeparator());
+
+  // Restore section — hidden until something has been hidden
+  const restoreWrapper = document.createElement("div");
+  Object.assign(restoreWrapper.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    maxWidth: "0",
+    overflow: "hidden",
+    opacity: "0",
+    transition: "max-width 0.35s ease, opacity 0.25s ease",
+  });
+  restoreWrapper.appendChild(
+    makeActionBtn(["⇧", "Ctrl", "Z"], "Undo", () => void restoreLastHidden()),
+  );
+  container.appendChild(restoreWrapper);
+  statusRestoreWrapperEl = restoreWrapper;
+
+  container.appendChild(makeDot());
+  container.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode));
+
+  updateStatusBarContent();
+  return container;
 }
 
-function updateStatusBarContent(el: HTMLDivElement): void {
-  el.textContent =
-    sessionHiddenCount > 0
-      ? `${sessionHiddenCount} hidden · Click for more · Esc to stop`
-      : "Click to hide · Esc to stop";
+function updateStatusBarContent(): void {
+  if (statusInfoEl) {
+    statusInfoEl.textContent = sessionHiddenCount > 0 ? `${sessionHiddenCount} Hidden` : "Hide";
+  }
+  if (statusRestoreWrapperEl) {
+    const hasUndo = undoStack.length > 0;
+    statusRestoreWrapperEl.style.maxWidth = hasUndo ? "200px" : "0";
+    statusRestoreWrapperEl.style.opacity = hasUndo ? "1" : "0";
+  }
+}
+
+function makeActionBtn(keys: string[], label: string, onClick: () => void): HTMLSpanElement {
+  const btn = document.createElement("span");
+  Object.assign(btn.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    cursor: "pointer",
+    pointerEvents: "auto",
+  });
+  const keysWrap = document.createElement("span");
+  Object.assign(keysWrap.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "2px",
+    pointerEvents: "none",
+  });
+  keys.forEach((k) => keysWrap.appendChild(makeKbd(k)));
+  btn.appendChild(keysWrap);
+  const text = document.createElement("span");
+  text.textContent = label;
+  text.style.pointerEvents = "none";
+  btn.appendChild(text);
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
+  });
+  return btn;
+}
+
+function makeKbd(text: string): HTMLElement {
+  const kbd = document.createElement("kbd");
+  kbd.textContent = text;
+  Object.assign(kbd.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(255,255,255,0.2)",
+    borderRadius: "2px",
+    padding: "0 4px",
+    height: "20px",
+    minWidth: "20px",
+    fontSize: "10px",
+    fontFamily: "inherit",
+    fontWeight: "500",
+    pointerEvents: "none",
+  });
+  return kbd;
+}
+
+function removePreloadCSSForElement(element: HTMLElement): void {
+  const style = document.getElementById("__bare_preload__") as HTMLStyleElement | null;
+  if (!style?.sheet) return;
+  for (let i = style.sheet.cssRules.length - 1; i >= 0; i--) {
+    try {
+      if (element.matches((style.sheet.cssRules[i] as CSSStyleRule).selectorText)) {
+        style.sheet.deleteRule(i);
+      }
+    } catch {
+      // invalid selector
+    }
+  }
+}
+
+function makeDot(): HTMLSpanElement {
+  const dot = document.createElement("span");
+  dot.textContent = "·";
+  dot.style.opacity = "0.35";
+  return dot;
+}
+
+function makeSeparator(): HTMLSpanElement {
+  const sep = document.createElement("span");
+  Object.assign(sep.style, {
+    display: "inline-block",
+    width: "1px",
+    height: "12px",
+    background: "rgba(255,255,255,0.2)",
+    flexShrink: "0",
+  });
+  return sep;
 }
 
 // --- Iframe shields ---

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 interface CurrentTab {
+  id: number;
   origin: string;
 }
 
@@ -9,9 +10,9 @@ export function useCurrentTab(): CurrentTab | null {
 
   useEffect(() => {
     browser.tabs.query({ active: true, currentWindow: true }).then(([activeTab]) => {
-      if (activeTab?.url) {
+      if (activeTab?.id !== undefined && activeTab.url) {
         try {
-          setTab({ origin: new URL(activeTab.url).origin });
+          setTab({ id: activeTab.id, origin: new URL(activeTab.url).origin });
         } catch {}
       }
     });

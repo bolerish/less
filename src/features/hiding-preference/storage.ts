@@ -1,4 +1,4 @@
-const KEY_PREFIX = "pare:hiding-enabled:";
+const KEY_PREFIX = "bare:hiding-enabled:";
 
 function storageKey(origin: string): string {
   return `${KEY_PREFIX}${encodeURIComponent(origin)}`;

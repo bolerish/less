@@ -21,11 +21,11 @@ export default defineConfig({
     "~shared": "./src/shared",
   },
   manifest: {
-    name: "Pare - Clean Up Pages",
-    short_name: "Pare",
+    name: "Bare - Clean Up Pages",
+    short_name: "Bare",
     description: "Hide unwanted content and restore it when needed.",
     action: {
-      default_title: "Pare",
+      default_title: "Bare",
       default_icon: {
         16: "icons/16.png",
         32: "icons/32.png",

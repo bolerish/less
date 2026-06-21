@@ -1,14 +1,67 @@
-const INTERNAL_ATTRIBUTE_NAME_PREFIX = "data-pare-";
-const UNIQUE_ATTRIBUTE_NAMES = ["id", "name", "href", "src", "type", "role", "title", "alt"] as const;
-const ALLOWLIST_ATTRIBUTE_NAMES = new Set(["id", "name", "role", "type", "href", "src", "alt", "title"]);
-const UTILITY_CLASS_NAME_TOKENS = new Set([
-  "absolute", "block", "contents", "fixed", "flex", "grid",
-  "hidden", "inline", "inline-block", "inline-flex", "relative", "sr-only", "sticky",
+const INTERNAL_ATTRIBUTE_NAME_PREFIX = "data-bare-";
+const UNIQUE_ATTRIBUTE_NAMES = [
+  "id",
+  "name",
+  "href",
+  "src",
+  "type",
+  "role",
+  "title",
+  "alt",
+] as const;
+const ALLOWLIST_ATTRIBUTE_NAMES = new Set([
+  "id",
+  "name",
+  "role",
+  "type",
+  "href",
+  "src",
+  "alt",
+  "title",
 ]);
-const UTILITY_CLASS_VALUE_SEGMENTS = new Set(["0", "auto", "fit", "full", "max", "min", "none", "screen"]);
+const UTILITY_CLASS_NAME_TOKENS = new Set([
+  "absolute",
+  "block",
+  "contents",
+  "fixed",
+  "flex",
+  "grid",
+  "hidden",
+  "inline",
+  "inline-block",
+  "inline-flex",
+  "relative",
+  "sr-only",
+  "sticky",
+]);
+const UTILITY_CLASS_VALUE_SEGMENTS = new Set([
+  "0",
+  "auto",
+  "fit",
+  "full",
+  "max",
+  "min",
+  "none",
+  "screen",
+]);
 const FINGERPRINT_ATTRIBUTE_NAMES = new Set([
-  "cx", "cy", "d", "height", "points", "r", "rx", "ry",
-  "viewBox", "viewbox", "width", "x", "x1", "x2", "y", "y1", "y2",
+  "cx",
+  "cy",
+  "d",
+  "height",
+  "points",
+  "r",
+  "rx",
+  "ry",
+  "viewBox",
+  "viewbox",
+  "width",
+  "x",
+  "x1",
+  "x2",
+  "y",
+  "y1",
+  "y2",
 ]);
 const MAX_DESCENDANT_ATTRIBUTE_FINGERPRINTS = 8;
 const MAX_TEXT_PREVIEW_LENGTH = 120;
@@ -26,7 +79,9 @@ type UniqueAttributeInput = { attributeName: string; attributeValue: string };
 
 export function normalizeTextPreview(value: string | null | undefined): string | undefined {
   const normalizedValue = normalizeTextContent(value ?? null);
-  return normalizedValue === undefined ? undefined : normalizedValue.slice(0, MAX_TEXT_PREVIEW_LENGTH);
+  return normalizedValue === undefined
+    ? undefined
+    : normalizedValue.slice(0, MAX_TEXT_PREVIEW_LENGTH);
 }
 
 export function deriveFullTextFingerprint(value: string | null): string | undefined {
@@ -92,12 +147,17 @@ export const deriveGeneratedClassTokens = (className: string | SVGAnimatedString
   Array.from(new Set(normalizeClassName(className).split(/\s+/).filter(isHashedToken))).sort();
 
 export const deriveClassTokens = (className: string | SVGAnimatedString): string[] =>
-  Array.from(new Set([...deriveStableClassTokens(className), ...deriveGeneratedClassTokens(className)])).sort();
+  Array.from(
+    new Set([...deriveStableClassTokens(className), ...deriveGeneratedClassTokens(className)]),
+  ).sort();
 
 export const deriveAttributeFingerprints = (element: Element): string[] =>
   Array.from(element.attributes)
     .filter(({ name, value }) => FINGERPRINT_ATTRIBUTE_NAMES.has(name) && value.trim().length > 0)
-    .map(({ name, value }) => `${element.tagName.toLowerCase()}:${name}:${deriveCompactFingerprint(value)}`)
+    .map(
+      ({ name, value }) =>
+        `${element.tagName.toLowerCase()}:${name}:${deriveCompactFingerprint(value)}`,
+    )
     .sort();
 
 export const deriveDescendantAttributeFingerprints = (element: Element): string[] => {

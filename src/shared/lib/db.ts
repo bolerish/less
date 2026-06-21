@@ -7,12 +7,12 @@ export interface MetaEntry {
   value: unknown;
 }
 
-class PareDB extends Dexie {
+class BareDB extends Dexie {
   records!: Table<HiddenElementRecord>;
   meta!: Table<MetaEntry>;
 
   constructor() {
-    super("pare-db");
+    super("bare-db");
     this.version(1).stores({
       records: [
         "&id",
@@ -27,4 +27,4 @@ class PareDB extends Dexie {
   }
 }
 
-export const db = new PareDB();
+export const db = new BareDB();

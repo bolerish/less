@@ -166,12 +166,17 @@ web-ext.config.ts
 .vscode-test
 .vscode/
 !.vscode/extensions.json
-
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Claude
+
 docs/
+.superpowers/
+
+# Outer
+.DS_Store

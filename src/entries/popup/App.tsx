@@ -1,4 +1,4 @@
-import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import wxtLogo from "~assets/logo.svg";
 import { deleteRecordsByOrigin } from "~features/record";
@@ -16,6 +16,18 @@ function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const hiddenCount = useHiddenCount(origin, refreshKey);
   const [isResetting, setIsResetting] = useState(false);
+
+  const handleSelectToHide = async (): Promise<void> => {
+    if (!currentTab) return;
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id === undefined) return;
+    try {
+      await browser.tabs.sendMessage(tab.id, { type: "SET_SELECTION_ENABLED", enabled: true });
+    } catch (error) {
+      console.warn("[pare] failed to start selection mode", error);
+    }
+    window.close();
+  };
 
   const handleReset = async (): Promise<void> => {
     if (!origin) return;
@@ -62,6 +74,16 @@ function App() {
             disabled={!loaded}
             onCheckedChange={toggle}
           />
+        </div>
+        <div className="px-1 pt-1 pb-2">
+          <Button
+            className="w-full"
+            disabled={!enabled || !loaded || !currentTab}
+            onClick={handleSelectToHide}
+          >
+            <CursorClickIcon />
+            Select to hide
+          </Button>
         </div>
       </main>
     </div>

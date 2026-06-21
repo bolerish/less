@@ -3,6 +3,7 @@ import { deriveHiddenElementRecord } from "~features/record/derivation/record-in
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 import { addRecord, getRecordsByPage, getRecordsBySiteLayout } from "~features/record";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
+import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 
 const HIGHLIGHT_ATTR = "data-pare-highlight";
 
@@ -92,6 +93,8 @@ function handleClick(event: MouseEvent): void {
   const target = hoveredEl ?? resolveTarget(event.clientX, event.clientY);
   if (target === null) return;
 
+  hoveredEl = null;
+  updateHighlight(null);
   void hideAndSave(target);
 }
 
@@ -103,7 +106,6 @@ function handleKeyDown(event: KeyboardEvent): void {
 }
 
 async function hideAndSave(element: HTMLElement): Promise<void> {
-  stopSelectionMode();
   const record = deriveHiddenElementRecord(element, document);
   element.style.setProperty("display", "none", "important");
   element.setAttribute("data-pare-hidden", "true");
@@ -115,18 +117,10 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
 }
 
 function resolveTarget(x: number, y: number): HTMLElement | null {
-  const elements = document.elementsFromPoint(x, y);
-  for (const el of elements) {
-    if (!(el instanceof HTMLElement)) continue;
-    if (isOverlayOrHidden(el)) continue;
-    const tag = el.tagName.toLowerCase();
-    if (tag === "html" || tag === "body") continue;
-    return el;
-  }
-  return null;
+  return resolveSelectionTarget(document, x, y, isOverlayOrHidden);
 }
 
-function isOverlayOrHidden(el: Element): boolean {
+function isOverlayOrHidden(el: HTMLElement): boolean {
   return el.hasAttribute(HIGHLIGHT_ATTR) || el.getAttribute("data-pare-hidden") === "true";
 }
 

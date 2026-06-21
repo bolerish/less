@@ -2,6 +2,18 @@
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "~assets": ["./src/assets"],
+      "~assets/*": ["./src/assets/*"],
+      "~entries": ["./src/entries"],
+      "~entries/*": ["./src/entries/*"],
+      "~features": ["./src/features"],
+      "~features/*": ["./src/features/*"],
+      "~shared": ["./src/shared"],
+      "~shared/*": ["./src/shared/*"],
+      "~": ["./src"],
+      "~/*": ["./src/*"]
+    }
   }
 }

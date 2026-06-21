@@ -1,4 +1,9 @@
-import { HIDDEN_ELEMENT_ATTRIBUTE, HIDDEN_INLINE_STYLE_ATTRIBUTE, isHiddenElement, isHideExcludedElement } from "./hide-policy";
+import {
+  HIDDEN_ELEMENT_ATTRIBUTE,
+  HIDDEN_INLINE_STYLE_ATTRIBUTE,
+  isHiddenElement,
+  isHideExcludedElement,
+} from "./hide-policy";
 
 export function applyHiddenElement(element: HTMLElement): void {
   if (isHideExcludedElement(element) || isHiddenElement(element)) return;

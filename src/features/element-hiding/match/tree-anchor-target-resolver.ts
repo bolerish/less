@@ -51,18 +51,30 @@ function resolveTopScored(scores: Map<HTMLElement, number>): HTMLElement[] {
 function computeAnchorScore(el: HTMLElement, anchor: AnchorNode): number {
   let score = 0;
 
-  if (anchor.uniqueAttribute !== null && el.getAttribute(anchor.uniqueAttribute.attributeName) === anchor.uniqueAttribute.attributeValue) {
+  if (
+    anchor.uniqueAttribute !== null &&
+    el.getAttribute(anchor.uniqueAttribute.attributeName) === anchor.uniqueAttribute.attributeValue
+  ) {
     score += IDENTITY_SCORE;
   }
 
-  if (anchor.fullTextFingerprint !== null && deriveFullTextFingerprint(el.innerText || el.textContent) === anchor.fullTextFingerprint) {
+  if (
+    anchor.fullTextFingerprint !== null &&
+    deriveFullTextFingerprint(el.innerText || el.textContent) === anchor.fullTextFingerprint
+  ) {
     score += IDENTITY_SCORE;
   }
 
   score += computeTextMatchScore(normalizeText(el.innerText || el.textContent), anchor.text);
   score += computeOverlap(anchor.classTokens, deriveClassTokens(el.className)) * CLASS_TOKEN_SCORE;
-  score += computeOverlap(anchor.attributeFingerprints, deriveAttributeFingerprints(el)) * ATTR_FINGERPRINT_SCORE;
-  score += computeOverlap(anchor.descendantAttributeFingerprints, deriveDescendantAttributeFingerprints(el)) * DESCENDANT_ATTR_FINGERPRINT_SCORE;
+  score +=
+    computeOverlap(anchor.attributeFingerprints, deriveAttributeFingerprints(el)) *
+    ATTR_FINGERPRINT_SCORE;
+  score +=
+    computeOverlap(
+      anchor.descendantAttributeFingerprints,
+      deriveDescendantAttributeFingerprints(el),
+    ) * DESCENDANT_ATTR_FINGERPRINT_SCORE;
 
   return score;
 }
@@ -109,7 +121,9 @@ function resolveAnchorTargets(
     }
     case "descendant": {
       const target = anchorEl.closest<HTMLElement>(record.target.tagName);
-      return target !== null && target.contains(anchorEl) && hasMatchingTarget(target, record) ? [target] : [];
+      return target !== null && target.contains(anchorEl) && hasMatchingTarget(target, record)
+        ? [target]
+        : [];
     }
     default: {
       const exhaustive: never = anchor.relation;

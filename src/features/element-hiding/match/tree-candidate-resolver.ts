@@ -30,16 +30,21 @@ interface Candidate {
   score: number;
 }
 
-export function resolveTreeCandidateElements(documentRef: Document, record: HiddenElementRecord): HTMLElement[] {
+export function resolveTreeCandidateElements(
+  documentRef: Document,
+  record: HiddenElementRecord,
+): HTMLElement[] {
   const tree = record.matchInputs.tree;
   if (tree === undefined) return [];
 
-  return Array.from(documentRef.querySelectorAll<HTMLElement>(record.target.tagName)).filter((el) => {
-    return (
-      hasMatchingFingerprint(el.parentElement, tree.parent) &&
-      hasMatchingFingerprint(el.parentElement?.parentElement ?? null, tree.grandParent)
-    );
-  });
+  return Array.from(documentRef.querySelectorAll<HTMLElement>(record.target.tagName)).filter(
+    (el) => {
+      return (
+        hasMatchingFingerprint(el.parentElement, tree.parent) &&
+        hasMatchingFingerprint(el.parentElement?.parentElement ?? null, tree.grandParent)
+      );
+    },
+  );
 }
 
 export function resolveTopTreeCandidate(
@@ -86,16 +91,26 @@ function computeScore(el: HTMLElement, record: HiddenElementRecord): number {
     score += TARGET_STABLE_ATTR_SCORE;
   }
 
-  if (hasMatchingFingerprint(parent, tree.parent) && tree.parent !== null) score += PARENT_NODE_SCORE;
-  if (hasMatchingFingerprint(grandParent, tree.grandParent) && tree.grandParent !== null) score += GRANDPARENT_NODE_SCORE;
+  if (hasMatchingFingerprint(parent, tree.parent) && tree.parent !== null)
+    score += PARENT_NODE_SCORE;
+  if (hasMatchingFingerprint(grandParent, tree.grandParent) && tree.grandParent !== null)
+    score += GRANDPARENT_NODE_SCORE;
 
   if (computeOverlap(tree.targetFingerprint.classTokens, deriveClassTokens(el.className)) > 0) {
     score += CLASS_TOKEN_SCORE;
   }
-  if (computeOverlap(tree.targetFingerprint.attributeFingerprints, deriveAttributeFingerprints(el)) > 0) {
+  if (
+    computeOverlap(tree.targetFingerprint.attributeFingerprints, deriveAttributeFingerprints(el)) >
+    0
+  ) {
     score += ATTR_FINGERPRINT_SCORE;
   }
-  if (computeOverlap(tree.targetFingerprint.attributeFingerprints, deriveDescendantAttributeFingerprints(el)) > 0) {
+  if (
+    computeOverlap(
+      tree.targetFingerprint.attributeFingerprints,
+      deriveDescendantAttributeFingerprints(el),
+    ) > 0
+  ) {
     score += DESCENDANT_ATTR_FINGERPRINT_SCORE;
   }
   if (computeOverlap(tree.childTagSummary, deriveChildTags(el)) > 0) {
@@ -140,7 +155,11 @@ function computeSiblingNodeScore(sibling: Element | null, stored: SiblingNode | 
       ? SIBLING_FINGERPRINT_SCORE
       : 0;
 
-  return SIBLING_TAG_SCORE + computeTextMatchScore(normalizeText(sibling.innerText || sibling.textContent), stored.text) + fingerprintScore;
+  return (
+    SIBLING_TAG_SCORE +
+    computeTextMatchScore(normalizeText(sibling.innerText || sibling.textContent), stored.text) +
+    fingerprintScore
+  );
 }
 
 function resolveAncestor(el: HTMLElement, depth: number): HTMLElement | null {
@@ -156,7 +175,9 @@ function computeOverlap(a: readonly string[], b: readonly string[]): number {
 
 function deriveChildTags(el: HTMLElement): string[] {
   const parent = el.parentElement ?? el;
-  return Array.from(new Set(Array.from(parent.children).map((c) => c.tagName.toLowerCase()))).sort();
+  return Array.from(
+    new Set(Array.from(parent.children).map((c) => c.tagName.toLowerCase())),
+  ).sort();
 }
 
 function deriveRelativeIndex(el: HTMLElement): number | undefined {

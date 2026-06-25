@@ -41,8 +41,18 @@ function matchByUniqueAttribute(documentRef: Document, record: HiddenElementReco
   const selector = `[${unique.attributeName}="${CSS.escape(unique.attributeValue)}"]`;
   const matched = Array.from(documentRef.querySelectorAll<HTMLElement>(selector));
 
-  if (matched.length !== 1) return { status: "unmatched" };
-  return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
+  if (matched.length === 0) return { status: "unmatched" };
+  if (matched.length === 1) return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
+
+  // Multiple elements share this attribute (e.g. responsive layout duplicates).
+  // Narrow down using the tree structure candidates as an intersection.
+  const structureCandidates = new Set(resolveTreeCandidateElements(documentRef, record));
+  const intersection = matched.filter((el) => structureCandidates.has(el));
+  if (intersection.length === 1) {
+    return { status: "matched", matchedElement: intersection[0], matchedAt: Date.now() };
+  }
+
+  return { status: "unmatched" };
 }
 
 function matchByStructure(documentRef: Document, record: HiddenElementRecord): MatchResult {

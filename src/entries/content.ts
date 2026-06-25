@@ -172,7 +172,7 @@ function watchAndReapplyHiding(): void {
 
   reapplyObserver = new MutationObserver(() => {
     if (debounceTimer !== null) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => void applyStoredHiding(), 300);
+    debounceTimer = setTimeout(() => void applyStoredHiding(), 80);
   });
 
   reapplyObserver.observe(document.documentElement, { childList: true, subtree: true });

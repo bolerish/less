@@ -1,4 +1,4 @@
-import { ArrowCounterClockwiseIcon, CaretRightIcon, CursorClickIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import wxtLogo from "~assets/logo.svg";
 import { clearCSSCacheForOrigin, deleteRecordsByOrigin } from "~features/record";
@@ -16,6 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~shared/components/ui/accordion";
+import { ButtonGroup } from "~shared/components/ui/button-group";
 
 function App() {
   const currentTab = useCurrentTab();
@@ -71,15 +72,14 @@ function App() {
         <span className="flex items-center gap-1.5  font-medium  cursor-pointer select-none list-none  text-zinc-800">
           Hidden
         </span>
-        <div className="flex items-center gap-3">
+        <ButtonGroup>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 size="icon-sm"
-                variant="ghost"
                 disabled={!enabled || !loaded || !currentTab}
                 onClick={handleSelectToHide}
-                className="w-fit"
+                variant="outline"
               >
                 <CursorClickIcon />
               </Button>
@@ -90,18 +90,17 @@ function App() {
             <TooltipTrigger asChild>
               <Button
                 size="icon-sm"
-                variant="ghost"
                 disabled={undoCount === 0}
                 onClick={restore}
                 aria-label="Undo"
-                className="w-fit"
+                variant="outline"
               >
                 <ArrowCounterClockwiseIcon />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">Undo</TooltipContent>
           </Tooltip>
-        </div>
+        </ButtonGroup>
       </div>
 
       {!(isResetting || hiddenCount === 0) && (
@@ -109,7 +108,6 @@ function App() {
           <Button
             className="w-full rounded-none border-0 justify-center h-8 px-3 font-normal"
             onClick={handleReset}
-            variant="default"
           >
             <span>Reset</span>
           </Button>

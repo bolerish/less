@@ -35,7 +35,7 @@ export default defineConfig({
       },
     },
 
-    permissions: ["storage", "tabs"],
+    permissions: ["storage", "tabs", "webNavigation", "scripting"],
     web_accessible_resources: [
       {
         resources: ["logo.svg"],

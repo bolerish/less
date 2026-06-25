@@ -9,6 +9,7 @@ export default defineContentScript({
 });
 
 async function injectPreloadCSS(): Promise<void> {
+  if (document.getElementById("__bare_preload__")) return;
   const { origin, pathname: path, search } = location;
   if (!origin.startsWith("http")) return;
 

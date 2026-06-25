@@ -21,9 +21,10 @@ export default defineConfig({
     "~shared": "./src/shared",
   },
   manifest: {
-    name: "Bare - Clean Up Pages",
+    name: "__MSG_ext_name__",
     short_name: "Bare",
-    description: "Hide unwanted content and restore it when needed.",
+    description: "__MSG_ext_description__",
+    default_locale: "en",
     action: {
       default_title: "Bare",
       default_icon: {

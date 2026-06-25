@@ -5,10 +5,7 @@ import {
   isHideExcludedElement,
 } from "./hide-policy";
 
-// Tracks pending rAF handles so restore can cancel before display:none fires
-const pendingHideRaf = new WeakMap<HTMLElement, number>();
-
-export function applyHiddenElement(element: HTMLElement, immediate = false): void {
+export function applyHiddenElement(element: HTMLElement, animated = false): void {
   if (isHideExcludedElement(element) || isHiddenElement(element)) return;
 
   const inlineStyle = element.getAttribute("style");
@@ -17,40 +14,43 @@ export function applyHiddenElement(element: HTMLElement, immediate = false): voi
   }
   element.setAttribute(HIDDEN_ELEMENT_ATTRIBUTE, "true");
 
-  if (immediate) {
-    // Auto-hide context: single layout shift, no intermediate empty space
-    element.style.setProperty("display", "none", "important");
-    return;
-  }
+  if (animated) {
+    // Set opacity:1 explicitly so the browser has a known starting value,
+    // then force a reflow to lock it in before changing to 0.
+    element.style.setProperty("opacity", "1", "important");
+    element.style.setProperty("transition", "opacity 0.2s ease-out", "important");
+    void element.getBoundingClientRect();
+    element.style.setProperty("opacity", "0", "important");
 
-  // User-triggered: Phase 1 makes element invisible, Phase 2 collapses space on next frame.
-  // Separating the two events makes the interaction feel intentional rather than jarring.
-  element.style.setProperty("visibility", "hidden", "important");
-  const handle = requestAnimationFrame(() => {
-    pendingHideRaf.delete(element);
-    if (!isHiddenElement(element)) return;
-    element.style.removeProperty("visibility");
-    element.style.setProperty("display", "none", "important");
-  });
-  pendingHideRaf.set(element, handle);
+    const finalize = () => {
+      if (!isHiddenElement(element)) return;
+      element.style.removeProperty("transition");
+      element.style.removeProperty("opacity");
+      element.style.setProperty("visibility", "hidden", "important");
+    };
+    const timer = setTimeout(finalize, 280);
+    element.addEventListener("transitionend", function onEnd(e: TransitionEvent) {
+      if (e.propertyName !== "opacity") return;
+      element.removeEventListener("transitionend", onEnd);
+      clearTimeout(timer);
+      finalize();
+    });
+  } else {
+    element.style.setProperty("visibility", "hidden", "important");
+  }
 }
 
 export function restoreHiddenElement(element: HTMLElement): void {
   if (!isHiddenElement(element)) return;
-
-  const handle = pendingHideRaf.get(element);
-  if (handle !== undefined) {
-    cancelAnimationFrame(handle);
-    pendingHideRaf.delete(element);
-  }
 
   const inlineStyle = element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
   if (inlineStyle !== null) {
     element.setAttribute("style", inlineStyle);
     element.removeAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
   } else {
-    element.style.removeProperty("display");
     element.style.removeProperty("visibility");
+    element.style.removeProperty("opacity");
+    element.style.removeProperty("transition");
     if (element.getAttribute("style") === "") element.removeAttribute("style");
   }
   element.removeAttribute(HIDDEN_ELEMENT_ATTRIBUTE);

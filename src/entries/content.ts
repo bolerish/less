@@ -5,8 +5,10 @@ import {
   restoreHiddenElement,
 } from "~features/element-hiding";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
+import { pageCSSCacheKey, siteCSSCacheKey } from "~features/record/css-cache";
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
+import { resolveCSSSelector } from "~features/record/derivation/record-match-signal-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 
@@ -14,6 +16,8 @@ const HIGHLIGHT_ATTR = "data-bare-highlight";
 const STATUS_BAR_ATTR = "data-bare-ui";
 const SHIELD_ATTR = "data-bare-iframe-shield";
 const HIDING_KEY_PREFIX = "bare:hiding-enabled:";
+
+let hidingEnabled = false;
 
 export default defineContentScript({
   matches: ["*://*/*"],
@@ -26,16 +30,19 @@ async function bootstrap(): Promise<void> {
   const origin = window.location.origin;
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
-  const enabled = await getSiteHidingEnabled(origin);
-  if (enabled) {
+  hidingEnabled = await getSiteHidingEnabled(origin);
+  if (hidingEnabled) {
     await applyStoredHiding();
     watchAndReapplyHiding();
   }
 
+  setupNavigationListener();
+  document.addEventListener("keydown", handleGlobalKeyDown, true);
+
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local" || !(hidingKey in changes)) return;
-    const nowEnabled = changes[hidingKey].newValue !== false;
-    if (nowEnabled) {
+    hidingEnabled = changes[hidingKey].newValue !== false;
+    if (hidingEnabled) {
       void applyStoredHiding();
       watchAndReapplyHiding();
     } else {
@@ -53,6 +60,7 @@ async function bootstrap(): Promise<void> {
     }
 
     if (message.type === "REFRESH_HIDING") {
+      invalidateRecordCache();
       document.getElementById("__bare_preload__")?.remove();
       restoreAllHiddenElements(document);
       void applyStoredHiding();
@@ -73,6 +81,14 @@ async function bootstrap(): Promise<void> {
 
 async function applyStoredHiding(): Promise<void> {
   const ctx = deriveCurrentPageContext(window);
+  const cacheKey = `${ctx.path}\x00${ctx.search}`;
+
+  const cached = recordCache.get(cacheKey);
+  if (cached) {
+    applyRecordsHiding(document, cached);
+    return;
+  }
+
   try {
     const response = (await browser.runtime.sendMessage({
       type: "GET_RECORDS_FOR_PAGE",
@@ -80,7 +96,13 @@ async function applyStoredHiding(): Promise<void> {
       path: ctx.path,
       search: ctx.search,
     })) as { records: HiddenElementRecord[] };
-    applyRecordsHiding(document, response.records);
+    recordCache.set(cacheKey, response.records);
+
+    const toCache: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
+    applyRecordsHiding(document, response.records, (record, el) => {
+      if (!record.cssSelector) toCache.push({ record, el });
+    });
+    if (toCache.length > 0) void retroactivelyCacheSelectorBatch(toCache);
   } catch {
     // Background may not be ready on very early page load
   }
@@ -97,6 +119,46 @@ let sessionHiddenCount = 0;
 const undoStack: Array<{ element: HTMLElement; recordId: string }> = [];
 let statusInfoEl: HTMLSpanElement | null = null;
 let statusRestoreWrapperEl: HTMLDivElement | null = null;
+
+// --- In-memory record cache ---
+
+const recordCache = new Map<string, HiddenElementRecord[]>();
+
+function invalidateRecordCache(): void {
+  recordCache.clear();
+}
+
+// --- Retroactive CSS caching ---
+
+async function retroactivelyCacheSelectorBatch(
+  items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
+): Promise<void> {
+  const byKey = new Map<string, string[]>();
+
+  for (const { record, el } of items) {
+    const cssSelector = resolveCSSSelector(el, document);
+    if (!cssSelector) continue;
+    const { origin, path, search } = record.pageContext;
+    const key =
+      record.scope === "site-layout"
+        ? siteCSSCacheKey(origin)
+        : pageCSSCacheKey(origin, path, search);
+    const list = byKey.get(key);
+    if (list) {
+      if (!list.includes(cssSelector)) list.push(cssSelector);
+    } else {
+      byKey.set(key, [cssSelector]);
+    }
+  }
+
+  for (const [key, newSelectors] of byKey) {
+    const stored = ((await browser.storage.local.get(key))[key] as string[] | undefined) ?? [];
+    const toAdd = newSelectors.filter((s) => !stored.includes(s));
+    if (toAdd.length > 0) {
+      await browser.storage.local.set({ [key]: [...stored, ...toAdd] });
+    }
+  }
+}
 
 // --- Deferred hiding (SPA / dynamic content) ---
 
@@ -125,6 +187,29 @@ function stopReapplyWatcher(): void {
     clearTimeout(reapplyStopTimer);
     reapplyStopTimer = null;
   }
+}
+
+function setupNavigationListener(): void {
+  const origPush = history.pushState.bind(history);
+  const origReplace = history.replaceState.bind(history);
+
+  history.pushState = function (...args: Parameters<typeof history.pushState>) {
+    origPush(...args);
+    onSpaNavigation();
+  };
+  history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
+    origReplace(...args);
+    onSpaNavigation();
+  };
+
+  window.addEventListener("popstate", onSpaNavigation);
+}
+
+function onSpaNavigation(): void {
+  if (!hidingEnabled) return;
+  stopReapplyWatcher();
+  void applyStoredHiding();
+  watchAndReapplyHiding();
 }
 
 // --- Iframe shields ---
@@ -193,6 +278,23 @@ function handleClick(event: MouseEvent): void {
   void hideAndSave(target);
 }
 
+function handleGlobalKeyDown(event: KeyboardEvent): void {
+  if (event.shiftKey && event.ctrlKey) {
+    if (event.key === "E") {
+      event.preventDefault();
+      if (!hidingEnabled) return;
+      if (selectionActive) stopSelectionMode();
+      else startSelectionMode();
+      return;
+    }
+    if (event.key === "Z") {
+      event.preventDefault();
+      void restoreLastHidden();
+      return;
+    }
+  }
+}
+
 function handleKeyDown(event: KeyboardEvent): void {
   if (event.key === "Escape") {
     event.preventDefault();
@@ -210,6 +312,7 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   applyHiddenElement(element);
   try {
     await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
+    invalidateRecordCache();
     sessionHiddenCount++;
     undoStack.push({ element, recordId: record.id });
     updateStatusBarContent();
@@ -226,6 +329,7 @@ async function restoreLastHidden(): Promise<void> {
   sessionHiddenCount = Math.max(0, sessionHiddenCount - 1);
   try {
     await browser.runtime.sendMessage({ type: "DELETE_RECORD", id: last.recordId });
+    invalidateRecordCache();
   } catch {
     console.warn("[bare] failed to delete record");
   }

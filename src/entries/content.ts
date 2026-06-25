@@ -309,7 +309,7 @@ function handleViewportChange(): void {
 
 async function hideAndSave(element: HTMLElement): Promise<void> {
   const record = deriveHiddenElementRecord(element, document);
-  applyHiddenElement(element);
+  applyHiddenElement(element, true);
   try {
     await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
     invalidateRecordCache();

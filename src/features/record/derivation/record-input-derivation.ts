@@ -2,6 +2,7 @@ import type { HiddenElementRecord } from "../schema";
 import { deriveCurrentPageContext } from "./page-context-derivation";
 import {
   normalizeTextPreview,
+  resolveCSSSelector,
   resolveUniqueAttributeInput,
 } from "./record-match-signal-derivation";
 import { deriveScope } from "./record-scope-derivation";
@@ -17,9 +18,7 @@ export function deriveHiddenElementRecord(
   const treeAnchor = deriveTreeAnchorInput(element, documentRef);
 
   const matchPlan = deriveMatchPlan(uniqueAttribute !== undefined, treeAnchor !== undefined);
-  const cssSelector = uniqueAttribute
-    ? `[${uniqueAttribute.attributeName}="${CSS.escape(uniqueAttribute.attributeValue)}"]`
-    : undefined;
+  const cssSelector = resolveCSSSelector(element, documentRef);
 
   return {
     id: crypto.randomUUID(),

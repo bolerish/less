@@ -225,3 +225,73 @@ function getUniqueAttributePriority(name: string): number {
   if (name.startsWith("aria-")) return UNIQUE_ATTRIBUTE_PRIORITY.aria;
   return UNIQUE_ATTRIBUTE_PRIORITY.fallback;
 }
+
+// Resolves the most stable CSS selector for an element, trying progressively
+// broader strategies: unique attribute → class combination → ancestor compound.
+export function resolveCSSSelector(
+  element: HTMLElement,
+  documentRef: Document,
+): string | undefined {
+  const uniqueAttr = resolveUniqueAttributeInput(element, documentRef);
+  if (uniqueAttr) {
+    return `[${uniqueAttr.attributeName}="${CSS.escape(uniqueAttr.attributeValue)}"]`;
+  }
+  return resolveClassBasedSelector(element, documentRef) ?? resolveAnchoredSelector(element, documentRef);
+}
+
+function resolveClassBasedSelector(
+  element: HTMLElement,
+  documentRef: Document,
+): string | undefined {
+  const classes = deriveStableClassTokens(element.className);
+  if (classes.length === 0) return undefined;
+
+  const tag = element.tagName.toLowerCase();
+  const classParts = classes.map((c) => `.${CSS.escape(c)}`).join("");
+
+  const candidates: string[] = [
+    `${tag}${classParts}`,
+    ...(classes.length >= 2 ? [classParts] : []),
+    ...(classes.length > 1 ? [`${tag}.${CSS.escape(classes[0])}`] : []),
+  ];
+
+  for (const candidate of candidates) {
+    if (isUniqueSelector(candidate, element, documentRef)) return candidate;
+  }
+  return undefined;
+}
+
+function resolveAnchoredSelector(
+  element: HTMLElement,
+  documentRef: Document,
+): string | undefined {
+  const classes = deriveStableClassTokens(element.className);
+  const tag = element.tagName.toLowerCase();
+  const elementPart =
+    classes.length > 0 ? `${tag}.${CSS.escape(classes[0])}` : tag;
+
+  let ancestor = element.parentElement;
+  for (let depth = 0; depth < 4 && ancestor && ancestor !== documentRef.documentElement; depth++) {
+    const ancestorAttr = resolveUniqueAttributeInput(ancestor, documentRef);
+    if (ancestorAttr) {
+      const ancestorPart = `[${ancestorAttr.attributeName}="${CSS.escape(ancestorAttr.attributeValue)}"]`;
+      const compound = `${ancestorPart} ${elementPart}`;
+      if (isUniqueSelector(compound, element, documentRef)) return compound;
+    }
+    ancestor = ancestor.parentElement;
+  }
+  return undefined;
+}
+
+function isUniqueSelector(
+  selector: string,
+  target: HTMLElement,
+  documentRef: Document,
+): boolean {
+  try {
+    const results = documentRef.querySelectorAll<HTMLElement>(selector);
+    return results.length === 1 && results[0] === target;
+  } catch {
+    return false;
+  }
+}

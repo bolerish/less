@@ -70,7 +70,29 @@ function hasNonZeroRect(el: HTMLElement): boolean {
 function resolveSelectableTarget(element: HTMLElement): HTMLElement | null {
   const unwrapped = unwrapTarget(element);
   if (isIgnorableEmptyElement(unwrapped)) return null;
-  return unwrapped;
+  return elevateToCustomElementHost(unwrapped) ?? unwrapped;
+}
+
+// Polymer/LitElement scoped-CSS pattern: inner elements carry the host's tag
+// name as a class (e.g. class="style-scope ytd-rich-shelf-renderer").
+// When we detect this, elevate the target to the custom element itself so the
+// user hides the whole component, not an anonymous internal wrapper.
+function elevateToCustomElementHost(element: HTMLElement): HTMLElement | null {
+  const hostTag = findCustomElementHostClass(element);
+  if (hostTag === null) return null;
+  const host = element.closest<HTMLElement>(hostTag);
+  return host !== null && host !== element ? host : null;
+}
+
+function findCustomElementHostClass(element: HTMLElement): string | null {
+  for (const cls of element.classList) {
+    if (isCustomElementTagName(cls)) return cls;
+  }
+  return null;
+}
+
+function isCustomElementTagName(name: string): boolean {
+  return /^[a-z][a-z0-9]*(-[a-z0-9]+)+$/.test(name);
 }
 
 function unwrapTarget(element: HTMLElement): HTMLElement {

@@ -1,10 +1,9 @@
-## Veil
+# Veil
 
 <img src="/src/assets/logo.svg" alt="Veil logo" width="100" />
 
-Veil what you want.
-
-A browser extension to hide distracting elements on any web page — remembered across visits.
+Hide anything on any page. Remembered across visits.  
+Point at anything. Click. Gone.
 
 ---
 

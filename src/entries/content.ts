@@ -387,6 +387,8 @@ function createHighlightOverlay(): HTMLDivElement {
 }
 
 function createStatusBar(): HTMLDivElement {
+  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
   const container = document.createElement("div");
   container.setAttribute(STATUS_BAR_ATTR, "true");
   Object.assign(container.style, {
@@ -395,8 +397,8 @@ function createStatusBar(): HTMLDivElement {
     left: "50%",
     transform: "translateX(-50%)",
     zIndex: "2147483647",
-    background: "rgba(9,9,11,0.88)",
-    color: "#fafafa",
+    background: isDark ? "rgba(250,250,250,0.95)" : "rgba(9,9,11,0.88)",
+    color: isDark ? "#18181b" : "#fafafa",
     borderRadius: "9999px",
     padding: "8px 20px",
     fontSize: "13px",
@@ -404,7 +406,10 @@ function createStatusBar(): HTMLDivElement {
     fontWeight: "450",
     lineHeight: "1.5",
     whiteSpace: "nowrap",
-    boxShadow: "0 4px 16px rgba(0,0,0,0.32)",
+    boxShadow: isDark
+      ? "0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)"
+      : "0 4px 16px rgba(0,0,0,0.32)",
+    border: isDark ? "1px solid rgba(0,0,0,0.07)" : "none",
     pointerEvents: "none",
     display: "inline-flex",
     alignItems: "center",
@@ -415,7 +420,7 @@ function createStatusBar(): HTMLDivElement {
   container.appendChild(infoEl);
   statusInfoEl = infoEl;
 
-  container.appendChild(makeSeparator());
+  container.appendChild(makeSeparator(isDark));
 
   // Restore section — hidden until something has been hidden
   const restoreWrapper = document.createElement("div");
@@ -429,13 +434,13 @@ function createStatusBar(): HTMLDivElement {
     transition: "max-width 0.35s ease, opacity 0.25s ease",
   });
   restoreWrapper.appendChild(
-    makeActionBtn(["⇧", "Ctrl", "Z"], "Undo", () => void restoreLastHidden()),
+    makeActionBtn(["⇧", "Ctrl", "Z"], "Undo", () => void restoreLastHidden(), isDark),
   );
   container.appendChild(restoreWrapper);
   statusRestoreWrapperEl = restoreWrapper;
 
   container.appendChild(makeDot());
-  container.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode));
+  container.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
 
   updateStatusBarContent();
   return container;
@@ -452,7 +457,12 @@ function updateStatusBarContent(): void {
   }
 }
 
-function makeActionBtn(keys: string[], label: string, onClick: () => void): HTMLSpanElement {
+function makeActionBtn(
+  keys: string[],
+  label: string,
+  onClick: () => void,
+  isDark: boolean,
+): HTMLSpanElement {
   const btn = document.createElement("span");
   Object.assign(btn.style, {
     display: "inline-flex",
@@ -468,7 +478,7 @@ function makeActionBtn(keys: string[], label: string, onClick: () => void): HTML
     gap: "2px",
     pointerEvents: "none",
   });
-  keys.forEach((k) => keysWrap.appendChild(makeKbd(k)));
+  keys.forEach((k) => keysWrap.appendChild(makeKbd(k, isDark)));
   btn.appendChild(keysWrap);
   const text = document.createElement("span");
   text.textContent = label;
@@ -482,21 +492,25 @@ function makeActionBtn(keys: string[], label: string, onClick: () => void): HTML
   return btn;
 }
 
-function makeKbd(text: string): HTMLElement {
+function makeKbd(text: string, isDark: boolean): HTMLElement {
   const kbd = document.createElement("kbd");
   kbd.textContent = text;
   Object.assign(kbd.style, {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "rgba(255,255,255,0.2)",
-    borderRadius: "2px",
-    padding: "0 4px",
-    height: "20px",
-    minWidth: "20px",
+    background: isDark ? "rgba(0,0,0,0.07)" : "rgba(255,255,255,0.1)",
+    border: isDark ? "1px solid rgba(0,0,0,0.18)" : "1px solid rgba(255,255,255,0.28)",
+    borderBottom: isDark ? "2px solid rgba(0,0,0,0.14)" : "2px solid rgba(255,255,255,0.2)",
+    borderRadius: "4px",
+    padding: "0 5px",
+    height: "18px",
+    minWidth: "18px",
     fontSize: "10px",
     fontFamily: "inherit",
     fontWeight: "500",
+    lineHeight: "1",
+    letterSpacing: "0.02em",
     pointerEvents: "none",
   });
   return kbd;
@@ -523,13 +537,13 @@ function makeDot(): HTMLSpanElement {
   return dot;
 }
 
-function makeSeparator(): HTMLSpanElement {
+function makeSeparator(isDark: boolean): HTMLSpanElement {
   const sep = document.createElement("span");
   Object.assign(sep.style, {
     display: "inline-block",
     width: "1px",
     height: "12px",
-    background: "rgba(255,255,255,0.2)",
+    background: isDark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.2)",
     flexShrink: "0",
   });
   return sep;

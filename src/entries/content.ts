@@ -426,16 +426,25 @@ function createHighlightOverlay(): HTMLDivElement {
 }
 
 function isPageDark(): boolean {
-  for (const el of [document.documentElement, document.body]) {
-    if (!el) continue;
+  const bgLuminance = (el: Element): number | null => {
     const bg = window.getComputedStyle(el).backgroundColor;
     const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);
-    if (!m) continue;
+    if (!m) return null;
     const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1;
-    if (alpha < 0.1) continue;
-    const luminance = (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
-    return luminance < 0.5;
+    if (alpha < 0.1) return null;
+    return (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
+  };
+
+  // Walk up from a center-page element — finds the actual rendered background
+  // even when html/body are transparent
+  const probe = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+  let el: Element | null = probe ?? document.body;
+  while (el && el !== document.documentElement.parentElement) {
+    const lum = bgLuminance(el);
+    if (lum !== null) return lum < 0.5;
+    el = el.parentElement;
   }
+
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 

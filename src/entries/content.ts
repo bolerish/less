@@ -60,6 +60,7 @@ async function bootstrap(): Promise<void> {
     }
 
     if (message.type === "REFRESH_HIDING") {
+      stopReapplyWatcher();
       invalidateRecordCache();
       document.getElementById("__bare_preload__")?.remove();
       restoreAllHiddenElements(document);
@@ -407,8 +408,8 @@ function createStatusBar(): HTMLDivElement {
 
   const applyPillStyle = (el: HTMLDivElement): void => {
     Object.assign(el.style, {
-      background: isDark ? "rgba(250,250,250,0.95)" : "rgba(9,9,11,0.88)",
-      color: isDark ? "#18181b" : "#fafafa",
+      background: "rgba(255,255,255,0.93)",
+      color: "#18181b",
       borderRadius: "9999px",
       padding: "8px 20px",
       fontSize: "13px",
@@ -417,9 +418,9 @@ function createStatusBar(): HTMLDivElement {
       lineHeight: "1.5",
       whiteSpace: "nowrap",
       boxShadow: isDark
-        ? "0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)"
-        : "0 4px 16px rgba(0,0,0,0.32)",
-      border: isDark ? "1px solid rgba(0,0,0,0.07)" : "none",
+        ? "0 4px 24px rgba(0,0,0,0.45), 0 1px 6px rgba(0,0,0,0.2)"
+        : "0 4px 16px rgba(0,0,0,0.1)",
+      border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.07)",
       display: "inline-flex",
       alignItems: "center",
       gap: "8px",
@@ -452,8 +453,8 @@ function createStatusBar(): HTMLDivElement {
   mainPill.appendChild(infoEl);
   statusInfoEl = infoEl;
 
-  mainPill.appendChild(makeSeparator(isDark));
-  mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
+  mainPill.appendChild(makeSeparator());
+  mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode));
   wrapper.appendChild(mainPill);
 
   // Undo pill — appears when something has been hidden
@@ -495,12 +496,7 @@ function updateStatusBarContent(): void {
   }
 }
 
-function makeActionBtn(
-  keys: string[],
-  label: string,
-  onClick: () => void,
-  isDark: boolean,
-): HTMLSpanElement {
+function makeActionBtn(keys: string[], label: string, onClick: () => void): HTMLSpanElement {
   const btn = document.createElement("span");
   Object.assign(btn.style, {
     display: "inline-flex",
@@ -516,7 +512,7 @@ function makeActionBtn(
     gap: "2px",
     pointerEvents: "none",
   });
-  keys.forEach((k) => keysWrap.appendChild(makeKbd(k, isDark)));
+  keys.forEach((k) => keysWrap.appendChild(makeKbd(k)));
   btn.appendChild(keysWrap);
   const text = document.createElement("span");
   text.textContent = label;
@@ -530,16 +526,16 @@ function makeActionBtn(
   return btn;
 }
 
-function makeKbd(text: string, isDark: boolean): HTMLElement {
+function makeKbd(text: string): HTMLElement {
   const kbd = document.createElement("kbd");
   kbd.textContent = text;
   Object.assign(kbd.style, {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    background: isDark ? "rgba(0,0,0,0.07)" : "rgba(255,255,255,0.1)",
-    border: isDark ? "1px solid rgba(0,0,0,0.18)" : "1px solid rgba(255,255,255,0.28)",
-    borderBottom: isDark ? "2px solid rgba(0,0,0,0.14)" : "2px solid rgba(255,255,255,0.2)",
+    background: "rgba(0,0,0,0.06)",
+    border: "1px solid rgba(0,0,0,0.16)",
+    borderBottom: "2px solid rgba(0,0,0,0.12)",
     borderRadius: "4px",
     padding: "0 5px",
     height: "18px",
@@ -575,13 +571,13 @@ function makeDot(): HTMLSpanElement {
   return dot;
 }
 
-function makeSeparator(isDark: boolean): HTMLSpanElement {
+function makeSeparator(): HTMLSpanElement {
   const sep = document.createElement("span");
   Object.assign(sep.style, {
     display: "inline-block",
     width: "1px",
     height: "12px",
-    background: isDark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.2)",
+    background: "rgba(0,0,0,0.15)",
     flexShrink: "0",
   });
   return sep;

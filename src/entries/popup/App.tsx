@@ -1,7 +1,6 @@
 import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import wxtLogo from "~assets/logo.svg";
-import { clearCSSCacheForOrigin, deleteRecordsByOrigin } from "~features/record";
 import { Button } from "~shared/components/ui/button";
 import { Kbd, KbdGroup } from "~shared/components/ui/kbd";
 import { Switch } from "~shared/components/ui/switch";
@@ -43,12 +42,8 @@ function App() {
     if (!origin) return;
     setIsResetting(true);
     try {
-      await deleteRecordsByOrigin(origin);
-      await clearCSSCacheForOrigin(origin);
+      await browser.runtime.sendMessage({ type: "RESET_ORIGIN", origin, tabId });
       setRefreshKey((k) => k + 1);
-      if (tabId !== undefined) {
-        await browser.tabs.sendMessage(tabId, { type: "REFRESH_HIDING" }).catch(() => {});
-      }
     } catch (error) {
       console.warn("[Bare] reset failed", error);
     } finally {

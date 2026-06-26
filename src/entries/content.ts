@@ -403,60 +403,84 @@ function isPageDark(): boolean {
 function createStatusBar(): HTMLDivElement {
   const isDark = isPageDark();
 
-  const container = document.createElement("div");
-  container.setAttribute(STATUS_BAR_ATTR, "true");
-  Object.assign(container.style, {
+  const applyPillStyle = (el: HTMLDivElement): void => {
+    Object.assign(el.style, {
+      background: isDark ? "rgba(250,250,250,0.95)" : "rgba(9,9,11,0.88)",
+      color: isDark ? "#18181b" : "#fafafa",
+      borderRadius: "9999px",
+      padding: "8px 20px",
+      fontSize: "13px",
+      fontFamily: "system-ui,-apple-system,sans-serif",
+      fontWeight: "450",
+      lineHeight: "1.5",
+      whiteSpace: "nowrap",
+      boxShadow: isDark
+        ? "0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)"
+        : "0 4px 16px rgba(0,0,0,0.32)",
+      border: isDark ? "1px solid rgba(0,0,0,0.07)" : "none",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "8px",
+    });
+  };
+
+  // Wrapper — positions both pills
+  const wrapper = document.createElement("div");
+  wrapper.setAttribute(STATUS_BAR_ATTR, "true");
+  Object.assign(wrapper.style, {
     position: "fixed",
     bottom: "24px",
     left: "50%",
     transform: "translateX(-50%)",
     zIndex: "2147483647",
-    background: isDark ? "rgba(250,250,250,0.95)" : "rgba(9,9,11,0.88)",
-    color: isDark ? "#18181b" : "#fafafa",
-    borderRadius: "9999px",
-    padding: "8px 20px",
-    fontSize: "13px",
-    fontFamily: "system-ui,-apple-system,sans-serif",
-    fontWeight: "450",
-    lineHeight: "1.5",
-    whiteSpace: "nowrap",
-    boxShadow: isDark
-      ? "0 4px 20px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)"
-      : "0 4px 16px rgba(0,0,0,0.32)",
-    border: isDark ? "1px solid rgba(0,0,0,0.07)" : "none",
-    pointerEvents: "none",
     display: "inline-flex",
     alignItems: "center",
     gap: "8px",
+    pointerEvents: "none",
+    whiteSpace: "nowrap",
   });
+
+  // Undo pill — appears when something has been hidden
+  const undoPill = document.createElement("div");
+  applyPillStyle(undoPill);
+  Object.assign(undoPill.style, {
+    opacity: "0",
+    transform: "scale(0.9) translateY(4px)",
+    transition: "opacity 0.2s ease, transform 0.2s ease",
+    cursor: "pointer",
+    pointerEvents: "none",
+  });
+  const undoIcon = document.createElement("span");
+  undoIcon.textContent = "↺";
+  Object.assign(undoIcon.style, { fontSize: "15px", lineHeight: "1", pointerEvents: "none" });
+  const undoLabel = document.createElement("span");
+  undoLabel.textContent = "Undo";
+  undoLabel.style.pointerEvents = "none";
+  undoPill.appendChild(undoIcon);
+  undoPill.appendChild(undoLabel);
+  undoPill.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void restoreLastHidden();
+  });
+  wrapper.appendChild(undoPill);
+  statusRestoreWrapperEl = undoPill;
+
+  // Main pill — always visible
+  const mainPill = document.createElement("div");
+  applyPillStyle(mainPill);
+  mainPill.style.pointerEvents = "none";
 
   const infoEl = document.createElement("span");
-  container.appendChild(infoEl);
+  mainPill.appendChild(infoEl);
   statusInfoEl = infoEl;
 
-  container.appendChild(makeSeparator(isDark));
-
-  // Restore section — hidden until something has been hidden
-  const restoreWrapper = document.createElement("div");
-  Object.assign(restoreWrapper.style, {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    maxWidth: "0",
-    overflow: "hidden",
-    opacity: "0",
-    transition: "max-width 0.35s ease, opacity 0.25s ease",
-  });
-  restoreWrapper.appendChild(
-    makeActionBtn(["⇧ Ctrl", "Z"], "Undo", () => void restoreLastHidden(), isDark),
-  );
-  container.appendChild(restoreWrapper);
-  statusRestoreWrapperEl = restoreWrapper;
-
-  container.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
+  mainPill.appendChild(makeSeparator(isDark));
+  mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
+  wrapper.appendChild(mainPill);
 
   updateStatusBarContent();
-  return container;
+  return wrapper;
 }
 
 function updateStatusBarContent(): void {
@@ -465,8 +489,9 @@ function updateStatusBarContent(): void {
   }
   if (statusRestoreWrapperEl) {
     const hasUndo = undoStack.length > 0;
-    statusRestoreWrapperEl.style.maxWidth = hasUndo ? "200px" : "0";
     statusRestoreWrapperEl.style.opacity = hasUndo ? "1" : "0";
+    statusRestoreWrapperEl.style.transform = hasUndo ? "scale(1) translateY(0)" : "scale(0.9) translateY(4px)";
+    statusRestoreWrapperEl.style.pointerEvents = hasUndo ? "auto" : "none";
   }
 }
 

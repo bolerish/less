@@ -58,7 +58,6 @@ function App() {
 
   return (
     <div className="w-72 flex flex-col bg-zinc-50 text-zinc-900">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex gap-1.5 items-center">
           <img src={wxtLogo} alt="Veil logo" width={22} />
@@ -67,7 +66,6 @@ function App() {
         <Switch id="site-hiding" checked={enabled} disabled={!loaded} onCheckedChange={toggle} />
       </div>
 
-      {/* Hidden count + restore */}
       <div className="flex items-center justify-between px-4 pb-2">
         <span className="flex items-center gap-1.5  font-medium  cursor-pointer select-none list-none  text-zinc-800">
           Hidden
@@ -114,7 +112,6 @@ function App() {
         </div>
       )}
 
-      {/* Shortcuts disclosure */}
       <Accordion type="single" collapsible defaultValue="shortcuts">
         <AccordionItem value="shortcuts">
           <AccordionTrigger className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-medium  cursor-pointer select-none list-none text-zinc-400">

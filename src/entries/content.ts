@@ -111,8 +111,6 @@ async function applyStoredHiding(): Promise<void> {
   }
 }
 
-// --- Selection mode ---
-
 let selectionActive = false;
 let highlightEl: HTMLDivElement | null = null;
 let statusBarEl: HTMLDivElement | null = null;
@@ -123,15 +121,11 @@ const undoStack: Array<{ element: HTMLElement; recordId: string }> = [];
 let statusInfoEl: HTMLSpanElement | null = null;
 let statusRestoreWrapperEl: HTMLDivElement | null = null;
 
-// --- In-memory record cache ---
-
 const recordCache = new Map<string, HiddenElementRecord[]>();
 
 function invalidateRecordCache(): void {
   recordCache.clear();
 }
-
-// --- Retroactive CSS caching ---
 
 async function retroactivelyCacheSelectorBatch(
   items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
@@ -162,8 +156,6 @@ async function retroactivelyCacheSelectorBatch(
     }
   }
 }
-
-// --- Deferred hiding (SPA / dynamic content) ---
 
 let reapplyObserver: MutationObserver | null = null;
 let reapplyStopTimer: ReturnType<typeof setTimeout> | null = null;
@@ -214,8 +206,6 @@ function onSpaNavigation(): void {
   void applyStoredHiding();
   watchAndReapplyHiding();
 }
-
-// --- Iframe shields ---
 
 const iframeShields = new Map<HTMLIFrameElement, HTMLDivElement>();
 const iframeOriginalPointerEvents = new Map<HTMLIFrameElement, string>();
@@ -328,7 +318,6 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   await collapseEmptyAncestors(element);
 }
 
-// After hiding an element, walk up the tree and hide ancestors that became empty.
 async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
   const MAX_DEPTH = 2;
   let current = origin.parentElement;
@@ -474,7 +463,6 @@ function createStatusBar(): HTMLDivElement {
     });
   };
 
-  // Wrapper — positions both pills
   const wrapper = document.createElement("div");
   wrapper.setAttribute(STATUS_BAR_ATTR, "true");
   Object.assign(wrapper.style, {
@@ -491,7 +479,6 @@ function createStatusBar(): HTMLDivElement {
     userSelect: "none",
   });
 
-  // Main pill — always visible
   const mainPill = document.createElement("div");
   applyPillStyle(mainPill);
   mainPill.style.pointerEvents = "none";
@@ -504,7 +491,6 @@ function createStatusBar(): HTMLDivElement {
   mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode));
   wrapper.appendChild(mainPill);
 
-  // Undo pill — appears when something has been hidden
   const undoPill = document.createElement("div");
   applyPillStyle(undoPill);
   Object.assign(undoPill.style, {
@@ -630,8 +616,6 @@ function makeSeparator(): HTMLSpanElement {
   return sep;
 }
 
-// --- Iframe shields ---
-
 function shieldIframes(): void {
   document.querySelectorAll<HTMLIFrameElement>("iframe").forEach(shieldOneIframe);
 
@@ -724,8 +708,6 @@ function getComputedZIndex(el: HTMLElement): number {
   const z = Number.parseInt(window.getComputedStyle(el).zIndex, 10);
   return Number.isNaN(z) ? 0 : z;
 }
-
-// --- Utilities ---
 
 interface Message {
   type: string;

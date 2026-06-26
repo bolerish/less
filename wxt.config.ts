@@ -36,13 +36,7 @@ export default defineConfig({
       },
     },
 
-    permissions: ["storage", "tabs", "webNavigation", "scripting"],
-    web_accessible_resources: [
-      {
-        resources: ["logo.svg"],
-        matches: ["<all_urls>"],
-      },
-    ],
+    permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   },
   vite: () => ({
     plugins: [tailwindcss(), babel({ presets: [reactCompilerPreset()] })],

@@ -426,6 +426,25 @@ function createHighlightOverlay(): HTMLDivElement {
 }
 
 function isPageDark(): boolean {
+  const root = document.documentElement;
+
+  // 1. color-scheme CSS property (explicit browser signal)
+  const colorScheme = window.getComputedStyle(root).colorScheme;
+  if (colorScheme.includes("dark")) return true;
+  if (colorScheme.includes("light")) return false;
+
+  // 2. Common dark-mode class conventions (e.g. Tailwind, shadcn, Next Themes)
+  if (root.classList.contains("dark")) return true;
+  if (root.classList.contains("light")) return false;
+  if (document.body?.classList.contains("dark")) return true;
+  if (document.body?.classList.contains("light")) return false;
+
+  // 3. data-theme / data-color-scheme attributes
+  const theme = root.getAttribute("data-theme") ?? root.getAttribute("data-color-scheme");
+  if (theme === "dark") return true;
+  if (theme === "light") return false;
+
+  // 4. Background luminance — html/body first, then walk up from center of page
   const bgLuminance = (el: Element): number | null => {
     const bg = window.getComputedStyle(el).backgroundColor;
     const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);
@@ -435,11 +454,15 @@ function isPageDark(): boolean {
     return (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
   };
 
-  // Walk up from a center-page element — finds the actual rendered background
-  // even when html/body are transparent
+  for (const el of [root, document.body]) {
+    if (!el) continue;
+    const lum = bgLuminance(el);
+    if (lum !== null) return lum < 0.5;
+  }
+
   const probe = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
   let el: Element | null = probe ?? document.body;
-  while (el && el !== document.documentElement.parentElement) {
+  while (el && el !== root.parentElement) {
     const lum = bgLuminance(el);
     if (lum !== null) return lum < 0.5;
     el = el.parentElement;

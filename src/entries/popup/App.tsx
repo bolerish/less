@@ -34,7 +34,7 @@ function App() {
     try {
       await browser.tabs.sendMessage(tabId, { type: "SET_SELECTION_ENABLED", enabled: true });
     } catch (error) {
-      console.warn("[Bare] failed to start selection mode", error);
+      console.warn("[Veil] failed to start selection mode", error);
     }
     window.close();
   };
@@ -50,7 +50,7 @@ function App() {
         await browser.tabs.sendMessage(tabId, { type: "REFRESH_HIDING" }).catch(() => {});
       }
     } catch (error) {
-      console.warn("[Bare] reset failed", error);
+      console.warn("[Veil] reset failed", error);
     } finally {
       setIsResetting(false);
     }
@@ -61,8 +61,8 @@ function App() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex gap-1.5 items-center">
-          <img src={wxtLogo} alt="Bare logo" width={22} />
-          <span className="text-sm font-semibold tracking-tight">Bare</span>
+          <img src={wxtLogo} alt="Veil logo" width={22} />
+          <span className="text-sm font-semibold tracking-tight">Veil</span>
         </div>
         <Switch id="site-hiding" checked={enabled} disabled={!loaded} onCheckedChange={toggle} />
       </div>

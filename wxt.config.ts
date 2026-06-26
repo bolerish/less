@@ -22,11 +22,11 @@ export default defineConfig({
   },
   manifest: {
     name: "__MSG_ext_name__",
-    short_name: "Bare",
+    short_name: "Veil",
     description: "__MSG_ext_description__",
     default_locale: "en",
     action: {
-      default_title: "Bare",
+      default_title: "Veil",
       default_icon: {
         16: "icons/16.png",
         32: "icons/32.png",

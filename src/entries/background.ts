@@ -1,9 +1,7 @@
 import {
   addRecord,
   appendCSSCacheEntry,
-  clearCSSCacheForOrigin,
   deleteRecord,
-  deleteRecordsByOrigin,
   getRecord,
   getRecordsByPage,
   getRecordsBySiteLayout,
@@ -17,8 +15,7 @@ import type { HiddenElementRecord } from "~features/record/schema";
 type BackgroundMessage =
   | { type: "ADD_RECORD"; record: HiddenElementRecord }
   | { type: "DELETE_RECORD"; id: string }
-  | { type: "GET_RECORDS_FOR_PAGE"; origin: string; path: string; search: string }
-  | { type: "RESET_ORIGIN"; origin: string; tabId?: number };
+  | { type: "GET_RECORDS_FOR_PAGE"; origin: string; path: string; search: string };
 
 function isBackgroundMessage(value: unknown): value is BackgroundMessage {
   return typeof value === "object" && value !== null && "type" in value;
@@ -171,25 +168,6 @@ export default defineBackground(() => {
         return true;
       }
 
-      if (message.type === "RESET_ORIGIN") {
-        void (async () => {
-          try {
-            await deleteRecordsByOrigin(message.origin);
-            await clearCSSCacheForOrigin(message.origin);
-            // Purge in-memory CSS cache for this origin
-            for (const key of cssKeyCache.keys()) {
-              if (key.includes(encodeURIComponent(message.origin))) cssKeyCache.delete(key);
-            }
-            if (message.tabId !== undefined) {
-              await browser.tabs.sendMessage(message.tabId, { type: "REFRESH_HIDING" }).catch(() => {});
-            }
-            sendResponse({ ok: true });
-          } catch {
-            sendResponse({ ok: false });
-          }
-        })();
-        return true;
-      }
     },
   );
 });

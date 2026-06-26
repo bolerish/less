@@ -1,6 +1,8 @@
 import {
   applyHiddenElement,
   applyRecordsHiding,
+  isHiddenElement,
+  isHideExcludedElement,
   restoreAllHiddenElements,
   restoreHiddenElement,
 } from "~features/element-hiding";
@@ -321,7 +323,52 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
     updateStatusBarContent();
   } catch {
     console.warn("[bare] failed to save record");
+    return;
   }
+  await collapseEmptyAncestors(element);
+}
+
+// After hiding an element, walk up the tree and hide ancestors that became empty.
+async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
+  const MAX_DEPTH = 2;
+  let current = origin.parentElement;
+  let depth = 0;
+
+  while (current !== null && depth < MAX_DEPTH) {
+    if (isHideExcludedElement(current)) break;
+    if (isHiddenElement(current)) break;
+    if (current.closest(`[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}]`)) break;
+    if (!hasNoVisibleContent(current)) break;
+
+    const record = deriveHiddenElementRecord(current, document);
+    applyHiddenElement(current, false);
+    try {
+      await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
+      invalidateRecordCache();
+      sessionHiddenCount++;
+      undoStack.push({ element: current, recordId: record.id });
+      updateStatusBarContent();
+    } catch {
+      console.warn("[bare] failed to save ancestor record");
+      break;
+    }
+
+    current = current.parentElement;
+    depth++;
+  }
+}
+
+function hasNoVisibleContent(el: HTMLElement): boolean {
+  for (const node of el.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) return false;
+  }
+  for (const child of el.children) {
+    if (!(child instanceof HTMLElement)) continue;
+    if (isHiddenElement(child)) continue;
+    const rect = child.getBoundingClientRect();
+    if (rect.width > 0 || rect.height > 0) return false;
+  }
+  return true;
 }
 
 async function restoreLastHidden(): Promise<void> {

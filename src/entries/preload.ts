@@ -25,6 +25,6 @@ async function injectPreloadCSS(): Promise<void> {
 
   const style = document.createElement("style");
   style.id = "__bare_preload__";
-  style.textContent = selectors.map((s) => `${s}{visibility:hidden!important}`).join("");
+  style.textContent = selectors.map((s) => `${s}{display:none!important}`).join("");
   document.documentElement.appendChild(style);
 }

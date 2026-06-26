@@ -35,7 +35,7 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
           element.style.removeProperty("transition");
           element.style.removeProperty("opacity");
           element.style.removeProperty("will-change");
-          element.style.setProperty("visibility", "hidden", "important");
+          element.style.setProperty("display", "none", "important");
         };
         const timer = setTimeout(finalize, 360);
         element.addEventListener("transitionend", function onEnd(e: TransitionEvent) {
@@ -47,7 +47,7 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
       });
     });
   } else {
-    element.style.setProperty("visibility", "hidden", "important");
+    element.style.setProperty("display", "none", "important");
   }
 }
 
@@ -59,6 +59,7 @@ export function restoreHiddenElement(element: HTMLElement): void {
     element.setAttribute("style", inlineStyle);
     element.removeAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
   } else {
+    element.style.removeProperty("display");
     element.style.removeProperty("visibility");
     element.style.removeProperty("opacity");
     element.style.removeProperty("transition");

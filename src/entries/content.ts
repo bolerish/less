@@ -118,6 +118,7 @@ let sessionHiddenCount = 0;
 
 const undoStack: Array<{ element: HTMLElement; recordId: string }> = [];
 let statusInfoEl: HTMLSpanElement | null = null;
+let statusRestoreWrapperEl: HTMLDivElement | null = null;
 
 // --- In-memory record cache ---
 
@@ -254,6 +255,7 @@ function stopSelectionMode(): void {
   statusBarEl?.remove();
   statusBarEl = null;
   statusInfoEl = null;
+  statusRestoreWrapperEl = null;
 
   unshieldAllIframes();
 }
@@ -454,24 +456,28 @@ function createStatusBar(): HTMLDivElement {
   mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
   wrapper.appendChild(mainPill);
 
-  // Back pill — always visible, navigates browser history back
-  const backPill = document.createElement("div");
-  applyPillStyle(backPill);
-  Object.assign(backPill.style, {
+  // Undo pill — appears when something has been hidden
+  const undoPill = document.createElement("div");
+  applyPillStyle(undoPill);
+  Object.assign(undoPill.style, {
     padding: "8px 14px",
+    opacity: "0",
+    transform: "scale(0.9) translateY(4px)",
+    transition: "opacity 0.2s ease, transform 0.2s ease",
     cursor: "pointer",
-    pointerEvents: "auto",
+    pointerEvents: "none",
   });
-  const backIcon = document.createElement("span");
-  backIcon.textContent = "↺";
-  Object.assign(backIcon.style, { fontSize: "16px", lineHeight: "1", pointerEvents: "none" });
-  backPill.appendChild(backIcon);
-  backPill.addEventListener("click", (e) => {
+  const undoIcon = document.createElement("span");
+  undoIcon.textContent = "↺";
+  Object.assign(undoIcon.style, { fontSize: "16px", lineHeight: "1", pointerEvents: "none" });
+  undoPill.appendChild(undoIcon);
+  undoPill.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    history.back();
+    void restoreLastHidden();
   });
-  wrapper.appendChild(backPill);
+  wrapper.appendChild(undoPill);
+  statusRestoreWrapperEl = undoPill;
 
   updateStatusBarContent();
   return wrapper;
@@ -480,6 +486,12 @@ function createStatusBar(): HTMLDivElement {
 function updateStatusBarContent(): void {
   if (statusInfoEl) {
     statusInfoEl.textContent = sessionHiddenCount > 0 ? `${sessionHiddenCount} Hidden` : "Hide";
+  }
+  if (statusRestoreWrapperEl) {
+    const hasUndo = undoStack.length > 0;
+    statusRestoreWrapperEl.style.opacity = hasUndo ? "1" : "0";
+    statusRestoreWrapperEl.style.transform = hasUndo ? "scale(1) translateY(0)" : "scale(0.9) translateY(4px)";
+    statusRestoreWrapperEl.style.pointerEvents = hasUndo ? "auto" : "none";
   }
 }
 

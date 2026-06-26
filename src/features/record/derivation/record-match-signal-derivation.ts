@@ -227,7 +227,8 @@ function getUniqueAttributePriority(name: string): number {
 }
 
 // Resolves the most stable CSS selector for an element, trying progressively
-// broader strategies: unique attribute → class combination → ancestor compound.
+// broader strategies: unique attribute → stable class combination → generated
+// class (CSS module hashes) → ancestor compound.
 export function resolveCSSSelector(
   element: HTMLElement,
   documentRef: Document,
@@ -236,7 +237,11 @@ export function resolveCSSSelector(
   if (uniqueAttr) {
     return `[${uniqueAttr.attributeName}="${CSS.escape(uniqueAttr.attributeValue)}"]`;
   }
-  return resolveClassBasedSelector(element, documentRef) ?? resolveAnchoredSelector(element, documentRef);
+  return (
+    resolveClassBasedSelector(element, documentRef) ??
+    resolveGeneratedClassBasedSelector(element, documentRef) ??
+    resolveAnchoredSelector(element, documentRef)
+  );
 }
 
 function resolveClassBasedSelector(
@@ -261,14 +266,43 @@ function resolveClassBasedSelector(
   return undefined;
 }
 
+// CSS module hashes (e.g. `Component-module__name___XyZ0w`) are build-time
+// deterministic, so they're stable across page loads even though they look
+// like generated tokens. Try them as a fallback when stable classes don't
+// yield a unique selector.
+function resolveGeneratedClassBasedSelector(
+  element: HTMLElement,
+  documentRef: Document,
+): string | undefined {
+  const classes = deriveGeneratedClassTokens(element.className);
+  if (classes.length === 0) return undefined;
+
+  const tag = element.tagName.toLowerCase();
+
+  for (const cls of classes) {
+    const withTag = `${tag}.${CSS.escape(cls)}`;
+    if (isUniqueSelector(withTag, element, documentRef)) return withTag;
+  }
+  for (const cls of classes) {
+    const classOnly = `.${CSS.escape(cls)}`;
+    if (isUniqueSelector(classOnly, element, documentRef)) return classOnly;
+  }
+  return undefined;
+}
+
 function resolveAnchoredSelector(
   element: HTMLElement,
   documentRef: Document,
 ): string | undefined {
-  const classes = deriveStableClassTokens(element.className);
+  const stableClasses = deriveStableClassTokens(element.className);
+  const generatedClasses = deriveGeneratedClassTokens(element.className);
   const tag = element.tagName.toLowerCase();
   const elementPart =
-    classes.length > 0 ? `${tag}.${CSS.escape(classes[0])}` : tag;
+    stableClasses.length > 0
+      ? `${tag}.${CSS.escape(stableClasses[0])}`
+      : generatedClasses.length > 0
+        ? `${tag}.${CSS.escape(generatedClasses[0])}`
+        : tag;
 
   let ancestor = element.parentElement;
   for (let depth = 0; depth < 4 && ancestor && ancestor !== documentRef.documentElement; depth++) {

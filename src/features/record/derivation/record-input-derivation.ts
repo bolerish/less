@@ -62,6 +62,9 @@ function deriveMatchPlan(
   hasUniqueAttribute: boolean,
   hasTreeAnchor: boolean,
 ): HiddenElementRecord["matchPlan"] {
-  const fallback: HiddenElementRecord["matchPlan"] = hasTreeAnchor ? ["ANCHOR"] : ["STRUCTURE"];
-  return hasUniqueAttribute ? ["UNIQUE_ATTRIBUTE", ...fallback] : fallback;
+  const plan: HiddenElementRecord["matchPlan"] = [];
+  if (hasUniqueAttribute) plan.push("UNIQUE_ATTRIBUTE");
+  if (hasTreeAnchor) plan.push("ANCHOR");
+  plan.push("STRUCTURE");
+  return plan;
 }

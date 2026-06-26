@@ -1,7 +1,15 @@
-## Bare
+## Veil
 
-<img src="/src/assets/logo.svg" alt="Bium logo" width="100" alt="Logo"/>
+<img src="/src/assets/logo.svg" alt="Veil logo" width="100" />
 
-A browser extension that lets you hide distractions on any web page.
+Veil what you want.
 
-Hide what you don’t need, focus on what matters, and restore hidden elements anytime.
+A browser extension to hide distracting elements on any web page — remembered across visits.
+
+---
+
+```bash
+pnpm dev       # Chrome (hot reload)
+pnpm build     # Production build
+pnpm zip       # Build + zip for store submission
+```

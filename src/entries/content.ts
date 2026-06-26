@@ -265,6 +265,8 @@ function handlePointerMove(event: PointerEvent): void {
 }
 
 function handleClick(event: MouseEvent): void {
+  if ((event.target as HTMLElement).closest(`[${STATUS_BAR_ATTR}]`) !== null) return;
+
   event.preventDefault();
   event.stopPropagation();
 

@@ -440,32 +440,6 @@ function createStatusBar(): HTMLDivElement {
     whiteSpace: "nowrap",
   });
 
-  // Undo pill — appears when something has been hidden
-  const undoPill = document.createElement("div");
-  applyPillStyle(undoPill);
-  Object.assign(undoPill.style, {
-    opacity: "0",
-    transform: "scale(0.9) translateY(4px)",
-    transition: "opacity 0.2s ease, transform 0.2s ease",
-    cursor: "pointer",
-    pointerEvents: "none",
-  });
-  const undoIcon = document.createElement("span");
-  undoIcon.textContent = "↺";
-  Object.assign(undoIcon.style, { fontSize: "15px", lineHeight: "1", pointerEvents: "none" });
-  const undoLabel = document.createElement("span");
-  undoLabel.textContent = "Undo";
-  undoLabel.style.pointerEvents = "none";
-  undoPill.appendChild(undoIcon);
-  undoPill.appendChild(undoLabel);
-  undoPill.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    void restoreLastHidden();
-  });
-  wrapper.appendChild(undoPill);
-  statusRestoreWrapperEl = undoPill;
-
   // Main pill — always visible
   const mainPill = document.createElement("div");
   applyPillStyle(mainPill);
@@ -478,6 +452,29 @@ function createStatusBar(): HTMLDivElement {
   mainPill.appendChild(makeSeparator(isDark));
   mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
   wrapper.appendChild(mainPill);
+
+  // Undo pill — appears to the right when something has been hidden
+  const undoPill = document.createElement("div");
+  applyPillStyle(undoPill);
+  Object.assign(undoPill.style, {
+    padding: "8px 14px",
+    opacity: "0",
+    transform: "scale(0.9) translateY(4px)",
+    transition: "opacity 0.2s ease, transform 0.2s ease",
+    cursor: "pointer",
+    pointerEvents: "none",
+  });
+  const undoIcon = document.createElement("span");
+  undoIcon.textContent = "↺";
+  Object.assign(undoIcon.style, { fontSize: "16px", lineHeight: "1", pointerEvents: "none" });
+  undoPill.appendChild(undoIcon);
+  undoPill.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void restoreLastHidden();
+  });
+  wrapper.appendChild(undoPill);
+  statusRestoreWrapperEl = undoPill;
 
   updateStatusBarContent();
   return wrapper;

@@ -386,8 +386,22 @@ function createHighlightOverlay(): HTMLDivElement {
   return el;
 }
 
+function isPageDark(): boolean {
+  for (const el of [document.documentElement, document.body]) {
+    if (!el) continue;
+    const bg = window.getComputedStyle(el).backgroundColor;
+    const m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);
+    if (!m) continue;
+    const alpha = m[4] !== undefined ? parseFloat(m[4]) : 1;
+    if (alpha < 0.1) continue;
+    const luminance = (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
+    return luminance < 0.5;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 function createStatusBar(): HTMLDivElement {
-  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = isPageDark();
 
   const container = document.createElement("div");
   container.setAttribute(STATUS_BAR_ATTR, "true");
@@ -434,12 +448,11 @@ function createStatusBar(): HTMLDivElement {
     transition: "max-width 0.35s ease, opacity 0.25s ease",
   });
   restoreWrapper.appendChild(
-    makeActionBtn(["⇧", "Ctrl", "Z"], "Undo", () => void restoreLastHidden(), isDark),
+    makeActionBtn(["⇧ Ctrl", "Z"], "Undo", () => void restoreLastHidden(), isDark),
   );
   container.appendChild(restoreWrapper);
   statusRestoreWrapperEl = restoreWrapper;
 
-  container.appendChild(makeDot());
   container.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode, isDark));
 
   updateStatusBarContent();

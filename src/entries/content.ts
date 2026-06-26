@@ -444,8 +444,8 @@ function createStatusBar(): HTMLDivElement {
 
   const applyPillStyle = (el: HTMLDivElement): void => {
     Object.assign(el.style, {
-      background: "rgba(255,255,255,0.93)",
-      color: "#18181b",
+      background: isDark ? "rgba(20,20,22,0.78)" : "rgba(255,255,255,0.72)",
+      color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.85)",
       borderRadius: "9999px",
       padding: "8px 20px",
       fontSize: "13px",
@@ -454,13 +454,15 @@ function createStatusBar(): HTMLDivElement {
       lineHeight: "1.5",
       whiteSpace: "nowrap",
       boxShadow: isDark
-        ? "0 4px 24px rgba(0,0,0,0.45), 0 1px 6px rgba(0,0,0,0.2)"
-        : "0 4px 16px rgba(0,0,0,0.1)",
-      border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.07)",
+        ? "0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)"
+        : "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+      border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.07)",
       display: "inline-flex",
       alignItems: "center",
       gap: "8px",
     });
+    el.style.setProperty("-webkit-backdrop-filter", "blur(20px) saturate(160%)");
+    el.style.backdropFilter = "blur(20px) saturate(160%)";
   };
 
   const wrapper = document.createElement("div");
@@ -487,8 +489,22 @@ function createStatusBar(): HTMLDivElement {
   mainPill.appendChild(infoEl);
   statusInfoEl = infoEl;
 
-  mainPill.appendChild(makeSeparator());
-  mainPill.appendChild(makeActionBtn(["Esc"], "Exit", stopSelectionMode));
+  mainPill.appendChild(makeSeparator(isDark));
+  const closeBtn = document.createElement("span");
+  closeBtn.textContent = "✕";
+  Object.assign(closeBtn.style, {
+    fontSize: "13px",
+    lineHeight: "1",
+    opacity: "0.5",
+    cursor: "pointer",
+    pointerEvents: "auto",
+  });
+  closeBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    stopSelectionMode();
+  });
+  mainPill.appendChild(closeBtn);
   wrapper.appendChild(mainPill);
 
   const undoPill = document.createElement("div");
@@ -529,59 +545,6 @@ function updateStatusBarContent(): void {
   }
 }
 
-function makeActionBtn(keys: string[], label: string, onClick: () => void): HTMLSpanElement {
-  const btn = document.createElement("span");
-  Object.assign(btn.style, {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "5px",
-    cursor: "pointer",
-    pointerEvents: "auto",
-  });
-  const keysWrap = document.createElement("span");
-  Object.assign(keysWrap.style, {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "2px",
-    pointerEvents: "none",
-  });
-  keys.forEach((k) => keysWrap.appendChild(makeKbd(k)));
-  btn.appendChild(keysWrap);
-  const text = document.createElement("span");
-  text.textContent = label;
-  text.style.pointerEvents = "none";
-  btn.appendChild(text);
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick();
-  });
-  return btn;
-}
-
-function makeKbd(text: string): HTMLElement {
-  const kbd = document.createElement("kbd");
-  kbd.textContent = text;
-  Object.assign(kbd.style, {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "rgba(0,0,0,0.06)",
-    border: "1px solid rgba(0,0,0,0.16)",
-    borderBottom: "2px solid rgba(0,0,0,0.12)",
-    borderRadius: "4px",
-    padding: "0 5px",
-    height: "18px",
-    minWidth: "18px",
-    fontSize: "10px",
-    fontFamily: "inherit",
-    fontWeight: "500",
-    lineHeight: "1",
-    letterSpacing: "0.02em",
-    pointerEvents: "none",
-  });
-  return kbd;
-}
 
 function removePreloadCSSForElement(element: HTMLElement): void {
   const style = document.getElementById("__bare_preload__") as HTMLStyleElement | null;
@@ -597,20 +560,13 @@ function removePreloadCSSForElement(element: HTMLElement): void {
   }
 }
 
-function makeDot(): HTMLSpanElement {
-  const dot = document.createElement("span");
-  dot.textContent = "·";
-  dot.style.opacity = "0.35";
-  return dot;
-}
-
-function makeSeparator(): HTMLSpanElement {
+function makeSeparator(isDark = false): HTMLSpanElement {
   const sep = document.createElement("span");
   Object.assign(sep.style, {
     display: "inline-block",
     width: "1px",
     height: "12px",
-    background: "rgba(0,0,0,0.15)",
+    background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)",
     flexShrink: "0",
   });
   return sep;

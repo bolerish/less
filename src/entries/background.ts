@@ -9,13 +9,15 @@ import {
   rebuildPageCSSCache,
   rebuildSiteCSSCache,
   siteCSSCacheKey,
+  updateRecordCSSSelector,
 } from "~features/record";
 import type { HiddenElementRecord } from "~features/record/schema";
 
 type BackgroundMessage =
   | { type: "ADD_RECORD"; record: HiddenElementRecord }
   | { type: "DELETE_RECORD"; id: string }
-  | { type: "GET_RECORDS_FOR_PAGE"; origin: string; path: string; search: string };
+  | { type: "GET_RECORDS_FOR_PAGE"; origin: string; path: string; search: string }
+  | { type: "UPDATE_RECORD_CSS_SELECTOR"; id: string; cssSelector: string };
 
 function isBackgroundMessage(value: unknown): value is BackgroundMessage {
   return typeof value === "object" && value !== null && "type" in value;
@@ -168,6 +170,17 @@ export default defineBackground(() => {
         return true;
       }
 
+      if (message.type === "UPDATE_RECORD_CSS_SELECTOR") {
+        void (async () => {
+          try {
+            await updateRecordCSSSelector(message.id, message.cssSelector);
+            sendResponse({ ok: true });
+          } catch {
+            sendResponse({ ok: false });
+          }
+        })();
+        return true;
+      }
     },
   );
 });

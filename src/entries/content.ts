@@ -101,11 +101,11 @@ async function applyStoredHiding(): Promise<void> {
     })) as { records: HiddenElementRecord[] };
     recordCache.set(cacheKey, response.records);
 
-    const toCache: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
+    const toBackfill: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
     applyRecordsHiding(document, response.records, (record, el) => {
-      if (!record.cssSelector) toCache.push({ record, el });
+      if (!record.cssSelector) toBackfill.push({ record, el });
     });
-    if (toCache.length > 0) void retroactivelyCacheSelectorBatch(toCache);
+    if (toBackfill.length > 0) void backfillCSSSelector(toBackfill);
   } catch {
     // Background may not be ready on very early page load
   }
@@ -127,14 +127,16 @@ function invalidateRecordCache(): void {
   recordCache.clear();
 }
 
-async function retroactivelyCacheSelectorBatch(
+async function backfillCSSSelector(
   items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
 ): Promise<void> {
   const byKey = new Map<string, string[]>();
+  const resolved = new Map<string, string>(); // record id → cssSelector
 
   for (const { record, el } of items) {
     const cssSelector = resolveCSSSelector(el, document);
     if (!cssSelector) continue;
+    resolved.set(record.id, cssSelector);
     const { origin, path, search } = record.pageContext;
     const key =
       record.scope === "site-layout"
@@ -154,6 +156,10 @@ async function retroactivelyCacheSelectorBatch(
     if (toAdd.length > 0) {
       await browser.storage.local.set({ [key]: [...stored, ...toAdd] });
     }
+  }
+
+  for (const [id, cssSelector] of resolved) {
+    void browser.runtime.sendMessage({ type: "UPDATE_RECORD_CSS_SELECTOR", id, cssSelector });
   }
 }
 

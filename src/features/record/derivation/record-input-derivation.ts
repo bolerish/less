@@ -17,8 +17,8 @@ export function deriveHiddenElementRecord(
   const tree = deriveTreeInput(element);
   const treeAnchor = deriveTreeAnchorInput(element, documentRef);
 
-  const matchPlan = deriveMatchPlan(uniqueAttribute !== undefined, treeAnchor !== undefined);
   const cssSelector = resolveCSSSelector(element, documentRef);
+  const matchPlan = deriveMatchPlan(cssSelector !== undefined, uniqueAttribute !== undefined, treeAnchor !== undefined);
 
   return {
     id: crypto.randomUUID(),
@@ -59,10 +59,12 @@ function deriveDisplayText(element: HTMLElement): string | null {
 }
 
 function deriveMatchPlan(
+  hasCSSSelector: boolean,
   hasUniqueAttribute: boolean,
   hasTreeAnchor: boolean,
 ): HiddenElementRecord["matchPlan"] {
   const plan: HiddenElementRecord["matchPlan"] = [];
+  if (hasCSSSelector) plan.push("CSS_SELECTOR");
   if (hasUniqueAttribute) plan.push("UNIQUE_ATTRIBUTE");
   if (hasTreeAnchor) plan.push("ANCHOR");
   plan.push("STRUCTURE");

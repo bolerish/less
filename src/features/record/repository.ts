@@ -67,3 +67,12 @@ export async function addRecord(record: HiddenElementRecord): Promise<void> {
 export async function deleteRecord(id: string): Promise<void> {
   await db.records.delete(id);
 }
+
+export async function updateRecordCSSSelector(id: string, cssSelector: string): Promise<void> {
+  const record = await db.records.get(id);
+  if (!record) return;
+  const matchPlan = record.matchPlan.includes("CSS_SELECTOR")
+    ? record.matchPlan
+    : (["CSS_SELECTOR", ...record.matchPlan] as typeof record.matchPlan);
+  await db.records.update(id, { cssSelector, matchPlan });
+}

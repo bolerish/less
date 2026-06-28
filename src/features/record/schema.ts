@@ -1,6 +1,6 @@
 import { z } from "zod/v4-mini";
 
-export const MatchStrategySchema = z.enum(["UNIQUE_ATTRIBUTE", "STRUCTURE", "ANCHOR"]);
+export const MatchStrategySchema = z.enum(["CSS_SELECTOR", "UNIQUE_ATTRIBUTE", "STRUCTURE", "ANCHOR"]);
 
 export type MatchStrategy = z.infer<typeof MatchStrategySchema>;
 

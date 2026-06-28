@@ -13,7 +13,7 @@ export function applyRecordsHiding(
     if (result.status !== "matched") continue;
     const el = result.matchedElement;
     onMatched?.(record, el);
-    applyHiddenElement(el, true);
+    applyHiddenElement(el, false);
   }
 }
 

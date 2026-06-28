@@ -10,6 +10,11 @@ export type MatchResult =
 export function resolveMatchedElement(documentRef: Document, record: HiddenElementRecord): MatchResult {
   for (const strategy of record.matchPlan) {
     switch (strategy) {
+      case "CSS_SELECTOR": {
+        const result = matchByCSSSelector(documentRef, record);
+        if (result.status === "matched") return result;
+        break;
+      }
       case "UNIQUE_ATTRIBUTE": {
         const result = matchByUniqueAttribute(documentRef, record);
         if (result.status === "matched") return result;
@@ -30,6 +35,17 @@ export function resolveMatchedElement(documentRef: Document, record: HiddenEleme
         throw new Error(`Unhandled strategy: ${exhaustive}`);
       }
     }
+  }
+  return { status: "unmatched" };
+}
+
+function matchByCSSSelector(documentRef: Document, record: HiddenElementRecord): MatchResult {
+  if (!record.cssSelector) return { status: "unmatched" };
+  try {
+    const matched = documentRef.querySelectorAll<HTMLElement>(record.cssSelector);
+    if (matched.length === 1) return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
+  } catch {
+    // invalid selector
   }
   return { status: "unmatched" };
 }

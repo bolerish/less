@@ -54,6 +54,12 @@ function updateCssKeyCache(key: string, selectors: string[]): void {
 }
 
 export default defineBackground(() => {
+  browser.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === "install") {
+      void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") });
+    }
+  });
+
   browser.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     for (const [key, { newValue }] of Object.entries(changes)) {

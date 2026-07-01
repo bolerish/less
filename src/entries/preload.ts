@@ -1,4 +1,4 @@
-import { pageCSSCacheKey, siteCSSCacheKey } from "~features/record/css-cache";
+import { pageCSSCacheKey, SESSION_WARMED_KEY, siteCSSCacheKey } from "~features/record/css-cache";
 
 export default defineContentScript({
   matches: ["*://*/*"],
@@ -15,7 +15,12 @@ async function injectPreloadCSS(): Promise<void> {
 
   const pk = pageCSSCacheKey(origin, path, search);
   const sk = siteCSSCacheKey(origin);
-  const result = await browser.storage.local.get([pk, sk]);
+
+  const sessionResult = await browser.storage.session.get([SESSION_WARMED_KEY, pk, sk]);
+  const result = sessionResult[SESSION_WARMED_KEY]
+    ? sessionResult
+    : await browser.storage.local.get([pk, sk]);
+
   const selectors = [
     ...((result[pk] as string[] | undefined) ?? []),
     ...((result[sk] as string[] | undefined) ?? []),

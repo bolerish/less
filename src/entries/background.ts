@@ -10,6 +10,7 @@ import {
   rebuildSiteCSSCache,
   siteCSSCacheKey,
   updateRecordCSSSelector,
+  warmUpSessionCache,
 } from "~features/record";
 import type { HiddenElementRecord } from "~features/record/schema";
 
@@ -58,6 +59,11 @@ export default defineBackground(() => {
     if (reason === "install") {
       void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") });
     }
+    void warmUpSessionCache();
+  });
+
+  browser.runtime.onStartup.addListener(() => {
+    void warmUpSessionCache();
   });
 
   browser.storage.onChanged.addListener((changes, area) => {

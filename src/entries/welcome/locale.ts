@@ -25,9 +25,6 @@ export type Step = {
 export type Translations = {
   title: string;
   steps: Step[];
-  tryLabel: string;
-  trySearchPlaceholder: string;
-  tryGoLabel: string;
 };
 
 export const translations: Record<Locale, Translations> = {
@@ -54,9 +51,6 @@ export const translations: Record<Locale, Translations> = {
         kbdLabel: "Restore a hidden element",
       },
     ],
-    tryLabel: "Try it on any site",
-    trySearchPlaceholder: "Search or paste a URL...",
-    tryGoLabel: "Go",
   },
   ko: {
     title: "Veil로 불필요한 것을 숨기세요.",
@@ -80,9 +74,6 @@ export const translations: Record<Locale, Translations> = {
         kbdLabel: "숨긴 요소 되돌리기",
       },
     ],
-    tryLabel: "원하는 사이트에서 써보기",
-    trySearchPlaceholder: "검색어나 URL을 입력하세요...",
-    tryGoLabel: "이동",
   },
   ja: {
     title: "Veilで邪魔なものを非表示にしましょう。",
@@ -108,9 +99,6 @@ export const translations: Record<Locale, Translations> = {
         kbdLabel: "非表示にした要素を復元",
       },
     ],
-    tryLabel: "実際のサイトで試す",
-    trySearchPlaceholder: "検索またはURLを入力...",
-    tryGoLabel: "開く",
   },
   es: {
     title: "Oculta lo innecesario con Veil.",
@@ -136,9 +124,6 @@ export const translations: Record<Locale, Translations> = {
         kbdLabel: "Restaurar un elemento oculto",
       },
     ],
-    tryLabel: "Pruébalo en cualquier sitio",
-    trySearchPlaceholder: "Busca o pega una URL...",
-    tryGoLabel: "Ir",
   },
   zh_CN: {
     title: "用 Veil 隐藏不需要的内容。",
@@ -162,9 +147,6 @@ export const translations: Record<Locale, Translations> = {
         kbdLabel: "恢复已隐藏的元素",
       },
     ],
-    tryLabel: "在任意网站试用",
-    trySearchPlaceholder: "搜索或粘贴网址...",
-    tryGoLabel: "前往",
   },
 };
 

@@ -173,8 +173,12 @@ async function applyStoredHiding(): Promise<void> {
         toBackfill.push({ record, el });
       else toVerify.push({ record, el });
     });
-    if (toBackfill.length > 0) void backfillCSSSelector(toBackfill);
-    if (toVerify.length > 0) void verifyAndCleanCSSSelectors(toVerify);
+    if (toBackfill.length > 0 || toVerify.length > 0) {
+      void (async () => {
+        if (toBackfill.length > 0) await backfillCSSSelector(toBackfill);
+        if (toVerify.length > 0) await verifyAndCleanCSSSelectors(toVerify);
+      })();
+    }
   } catch {
     // Background may not be ready on very early page load
   }

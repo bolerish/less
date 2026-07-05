@@ -1,4 +1,5 @@
 import { readPreloadCSS } from "~features/record/css-cache";
+import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 
 export default defineContentScript({
   matches: ["*://*/*"],
@@ -10,7 +11,7 @@ export default defineContentScript({
 
 async function injectPreloadCSS(): Promise<void> {
   if (document.getElementById("__veil_preload__")) return;
-  const { origin, pathname: path, search } = location;
+  const { origin, path, search } = deriveCurrentPageContext(window);
   if (!origin.startsWith("http")) return;
 
   const css = await readPreloadCSS(origin, path, search);

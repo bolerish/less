@@ -7,17 +7,72 @@ import {
   restoreHiddenElement,
 } from "~features/element-hiding";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
-import { pageCSSCacheKey, siteCSSCacheKey } from "~features/record/css-cache";
+import {
+  CSS_ALL_KEY,
+  pageCSSCacheKey,
+  parseEntrySelector,
+  siteCSSCacheKey,
+} from "~features/record/css-cache";
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
 import { resolveCSSSelector } from "~features/record/derivation/record-match-signal-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 
-const HIGHLIGHT_ATTR = "data-bare-highlight";
-const STATUS_BAR_ATTR = "data-bare-ui";
-const SHIELD_ATTR = "data-bare-iframe-shield";
-const HIDING_KEY_PREFIX = "bare:hiding-enabled:";
+let _port: ReturnType<typeof browser.runtime.connect> | null = null;
+let _nextMsgId = 0;
+const _pending = new Map<number, { resolve: (r: unknown) => void; reject: (e: Error) => void }>();
+
+function getPort(): ReturnType<typeof browser.runtime.connect> {
+  if (!_port) {
+    _port = browser.runtime.connect({ name: "content" });
+    _port.onMessage.addListener((msg: { msgId?: number; [k: string]: unknown }) => {
+      if (msg.msgId !== undefined) {
+        const p = _pending.get(msg.msgId);
+        if (p) {
+          _pending.delete(msg.msgId);
+          p.resolve(msg);
+        }
+      }
+    });
+    _port.onDisconnect.addListener(() => {
+      void browser.runtime.lastError; // suppress bfcache disconnect warning
+      _port = null;
+      _pending.forEach((p) => p.reject(new Error("disconnected")));
+      _pending.clear();
+    });
+  }
+  return _port;
+}
+
+function portRequest<T>(data: object, timeoutMs = 3000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const msgId = _nextMsgId++;
+    const timer = setTimeout(() => {
+      if (_pending.delete(msgId)) reject(new Error("timeout"));
+    }, timeoutMs);
+    _pending.set(msgId, {
+      resolve: (r) => {
+        clearTimeout(timer);
+        resolve(r as T);
+      },
+      reject: (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    });
+    getPort().postMessage({ ...data, msgId });
+  });
+}
+
+function portPost(data: object): void {
+  getPort().postMessage(data);
+}
+
+const HIGHLIGHT_ATTR = "data-veil-highlight";
+const STATUS_BAR_ATTR = "data-veil-ui";
+const SHIELD_ATTR = "data-veil-iframe-shield";
+const HIDING_KEY_PREFIX = "veil:hiding-enabled:";
 
 let hidingEnabled = false;
 
@@ -33,10 +88,6 @@ async function bootstrap(): Promise<void> {
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
   hidingEnabled = await getSiteHidingEnabled(origin);
-  if (hidingEnabled) {
-    await applyStoredHiding();
-    watchAndReapplyHiding();
-  }
 
   setupNavigationListener();
   document.addEventListener("keydown", handleGlobalKeyDown, true);
@@ -64,7 +115,7 @@ async function bootstrap(): Promise<void> {
     if (message.type === "REFRESH_HIDING") {
       stopReapplyWatcher();
       invalidateRecordCache();
-      document.getElementById("__bare_preload__")?.remove();
+      document.getElementById("__veil_preload__")?.remove();
       restoreAllHiddenElements(document);
       void applyStoredHiding();
       watchAndReapplyHiding();
@@ -80,6 +131,20 @@ async function bootstrap(): Promise<void> {
       return true;
     }
   });
+
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
+    if (hidingEnabled) {
+      stopReapplyWatcher();
+      void applyStoredHiding();
+      watchAndReapplyHiding();
+    }
+  });
+
+  if (hidingEnabled) {
+    await applyStoredHiding();
+    watchAndReapplyHiding();
+  }
 }
 
 async function applyStoredHiding(): Promise<void> {
@@ -93,19 +158,23 @@ async function applyStoredHiding(): Promise<void> {
   }
 
   try {
-    const response = (await browser.runtime.sendMessage({
+    const response = await portRequest<{ records: HiddenElementRecord[] }>({
       type: "GET_RECORDS_FOR_PAGE",
       origin: ctx.origin,
       path: ctx.path,
       search: ctx.search,
-    })) as { records: HiddenElementRecord[] };
+    });
     recordCache.set(cacheKey, response.records);
 
     const toBackfill: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
+    const toVerify: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
     applyRecordsHiding(document, response.records, (record, el) => {
-      if (!record.cssSelector) toBackfill.push({ record, el });
+      if (!record.cssSelector || isLegacyCSSSelector(record.cssSelector))
+        toBackfill.push({ record, el });
+      else toVerify.push({ record, el });
     });
     if (toBackfill.length > 0) void backfillCSSSelector(toBackfill);
+    if (toVerify.length > 0) void verifyAndCleanCSSSelectors(toVerify);
   } catch {
     // Background may not be ready on very early page load
   }
@@ -125,6 +194,13 @@ const recordCache = new Map<string, HiddenElementRecord[]>();
 
 function invalidateRecordCache(): void {
   recordCache.clear();
+}
+
+// Old-style selectors used .className; new style uses [class*="token"].
+// Detects legacy selectors so they can be transparently re-derived on next match.
+function isLegacyCSSSelector(selector: string): boolean {
+  // Match a dot that starts a class selector (not inside an attribute value string)
+  return /(?:^|[\s>+~,(])\.[\w-]|(?<=[a-z0-9_-])\.[\w-]/.test(selector);
 }
 
 async function backfillCSSSelector(
@@ -150,16 +226,26 @@ async function backfillCSSSelector(
     }
   }
 
+  const currentAll =
+    ((await browser.storage.local.get(CSS_ALL_KEY))[CSS_ALL_KEY] as
+      | Record<string, string[]>
+      | undefined) ?? {};
+  let changed = false;
   for (const [key, newSelectors] of byKey) {
-    const stored = ((await browser.storage.local.get(key))[key] as string[] | undefined) ?? [];
-    const toAdd = newSelectors.filter((s) => !stored.includes(s));
+    const existing = currentAll[key] ?? [];
+    const existingSelectors = existing.map(parseEntrySelector);
+    const toAdd = newSelectors.filter((s) => !existingSelectors.includes(s));
     if (toAdd.length > 0) {
-      await browser.storage.local.set({ [key]: [...stored, ...toAdd] });
+      currentAll[key] = [...existing, ...toAdd.map((s) => `${s}@@@1`)];
+      changed = true;
     }
+  }
+  if (changed) {
+    await browser.storage.local.set({ [CSS_ALL_KEY]: currentAll });
   }
 
   for (const [id, cssSelector] of resolved) {
-    void browser.runtime.sendMessage({ type: "UPDATE_RECORD_CSS_SELECTOR", id, cssSelector });
+    portPost({ type: "UPDATE_RECORD_CSS_SELECTOR", id, cssSelector });
   }
 }
 
@@ -191,9 +277,15 @@ function stopReapplyWatcher(): void {
 }
 
 function setupNavigationListener(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const nav = (window as any).navigation as EventTarget | undefined;
+  if (nav) {
+    nav.addEventListener("navigate", onSpaNavigation);
+    return;
+  }
+
   const origPush = history.pushState.bind(history);
   const origReplace = history.replaceState.bind(history);
-
   history.pushState = function (...args: Parameters<typeof history.pushState>) {
     origPush(...args);
     onSpaNavigation();
@@ -202,7 +294,6 @@ function setupNavigationListener(): void {
     origReplace(...args);
     onSpaNavigation();
   };
-
   window.addEventListener("popstate", onSpaNavigation);
 }
 
@@ -312,7 +403,7 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   const record = deriveHiddenElementRecord(element, document);
   applyHiddenElement(element, true);
   try {
-    await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
+    await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
     invalidateRecordCache();
     sessionHiddenCount++;
     undoStack.push({ element, recordId: record.id });
@@ -338,7 +429,7 @@ async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
     const record = deriveHiddenElementRecord(current, document);
     applyHiddenElement(current, false);
     try {
-      await browser.runtime.sendMessage({ type: "ADD_RECORD", record });
+      await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
       invalidateRecordCache();
       sessionHiddenCount++;
       undoStack.push({ element: current, recordId: record.id });
@@ -373,7 +464,7 @@ async function restoreLastHidden(): Promise<void> {
   restoreHiddenElement(last.element);
   sessionHiddenCount = Math.max(0, sessionHiddenCount - 1);
   try {
-    await browser.runtime.sendMessage({ type: "DELETE_RECORD", id: last.recordId });
+    await portRequest<{ ok: boolean }>({ type: "DELETE_RECORD", id: last.recordId });
     invalidateRecordCache();
   } catch {
     console.warn("[bare] failed to delete record");
@@ -578,14 +669,15 @@ function updateStatusBarContent(): void {
   if (statusRestoreWrapperEl) {
     const hasUndo = undoStack.length > 0;
     statusRestoreWrapperEl.style.opacity = hasUndo ? "1" : "0";
-    statusRestoreWrapperEl.style.transform = hasUndo ? "scale(1) translateY(0)" : "scale(0.9) translateY(4px)";
+    statusRestoreWrapperEl.style.transform = hasUndo
+      ? "scale(1) translateY(0)"
+      : "scale(0.9) translateY(4px)";
     statusRestoreWrapperEl.style.pointerEvents = hasUndo ? "auto" : "none";
   }
 }
 
-
 function removePreloadCSSForElement(element: HTMLElement): void {
-  const style = document.getElementById("__bare_preload__") as HTMLStyleElement | null;
+  const style = document.getElementById("__veil_preload__") as HTMLStyleElement | null;
   if (!style?.sheet) return;
   for (let i = style.sheet.cssRules.length - 1; i >= 0; i--) {
     try {
@@ -595,6 +687,65 @@ function removePreloadCSSForElement(element: HTMLElement): void {
     } catch {
       // invalid selector
     }
+  }
+}
+
+function removePreloadCSSBySelector(selector: string): void {
+  const style = document.getElementById("__veil_preload__") as HTMLStyleElement | null;
+  if (!style?.sheet) return;
+  for (let i = style.sheet.cssRules.length - 1; i >= 0; i--) {
+    try {
+      if ((style.sheet.cssRules[i] as CSSStyleRule).selectorText === selector) {
+        style.sheet.deleteRule(i);
+      }
+    } catch {
+      // invalid selector
+    }
+  }
+}
+
+async function verifyAndCleanCSSSelectors(
+  items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
+): Promise<void> {
+  const staleByKey = new Map<string, Set<string>>();
+
+  for (const { record, el } of items) {
+    if (!record.cssSelector) continue;
+    let stale = false;
+    try {
+      const matched = document.querySelectorAll(record.cssSelector);
+      if (matched.length !== 1 || matched[0] !== el) stale = true;
+    } catch {
+      stale = true;
+    }
+    if (!stale) continue;
+
+    removePreloadCSSBySelector(record.cssSelector);
+
+    const { origin, path, search } = record.pageContext;
+    const key =
+      record.scope === "site-layout"
+        ? siteCSSCacheKey(origin)
+        : pageCSSCacheKey(origin, path, search);
+    if (!staleByKey.has(key)) staleByKey.set(key, new Set());
+    staleByKey.get(key)!.add(record.cssSelector);
+  }
+
+  if (staleByKey.size === 0) return;
+
+  const currentAll =
+    ((await browser.storage.local.get(CSS_ALL_KEY))[CSS_ALL_KEY] as
+      | Record<string, string[]>
+      | undefined) ?? {};
+  let changed = false;
+  for (const [key, stale] of staleByKey) {
+    if (!currentAll[key]) continue;
+    const before = currentAll[key].length;
+    currentAll[key] = currentAll[key].filter((e) => !stale.has(parseEntrySelector(e)));
+    if (currentAll[key].length !== before) changed = true;
+  }
+  if (changed) {
+    await browser.storage.local.set({ [CSS_ALL_KEY]: currentAll });
   }
 }
 

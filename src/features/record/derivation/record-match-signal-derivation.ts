@@ -1,4 +1,4 @@
-const INTERNAL_ATTRIBUTE_NAME_PREFIX = "data-bare-";
+const INTERNAL_ATTRIBUTE_NAME_PREFIX = "data-veil-";
 const UNIQUE_ATTRIBUTE_NAMES = [
   "id",
   "name",
@@ -226,9 +226,21 @@ function getUniqueAttributePriority(name: string): number {
   return UNIQUE_ATTRIBUTE_PRIORITY.fallback;
 }
 
+// Strips the content-hash suffix from a CSS Modules token.
+// e.g. "banner__ogMlr" → "banner", "Component_wrapper__a1b2c3" → "Component_wrapper"
+// Returns null if the token doesn't look like a CSS Modules token.
+function stripCSSModuleHash(token: string): string | null {
+  const match = token.match(/^(.{3,})__([A-Za-z0-9]{4,12})$/);
+  return match ? match[1] : null;
+}
+
+// Builds a [class*="token"] selector part. Using substring matching instead of
+// exact .token makes selectors survive BEM modifier additions and minor token changes.
+const classContains = (token: string): string => `[class*="${CSS.escape(token)}"]`;
+
 // Resolves the most stable CSS selector for an element, trying progressively
 // broader strategies: unique attribute → stable class combination → generated
-// class (CSS module hashes) → ancestor compound.
+// class (CSS module base) → ancestor compound → positional path.
 export function resolveCSSSelector(
   element: HTMLElement,
   documentRef: Document,
@@ -240,7 +252,8 @@ export function resolveCSSSelector(
   return (
     resolveClassBasedSelector(element, documentRef) ??
     resolveGeneratedClassBasedSelector(element, documentRef) ??
-    resolveAnchoredSelector(element, documentRef)
+    resolveAnchoredSelector(element, documentRef) ??
+    resolvePositionalFallbackSelector(element, documentRef)
   );
 }
 
@@ -252,12 +265,15 @@ function resolveClassBasedSelector(
   if (classes.length === 0) return undefined;
 
   const tag = element.tagName.toLowerCase();
-  const classParts = classes.map((c) => `.${CSS.escape(c)}`).join("");
+  // [class*="token"] is more resilient than .token: survives suffix additions
+  // (BEM modifiers, versioned class names) without false positives because
+  // uniqueness is always verified below.
+  const classParts = classes.map(classContains).join("");
 
   const candidates: string[] = [
     `${tag}${classParts}`,
     ...(classes.length >= 2 ? [classParts] : []),
-    ...(classes.length > 1 ? [`${tag}.${CSS.escape(classes[0])}`] : []),
+    ...(classes.length > 1 ? [`${tag}${classContains(classes[0])}`] : []),
   ];
 
   for (const candidate of candidates) {
@@ -266,10 +282,8 @@ function resolveClassBasedSelector(
   return undefined;
 }
 
-// CSS module hashes (e.g. `Component-module__name___XyZ0w`) are build-time
-// deterministic, so they're stable across page loads even though they look
-// like generated tokens. Try them as a fallback when stable classes don't
-// yield a unique selector.
+// For CSS module hashes, try the base name first (hash stripped) so the selector
+// survives build-time hash rotation. Fall back to the full token if needed.
 function resolveGeneratedClassBasedSelector(
   element: HTMLElement,
   documentRef: Document,
@@ -279,12 +293,24 @@ function resolveGeneratedClassBasedSelector(
 
   const tag = element.tagName.toLowerCase();
 
+  // Priority 1: base name without hash — most resilient across rebuilds
   for (const cls of classes) {
-    const withTag = `${tag}.${CSS.escape(cls)}`;
+    const base = stripCSSModuleHash(cls);
+    if (base) {
+      const withTag = `${tag}${classContains(base)}`;
+      if (isUniqueSelector(withTag, element, documentRef)) return withTag;
+      const withoutTag = classContains(base);
+      if (isUniqueSelector(withoutTag, element, documentRef)) return withoutTag;
+    }
+  }
+
+  // Priority 2: full token with [class*=]
+  for (const cls of classes) {
+    const withTag = `${tag}${classContains(cls)}`;
     if (isUniqueSelector(withTag, element, documentRef)) return withTag;
   }
   for (const cls of classes) {
-    const classOnly = `.${CSS.escape(cls)}`;
+    const classOnly = classContains(cls);
     if (isUniqueSelector(classOnly, element, documentRef)) return classOnly;
   }
   return undefined;
@@ -299,13 +325,13 @@ function resolveAnchoredSelector(
   const tag = element.tagName.toLowerCase();
   const elementPart =
     stableClasses.length > 0
-      ? `${tag}.${CSS.escape(stableClasses[0])}`
+      ? `${tag}${classContains(stableClasses[0])}`
       : generatedClasses.length > 0
-        ? `${tag}.${CSS.escape(generatedClasses[0])}`
+        ? `${tag}${classContains(stripCSSModuleHash(generatedClasses[0]) ?? generatedClasses[0])}`
         : tag;
 
   let ancestor = element.parentElement;
-  for (let depth = 0; depth < 4 && ancestor && ancestor !== documentRef.documentElement; depth++) {
+  for (let depth = 0; depth < 8 && ancestor && ancestor !== documentRef.documentElement; depth++) {
     const ancestorAttr = resolveUniqueAttributeInput(ancestor, documentRef);
     if (ancestorAttr) {
       const ancestorPart = `[${ancestorAttr.attributeName}="${CSS.escape(ancestorAttr.attributeValue)}"]`;
@@ -314,6 +340,41 @@ function resolveAnchoredSelector(
     }
     ancestor = ancestor.parentElement;
   }
+  return undefined;
+}
+
+// Last-resort: builds a positional path (nth-of-type) from the nearest
+// unique-attribute ancestor down to the element. Less stable than class/attribute
+// selectors but prevents layout shift; stale selectors are cleaned by
+// verifyAndCleanCSSSelectors in content.ts.
+function resolvePositionalFallbackSelector(
+  element: HTMLElement,
+  documentRef: Document,
+): string | undefined {
+  const stepsBottomUp: string[] = [];
+  let cursor: HTMLElement = element;
+
+  for (let depth = 0; depth < 8; depth++) {
+    const parent = cursor.parentElement;
+    if (!parent || cursor === documentRef.documentElement) break;
+
+    const sameTagSiblings = Array.from(parent.children).filter(
+      (c): c is HTMLElement => c.tagName === cursor.tagName,
+    );
+    const pos = sameTagSiblings.indexOf(cursor) + 1;
+    const tag = cursor.tagName.toLowerCase();
+    stepsBottomUp.push(sameTagSiblings.length > 1 ? `${tag}:nth-of-type(${pos})` : tag);
+
+    const parentAttr = resolveUniqueAttributeInput(parent, documentRef);
+    if (parentAttr) {
+      const anchor = `[${parentAttr.attributeName}="${CSS.escape(parentAttr.attributeValue)}"]`;
+      const selector = [anchor, ...stepsBottomUp.slice().reverse()].join(" > ");
+      if (isUniqueSelector(selector, element, documentRef)) return selector;
+    }
+
+    cursor = parent;
+  }
+
   return undefined;
 }
 

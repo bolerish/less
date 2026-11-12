@@ -57,7 +57,7 @@ try {
     locale: "en-US",
     timezoneId: "Asia/Seoul",
     colorScheme: "light",
-    viewport: { width: 760, height: 600 },
+    viewport: { width: 616, height: 660 },
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
   });
   // All demo content comes from a local file; .test is reserved and never contacted.
@@ -68,6 +68,12 @@ try {
   const extensionURL = `chrome-extension://${new URL(worker.url()).host}`;
   const site = await context.newPage();
   await site.goto("https://demo.veil.test/reading");
+  const beforeState = await site.evaluate(() => ({
+    viewport: [innerWidth, innerHeight],
+    scroll: [scrollX, scrollY],
+    header: document.querySelector("header").getBoundingClientRect().toJSON(),
+    content: document.querySelector("article").textContent,
+  }));
   await site.screenshot({ path: join(originals, "before.png") });
 
   const popup = await context.newPage();
@@ -80,7 +86,7 @@ try {
   await popup.locator("#root > div").screenshot({ path: join(originals, "popup.png") });
   await popup.close();
 
-  await site.setViewportSize({ width: 1000, height: 580 });
+  await site.setViewportSize({ width: 1248, height: 680 });
   await site.keyboard.press("Control+Shift+E");
   const newsletter = await site.locator("#newsletter").boundingBox();
   await site.mouse.move(newsletter.x + 12, newsletter.y + 12);
@@ -91,6 +97,10 @@ try {
   // The real toolbar has an entrance animation; wait for it to finish before capture.
   await site.waitForTimeout(350);
   await site.screenshot({ path: join(originals, "selection.png") });
+  await site.setViewportSize({ width: 1368, height: 472 });
+  await site.waitForTimeout(350);
+  await site.screenshot({ path: join(originals, "marquee.png") });
+  await site.setViewportSize({ width: 1248, height: 680 });
   await site.mouse.click(newsletter.x + 12, newsletter.y + 12);
   await waitHidden(site, "#newsletter");
   await site.keyboard.press("Escape");
@@ -100,17 +110,28 @@ try {
   await site.mouse.click(sponsor.x + 12, sponsor.y + 12);
   await waitHidden(site, "#sponsor");
   await site.keyboard.press("Escape");
-  await site.setViewportSize({ width: 760, height: 600 });
+  await site.setViewportSize({ width: 616, height: 660 });
   // Revisit to capture persisted hiding, rather than a transient selection state.
   await site.reload();
   await waitHidden(site, "#newsletter");
   await waitHidden(site, "#sponsor");
+  const afterState = await site.evaluate(() => ({
+    viewport: [innerWidth, innerHeight],
+    scroll: [scrollX, scrollY],
+    header: document.querySelector("header").getBoundingClientRect().toJSON(),
+    content: document.querySelector("article").textContent,
+  }));
+  assert.deepEqual(
+    afterState,
+    beforeState,
+    "Before/after must share viewport, scroll, header, and article content",
+  );
   await site.screenshot({ path: join(originals, "after.png") });
-  await site.setViewportSize({ width: 900, height: 450 });
+  await site.setViewportSize({ width: 880, height: 680 });
   await site.screenshot({ path: join(originals, "managed-page.png") });
 
   const panel = await context.newPage();
-  await panel.setViewportSize({ width: 360, height: 650 });
+  await panel.setViewportSize({ width: 360, height: 680 });
   await site.bringToFront();
   await panel.goto(`${extensionURL}/sidepanel.html`);
   await panel.getByRole("heading", { name: "demo.veil.test", exact: true }).waitFor();
@@ -130,6 +151,7 @@ try {
     POPUP: "popup.png",
     MANAGED_PAGE: "managed-page.png",
     PANEL: "panel.png",
+    MARQUEE: "marquee.png",
   };
   let layout = (await readFile(join(source, "layout.html"), "utf8")).replace("{{TOKENS}}", tokens);
   for (const [key, file] of Object.entries(files))
@@ -160,6 +182,34 @@ try {
       await Promise.all(Array.from(document.images, (image) => image.decode()));
     });
     assert.equal(await art.locator(".asset.active").count(), 1);
+    const layoutIssues = await art.locator(".asset.active").evaluate((asset) => {
+      const bounds = asset.getBoundingClientRect();
+      return Array.from(asset.querySelectorAll("img, p, figcaption, .brand")).flatMap((element) => {
+        const rect = element.getBoundingClientRect();
+        // Only the small tile deliberately crops the bottom of a real page capture.
+        if (element.closest(".promo-crop")) return [];
+        if (
+          rect.left < bounds.left ||
+          rect.top < bounds.top ||
+          rect.right > bounds.right ||
+          rect.bottom > bounds.bottom
+        )
+          return [`Outside canvas: ${element.tagName} ${element.className}`];
+        if (element.tagName === "IMG" && element.classList.contains("shot")) {
+          const scaleX = rect.width / element.naturalWidth;
+          const scaleY = rect.height / element.naturalHeight;
+          if (Math.abs(scaleX - scaleY) > 0.001) return ["Distorted capture"];
+          if (Math.abs(scaleX - 1) > 0.001) return ["Capture must remain at native size"];
+        }
+        if (
+          element.scrollWidth > element.clientWidth ||
+          element.scrollHeight > element.clientHeight
+        )
+          return [`Clipped text: ${element.tagName}`];
+        return [];
+      });
+    });
+    assert.deepEqual(layoutIssues, [], "Export must preserve capture proportions and visible text");
     const path = join(output, name);
     await art.screenshot({ path, omitBackground: false });
     const png = await readFile(path);

@@ -10,6 +10,7 @@ import {
 import {
   getUndoCount,
   restoreLastHidden,
+  reconcileUndoStack,
   selectionActive,
   startSelectionMode,
   stopSelectionMode,
@@ -43,6 +44,7 @@ async function bootstrap(): Promise<void> {
       watchAndReapplyHiding();
     } else {
       stopReapplyWatcher();
+      invalidateRecordCache();
       document.getElementById("__veil_preload__")?.remove();
       restoreAllHiddenElements(document);
     }
@@ -57,12 +59,15 @@ async function bootstrap(): Promise<void> {
     }
 
     if (message.type === "REFRESH_HIDING") {
-      stopReapplyWatcher();
-      invalidateRecordCache();
-      document.getElementById("__veil_preload__")?.remove();
-      restoreAllHiddenElements(document);
-      void applyStoredHiding();
-      watchAndReapplyHiding();
+      if (message.origin && message.origin !== window.location.origin) {
+        sendResponse({ ok: false });
+        return;
+      }
+      void refreshHiding(message.retainedIds).then(
+        () => sendResponse({ ok: true }),
+        () => sendResponse({ ok: false }),
+      );
+      return true;
     }
 
     if (message.type === "GET_UNDO_COUNT") {
@@ -115,9 +120,23 @@ function handleGlobalKeyDown(event: KeyboardEvent): void {
   }
 }
 
+async function refreshHiding(retainedIds?: string[]): Promise<void> {
+  stopReapplyWatcher();
+  invalidateRecordCache();
+  document.getElementById("__veil_preload__")?.remove();
+  restoreAllHiddenElements(document);
+  if (retainedIds) reconcileUndoStack(retainedIds);
+  if (hidingEnabled) {
+    await applyStoredHiding(true);
+    watchAndReapplyHiding();
+  }
+}
+
 interface Message {
   type: string;
   enabled?: boolean;
+  origin?: string;
+  retainedIds?: string[];
 }
 
 function isMessage(value: unknown): value is Message {

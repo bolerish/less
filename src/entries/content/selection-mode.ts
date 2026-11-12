@@ -7,7 +7,12 @@ import {
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 import { invalidateRecordCache } from "./hiding-watcher";
-import { shieldIframes, syncShieldPositions, unshieldAllIframes, SHIELD_ATTR } from "./iframe-shield";
+import {
+  shieldIframes,
+  syncShieldPositions,
+  unshieldAllIframes,
+  SHIELD_ATTR,
+} from "./iframe-shield";
 import { portRequest } from "./port";
 import { removePreloadCSSForElement } from "./preload-css-sync";
 import { CORNER_ATTR, flashViewportGlow } from "./selection-feedback";
@@ -18,6 +23,7 @@ import {
   unmountSelectionUI,
   updateHighlight,
   updateStatusBarContent,
+  updateStatusBarError,
 } from "./selection-toolbar";
 
 export let selectionActive = false;
@@ -63,6 +69,15 @@ export function stopSelectionMode(): void {
   unshieldAllIframes();
 }
 
+export function reconcileUndoStack(retainedIds: string[]): void {
+  const retained = new Set(retainedIds);
+  for (let i = undoStack.length - 1; i >= 0; i--) {
+    if (!retained.has(undoStack[i].recordId)) undoStack.splice(i, 1);
+  }
+  sessionHiddenCount = undoStack.length;
+  updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
+}
+
 export async function restoreLastHidden(): Promise<void> {
   const last = undoStack.pop();
   if (!last) return;
@@ -70,10 +85,18 @@ export async function restoreLastHidden(): Promise<void> {
   restoreHiddenElement(last.element);
   sessionHiddenCount = Math.max(0, sessionHiddenCount - 1);
   try {
-    await portRequest<{ ok: boolean }>({ type: "DELETE_RECORD", id: last.recordId });
+    const response = await portRequest<{ ok: boolean }>({
+      type: "DELETE_RECORD",
+      id: last.recordId,
+    });
+    if (!response.ok) throw new Error("Could not delete hidden item");
     invalidateRecordCache();
   } catch {
-    console.warn("[bare] failed to delete record");
+    undoStack.push(last);
+    sessionHiddenCount++;
+    applyHiddenElement(last.element);
+    updateStatusBarError("Could not restore this item. Try again.");
+    return;
   }
   updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
 }
@@ -114,13 +137,15 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   const record = deriveHiddenElementRecord(element, document);
   applyHiddenElement(element, true);
   try {
-    await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
+    const response = await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
+    if (!response.ok) throw new Error("Could not save hidden item");
     invalidateRecordCache();
     sessionHiddenCount++;
     undoStack.push({ element, recordId: record.id });
     updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
   } catch {
-    console.warn("[bare] failed to save record");
+    restoreHiddenElement(element);
+    updateStatusBarError("Could not save this item. Try again.");
     return;
   }
   await collapseEmptyAncestors(element);
@@ -140,13 +165,15 @@ async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
     const record = deriveHiddenElementRecord(current, document);
     applyHiddenElement(current, false);
     try {
-      await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
+      const response = await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
+      if (!response.ok) throw new Error("Could not save hidden item");
       invalidateRecordCache();
       sessionHiddenCount++;
       undoStack.push({ element: current, recordId: record.id });
       updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
     } catch {
-      console.warn("[bare] failed to save ancestor record");
+      restoreHiddenElement(current);
+      updateStatusBarError("Could not save an empty container. Try again.");
       break;
     }
 
@@ -174,8 +201,7 @@ function resolveTarget(x: number, y: number): HTMLElement | null {
 
 function isOverlayOrHidden(el: HTMLElement): boolean {
   return (
-    el.closest(
-      `[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}],[${CORNER_ATTR}]`,
-    ) !== null || el.getAttribute("data-bare-hidden") === "true"
+    el.closest(`[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}],[${CORNER_ATTR}]`) !==
+      null || el.getAttribute("data-bare-hidden") === "true"
   );
 }

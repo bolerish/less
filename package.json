@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@bolerish/tokens": "0.18.1",
+    "@bolerish/ui": "0.18.1",
     "@phosphor-icons/react": "^2.1.10",
     "@stylexjs/stylex": "0.19.0",
     "class-variance-authority": "^0.7.1",

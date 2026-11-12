@@ -50,6 +50,7 @@ export function updateHighlight(target: HTMLElement | null): void {
 
 export function updateStatusBarContent(count: number, hasUndo: boolean): void {
   if (_statusInfoEl) {
+    _statusInfoEl.removeAttribute("role");
     _statusInfoEl.textContent = count > 0 ? `${count} Hidden` : "Hide";
   }
   if (_statusRestoreEl) {
@@ -59,6 +60,12 @@ export function updateStatusBarContent(count: number, hasUndo: boolean): void {
       : "scale(0.9) translateY(4px)";
     _statusRestoreEl.style.pointerEvents = hasUndo ? "auto" : "none";
   }
+}
+
+export function updateStatusBarError(message: string): void {
+  if (!_statusInfoEl) return;
+  _statusInfoEl.setAttribute("role", "alert");
+  _statusInfoEl.textContent = message;
 }
 
 export function isPageDark(): boolean {

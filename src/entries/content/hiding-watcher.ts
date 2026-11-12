@@ -2,18 +2,27 @@ import { applyRecordsHiding } from "~features/element-hiding";
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
 import { portRequest } from "./port";
-import { backfillCSSSelector, isLegacyCSSSelector, verifyAndCleanCSSSelectors } from "./preload-css-sync";
+import {
+  backfillCSSSelector,
+  isLegacyCSSSelector,
+  verifyAndCleanCSSSelectors,
+} from "./preload-css-sync";
 
 const recordCache = new Map<string, HiddenElementRecord[]>();
+
+let recordGeneration = 0;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 let reapplyObserver: MutationObserver | null = null;
 let reapplyStopTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function invalidateRecordCache(): void {
+  recordGeneration++;
   recordCache.clear();
 }
 
-export async function applyStoredHiding(): Promise<void> {
+export async function applyStoredHiding(reportError = false): Promise<void> {
+  const generation = recordGeneration;
   const ctx = deriveCurrentPageContext(window);
   const cacheKey = `${ctx.path}\x00${ctx.search}`;
 
@@ -24,12 +33,19 @@ export async function applyStoredHiding(): Promise<void> {
   }
 
   try {
-    const response = await portRequest<{ records: HiddenElementRecord[] }>({
+    const response = await portRequest<{ records?: HiddenElementRecord[]; error?: string }>({
       type: "GET_RECORDS_FOR_PAGE",
       origin: ctx.origin,
       path: ctx.path,
       search: ctx.search,
     });
+    if (response.error || !response.records) throw new Error(response.error ?? "Missing records");
+    if (
+      generation !== recordGeneration ||
+      window.location.pathname !== ctx.path ||
+      window.location.search !== ctx.search
+    )
+      return;
     recordCache.set(cacheKey, response.records);
 
     const toBackfill: Array<{ record: HiddenElementRecord; el: HTMLElement }> = [];
@@ -45,15 +61,14 @@ export async function applyStoredHiding(): Promise<void> {
         if (toVerify.length > 0) await verifyAndCleanCSSSelectors(toVerify);
       })();
     }
-  } catch {
-    // Background may not be ready on very early page load
+  } catch (error) {
+    if (reportError) throw error;
+    console.warn("[Veil] could not apply saved hiding", error);
   }
 }
 
 export function watchAndReapplyHiding(): void {
   if (reapplyObserver) return;
-
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   reapplyObserver = new MutationObserver(() => {
     if (debounceTimer !== null) clearTimeout(debounceTimer);
@@ -65,6 +80,8 @@ export function watchAndReapplyHiding(): void {
 }
 
 export function stopReapplyWatcher(): void {
+  if (debounceTimer !== null) clearTimeout(debounceTimer);
+  debounceTimer = null;
   reapplyObserver?.disconnect();
   reapplyObserver = null;
   if (reapplyStopTimer !== null) {

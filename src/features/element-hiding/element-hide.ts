@@ -23,6 +23,7 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
     // reflow causes.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
+        if (!isHiddenElement(element)) return;
         element.style.setProperty(
           "transition",
           "opacity 0.28s cubic-bezier(0.4, 0, 1, 1)",

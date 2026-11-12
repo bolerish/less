@@ -21,7 +21,8 @@ export default defineConfig({
     "~features": "./src/features",
     "~shared": "./src/shared",
   },
-  manifest: {
+  manifest: ({ browser }) => ({
+    minimum_chrome_version: browser === "firefox" ? undefined : "116",
     name: "__MSG_ext_name__",
     short_name: "Veil",
     description: "__MSG_ext_description__",
@@ -38,7 +39,7 @@ export default defineConfig({
     },
 
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
-  },
+  }),
   vite: () => ({
     plugins: [bolerishTokens(), tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
   }),

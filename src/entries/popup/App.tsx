@@ -1,13 +1,12 @@
 import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import wxtLogo from "~assets/logo.svg";
-import { clearCSSCacheForOrigin, deleteRecordsByOrigin } from "~features/record";
+
 import { Button } from "~shared/components/ui/button";
 import { Kbd, KbdGroup } from "~shared/components/ui/kbd";
 import { Switch } from "~shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~shared/components/ui/tooltip";
 import { useCurrentTab } from "./hooks/useCurrentTab";
-import { useHiddenCount } from "./hooks/useHiddenCount";
 import { useSiteHidingPreference } from "./hooks/useSiteHidingPreference";
 import { useUndoCount } from "./hooks/useUndoCount";
 import {
@@ -24,9 +23,7 @@ function App() {
   const tabId = currentTab?.id;
 
   const { enabled, loaded, toggle } = useSiteHidingPreference(origin);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const hiddenCount = useHiddenCount(origin, refreshKey);
-  const [isResetting, setIsResetting] = useState(false);
+  const [panelError, setPanelError] = useState("");
   const { count: undoCount, restore } = useUndoCount(tabId);
 
   const handleSelectToHide = async (): Promise<void> => {
@@ -39,21 +36,28 @@ function App() {
     window.close();
   };
 
-  const handleReset = async (): Promise<void> => {
-    if (!origin) return;
-    setIsResetting(true);
-    try {
-      await deleteRecordsByOrigin(origin);
-      await clearCSSCacheForOrigin(origin);
-      setRefreshKey((k) => k + 1);
-      if (tabId !== undefined) {
-        await browser.tabs.sendMessage(tabId, { type: "REFRESH_HIDING" }).catch(() => {});
+  const handleOpenPanel = (): void => {
+    setPanelError("");
+    // Call directly in the click handler: awaiting a query first loses the user gesture.
+    let opening: Promise<void>;
+    if (import.meta.env.FIREFOX) {
+      const firefox = browser as typeof browser & { sidebarAction: { open(): Promise<void> } };
+      opening = firefox.sidebarAction.open();
+    } else {
+      if (!currentTab) {
+        setPanelError("Open a website before opening the panel.");
+        return;
       }
-    } catch (error) {
-      console.warn("[Veil] reset failed", error);
-    } finally {
-      setIsResetting(false);
+      opening = browser.sidePanel.open({ windowId: currentTab.windowId });
     }
+    void opening
+      .then(() => window.close())
+      .catch((error) => {
+        console.warn("[Veil] could not open the side panel", error);
+        setPanelError(
+          "Could not open the panel. Try again, or open Veil from your browser’s sidebar menu.",
+        );
+      });
   };
 
   return (
@@ -63,7 +67,13 @@ function App() {
           <img src={wxtLogo} alt="Veil logo" width={22} />
           <span className="text-sm font-semibold tracking-tight">Veil</span>
         </div>
-        <Switch id="site-hiding" checked={enabled} disabled={!loaded} onCheckedChange={toggle} />
+        <Switch
+          aria-label="Hide saved items on this site"
+          id="site-hiding"
+          checked={enabled}
+          disabled={!loaded}
+          onCheckedChange={toggle}
+        />
       </div>
 
       <div className="flex items-center justify-between px-4 pb-2">
@@ -75,7 +85,8 @@ function App() {
             <TooltipTrigger asChild>
               <Button
                 size="icon-sm"
-                disabled={!enabled || !loaded || !currentTab}
+                disabled={!enabled || !loaded || !origin}
+                aria-label="Select items to hide"
                 onClick={handleSelectToHide}
                 variant="outline"
               >
@@ -101,16 +112,21 @@ function App() {
         </ButtonGroup>
       </div>
 
-      {!(isResetting || hiddenCount === 0) && (
-        <div className="mx-3 mb-3 rounded-lg border  overflow-hidden">
-          <Button
-            className="w-full rounded-none border-0 justify-center h-8 px-3 font-normal"
-            onClick={handleReset}
-          >
-            <span>Reset</span>
-          </Button>
-        </div>
-      )}
+      <div className="px-4 pb-3">
+        <Button
+          className="w-full"
+          variant="outline"
+          disabled={!currentTab}
+          onClick={handleOpenPanel}
+        >
+          Manage hidden items
+        </Button>
+        {panelError ? (
+          <p role="alert" className="text-xs mt-2">
+            {panelError}
+          </p>
+        ) : null}
+      </div>
 
       <Accordion type="single" collapsible defaultValue="shortcuts">
         <AccordionItem value="shortcuts">

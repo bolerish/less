@@ -1,4 +1,10 @@
 import {
+  handleManagement,
+  isManagementRequest,
+  removeManagedRecords,
+  withRecordMutation,
+} from "~features/record/management-service";
+import {
   addRecord,
   buildCSSFromEntries,
   buildRecordEntry,
@@ -29,9 +35,7 @@ function isContentPortMessage(v: unknown): v is ContentPortMessage {
 let allCSSCache: Record<string, string[]> | null = null;
 
 async function getCache(): Promise<Record<string, string[]>> {
-  if (allCSSCache === null) {
-    allCSSCache = await loadAllCSSCache();
-  }
+  allCSSCache = await loadAllCSSCache();
   return allCSSCache;
 }
 
@@ -41,7 +45,12 @@ async function persistCache(): Promise<void> {
   }
 }
 
-function extractCSSForURL(cache: Record<string, string[]>, origin: string, path: string, search: string): string | null {
+function extractCSSForURL(
+  cache: Record<string, string[]>,
+  origin: string,
+  path: string,
+  search: string,
+): string | null {
   const pk = pageCSSCacheKey(origin, path, search);
   const sk = siteCSSCacheKey(origin);
   const entries = [...(cache[pk] ?? []), ...(cache[sk] ?? [])];
@@ -49,6 +58,16 @@ function extractCSSForURL(cache: Record<string, string[]>, origin: string, path:
 }
 
 export default defineBackground(() => {
+  browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+    if (
+      sender.id !== browser.runtime.id ||
+      !sender.url?.startsWith(browser.runtime.getURL("/")) ||
+      !isManagementRequest(message)
+    )
+      return;
+    void handleManagement(message).then(sendResponse);
+    return true;
+  });
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === "install") {
       void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") });
@@ -108,9 +127,11 @@ export default defineBackground(() => {
 
       if (msg.type === "ADD_RECORD") {
         const { msgId, record } = msg;
-        void (async () => {
+        void withRecordMutation(async () => {
+          let added = false;
           try {
             await addRecord(record);
+            added = true;
             const entry = buildRecordEntry(record);
             if (entry) {
               const cache = await getCache();
@@ -126,43 +147,28 @@ export default defineBackground(() => {
               }
             }
             port.postMessage({ msgId, ok: true });
+            void browser.runtime.sendMessage({ type: "HIDDEN_ITEMS_CHANGED" }).catch(() => {});
           } catch {
+            allCSSCache = null;
+            if (added) await deleteRecord(record.id);
             port.postMessage({ msgId, ok: false });
           }
-        })();
+        });
       }
 
       if (msg.type === "DELETE_RECORD") {
         const { msgId, id } = msg;
-        void (async () => {
+        void withRecordMutation(async () => {
           try {
             const record = await getRecord(id);
-            await deleteRecord(id);
-            if (record) {
-              const cache = await getCache();
-              const { origin, path, search } = record.pageContext;
-              if (record.scope === "site-layout") {
-                const remaining = await getRecordsBySiteLayout(origin);
-                const key = siteCSSCacheKey(origin);
-                const entries = remaining.flatMap((r) =>
-                  r.cssSelector ? [`${r.cssSelector}@@@1`] : [],
-                );
-                allCSSCache = { ...cache, [key]: entries };
-              } else {
-                const remaining = await getRecordsByPage(origin, path, search);
-                const key = pageCSSCacheKey(origin, path, search);
-                const entries = remaining.flatMap((r) =>
-                  r.cssSelector ? [`${r.cssSelector}@@@1`] : [],
-                );
-                allCSSCache = { ...cache, [key]: entries };
-              }
-              await persistCache();
-            }
+            if (record) await removeManagedRecords(record.pageContext.origin, [id]);
+            allCSSCache = null;
             port.postMessage({ msgId, ok: true });
+            void browser.runtime.sendMessage({ type: "HIDDEN_ITEMS_CHANGED" }).catch(() => {});
           } catch {
             port.postMessage({ msgId, ok: false });
           }
-        })();
+        });
       }
 
       if (msg.type === "GET_RECORDS_FOR_PAGE") {
@@ -171,11 +177,13 @@ export default defineBackground(() => {
           .then(([pageRecords, siteRecords]) =>
             port.postMessage({ msgId, records: [...pageRecords, ...siteRecords] }),
           )
-          .catch(() => port.postMessage({ msgId, records: [] }));
+          .catch(() => port.postMessage({ msgId, error: "Could not load hidden items" }));
       }
 
       if (msg.type === "UPDATE_RECORD_CSS_SELECTOR") {
-        void updateRecordCSSSelector(msg.id, msg.cssSelector);
+        void withRecordMutation(() => updateRecordCSSSelector(msg.id, msg.cssSelector)).catch(
+          console.error,
+        );
       }
     });
   });

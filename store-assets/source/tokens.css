@@ -1,0 +1,64 @@
+:root,
+.veil-theme {
+  --veil-color-bg-canvas: #eee;
+  --veil-color-bg-surface: #fff;
+  --veil-color-bg-raised: #fff;
+  --veil-color-bg-inverse: #08090a;
+  --veil-color-bg-subtle: #f5f5f5;
+  --veil-color-bg-action-primary: #18181b;
+  --veil-color-fg-primary: #08090a;
+  --veil-color-fg-secondary: #383b3f;
+  --veil-color-fg-inverse: #f5f6f8;
+  --veil-color-fg-on-action-primary: #fff;
+  --veil-color-fg-feedback-error: #a50c25;
+  --veil-color-fg-feedback-info: #00458c;
+  --veil-color-stroke-default: #0000001a;
+  --veil-color-stroke-control: #81868f;
+  --veil-color-stroke-focus: #383b3f;
+  --veil-spacing-space-0-5: calc(0.125 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-1: calc(0.25 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-2: calc(0.5 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-3: calc(0.75 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-4: calc(1 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-5: calc(1.25 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-6: calc(1.5 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-spacing-space-8: calc(2 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-radius-sm: calc(0.25 * var(--bolerish-unit, 1rem));
+  --veil-radius-md: calc(0.5 * var(--bolerish-unit, 1rem));
+  --veil-radius-lg: calc(0.75 * var(--bolerish-unit, 1rem));
+  --veil-radius-xl: calc(1 * var(--bolerish-unit, 1rem));
+  --veil-radius-full: 9999px;
+  --veil-shadow-subtle: 0 1px 4px oklch(0% 0 0/0.08);
+  --veil-shadow-floating: 0 2px 10px oklch(0% 0 0/0.1);
+  --veil-shadow-overlay: 0 4px 16px oklch(0% 0 0/0.12);
+  --veil-font-family-body: var(
+    --bolerish-font-body,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  );
+  --veil-font-family-heading: var(
+    --bolerish-font-heading,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif
+  );
+  --veil-font-size-xs: calc(0.75 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-font-size-sm: calc(0.875 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-font-size-md: calc(1 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-font-size-lg: calc(1.125 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-font-size-xl: calc(1.5 * var(--bolerish-unit, 1rem) * var(--bolerish-density, 1));
+  --veil-line-height-tight: 1.25;
+  --veil-line-height-normal: 1.5;
+  --veil-font-weight-regular: 400;
+  --veil-font-weight-medium: 500;
+  --veil-font-weight-semibold: 600;
+}

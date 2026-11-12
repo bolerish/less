@@ -1,3 +1,5 @@
+import { createSelectionSurface, setSelectionHostStyles } from "./selection-surface";
+
 export const HIGHLIGHT_ATTR = "data-veil-highlight";
 export const STATUS_BAR_ATTR = "data-veil-ui";
 
@@ -29,15 +31,15 @@ export function unmountSelectionUI(): void {
 export function updateHighlight(target: HTMLElement | null): void {
   if (!_highlightEl) return;
   if (target === null) {
-    _highlightEl.style.display = "none";
+    setSelectionHostStyles(_highlightEl, { display: "none" });
     return;
   }
   const rect = target.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) {
-    _highlightEl.style.display = "none";
+    setSelectionHostStyles(_highlightEl, { display: "none" });
     return;
   }
-  Object.assign(_highlightEl.style, {
+  setSelectionHostStyles(_highlightEl, {
     display: "block",
     top: `${rect.top}px`,
     left: `${rect.left}px`,
@@ -102,20 +104,13 @@ export function isPageDark(): boolean {
 }
 
 function buildHighlightOverlay(): HTMLDivElement {
-  const el = document.createElement("div");
-  el.setAttribute(HIGHLIGHT_ATTR, "true");
+  const { host: el, surface } = createSelectionSurface(HIGHLIGHT_ATTR, isPageDark());
   el.setAttribute("aria-hidden", "true");
-  Object.assign(el.style, {
-    position: "fixed",
-    top: "0",
-    left: "0",
-    pointerEvents: "none",
-    zIndex: "2147483647",
-    background: "rgba(59,130,246,0.15)",
-    border: "2px solid rgba(59,130,246,0.7)",
-    borderRadius: "3px",
-    boxSizing: "border-box",
-    display: "none",
+  setSelectionHostStyles(el, { top: "0", left: "0", display: "none" });
+  Object.assign(surface.style, {
+    background: "var(--veil-selection-fill)",
+    border: "2px solid var(--veil-selection-stroke)",
+    borderRadius: "var(--veil-radius-sm)",
   });
   return el;
 }
@@ -124,35 +119,27 @@ function buildStatusBar(
   onClose: () => void,
   onUndo: () => void,
 ): { wrapper: HTMLDivElement; infoEl: HTMLSpanElement; restoreEl: HTMLDivElement } {
-  const isDark = isPageDark();
-
   const applyPillStyle = (el: HTMLDivElement): void => {
     Object.assign(el.style, {
-      background: isDark ? "rgba(20,20,22,0.78)" : "rgba(255,255,255,0.72)",
-      color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.85)",
-      borderRadius: "9999px",
-      padding: "8px 20px",
-      fontSize: "13px",
-      fontFamily: "system-ui,-apple-system,sans-serif",
-      fontWeight: "450",
-      lineHeight: "1.5",
+      background: "var(--veil-color-bg-raised)",
+      color: "var(--veil-color-fg-primary)",
+      borderRadius: "var(--veil-radius-full)",
+      padding: "var(--veil-spacing-space-2) var(--veil-spacing-space-5)",
+      fontSize: "var(--veil-font-size-xs)",
+      fontFamily: "var(--veil-font-family-body)",
+      fontWeight: "var(--veil-font-weight-regular)",
+      lineHeight: "var(--veil-line-height-normal)",
       whiteSpace: "nowrap",
-      boxShadow: isDark
-        ? "0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)"
-        : "0 4px 20px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
-      border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.07)",
+      boxShadow: "var(--veil-shadow-overlay)",
+      border: "1px solid var(--veil-color-stroke-control)",
       display: "inline-flex",
       alignItems: "center",
-      gap: "8px",
+      gap: "var(--veil-spacing-space-2)",
     });
-    el.style.setProperty("-webkit-backdrop-filter", "blur(20px) saturate(160%)");
-    el.style.backdropFilter = "blur(20px) saturate(160%)";
   };
 
-  const wrapper = document.createElement("div");
-  wrapper.setAttribute(STATUS_BAR_ATTR, "true");
-  Object.assign(wrapper.style, {
-    position: "fixed",
+  const { host: wrapper, surface } = createSelectionSurface(STATUS_BAR_ATTR, isPageDark());
+  setSelectionHostStyles(wrapper, {
     bottom: "24px",
     left: "50%",
     transform: "translateX(-50%) translateY(12px)",
@@ -160,15 +147,21 @@ function buildStatusBar(
     zIndex: "2147483647",
     display: "inline-flex",
     alignItems: "center",
-    gap: "8px",
     pointerEvents: "none",
     whiteSpace: "nowrap",
     userSelect: "none",
     transition: "opacity 0.2s ease, transform 0.2s ease",
   });
   requestAnimationFrame(() => {
-    wrapper.style.opacity = "1";
-    wrapper.style.transform = "translateX(-50%) translateY(0)";
+    setSelectionHostStyles(wrapper, { opacity: "1", transform: "translateX(-50%) translateY(0)" });
+  });
+
+  Object.assign(surface.style, {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "var(--veil-spacing-space-2)",
+    width: "auto",
+    height: "auto",
   });
 
   const mainPill = document.createElement("div");
@@ -179,14 +172,14 @@ function buildStatusBar(
   infoEl.textContent = "Hide";
   mainPill.appendChild(infoEl);
 
-  mainPill.appendChild(makeSeparator(isDark));
+  mainPill.appendChild(makeSeparator());
 
   const closeBtn = document.createElement("span");
   closeBtn.textContent = "✕";
   Object.assign(closeBtn.style, {
-    fontSize: "13px",
+    fontSize: "var(--veil-font-size-xs)",
     lineHeight: "1",
-    opacity: "0.5",
+    color: "var(--veil-color-fg-secondary)",
     cursor: "pointer",
     pointerEvents: "auto",
   });
@@ -196,12 +189,12 @@ function buildStatusBar(
     onClose();
   });
   mainPill.appendChild(closeBtn);
-  wrapper.appendChild(mainPill);
+  surface.appendChild(mainPill);
 
   const restoreEl = document.createElement("div");
   applyPillStyle(restoreEl);
   Object.assign(restoreEl.style, {
-    padding: "8px 14px",
+    padding: "var(--veil-spacing-space-2) var(--veil-spacing-space-3)",
     opacity: "0",
     transform: "scale(0.9) translateY(4px)",
     transition: "opacity 0.2s ease, transform 0.2s ease",
@@ -210,25 +203,29 @@ function buildStatusBar(
   });
   const undoIcon = document.createElement("span");
   undoIcon.textContent = "↺";
-  Object.assign(undoIcon.style, { fontSize: "16px", lineHeight: "1", pointerEvents: "none" });
+  Object.assign(undoIcon.style, {
+    fontSize: "var(--veil-font-size-md)",
+    lineHeight: "1",
+    pointerEvents: "none",
+  });
   restoreEl.appendChild(undoIcon);
   restoreEl.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     onUndo();
   });
-  wrapper.appendChild(restoreEl);
+  surface.appendChild(restoreEl);
 
   return { wrapper, infoEl, restoreEl };
 }
 
-function makeSeparator(isDark: boolean): HTMLSpanElement {
+function makeSeparator(): HTMLSpanElement {
   const sep = document.createElement("span");
   Object.assign(sep.style, {
     display: "inline-block",
     width: "1px",
     height: "12px",
-    background: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)",
+    background: "var(--veil-color-stroke-control)",
     flexShrink: "0",
   });
   return sep;

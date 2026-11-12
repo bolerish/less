@@ -2,6 +2,7 @@ import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "wxt";
+import { bolerishTokens } from "./build/bolerish-tokens";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -39,6 +40,6 @@ export default defineConfig({
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   },
   vite: () => ({
-    plugins: [tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
+    plugins: [bolerishTokens(), tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
   }),
 });

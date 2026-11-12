@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/nunito-sans";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -25,97 +24,63 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --font-heading: var(--font-sans);
-  --font-sans: "Nunito Sans Variable", sans-serif;
+  --radius-xs: var(--veil-radius-sm);
+  --radius-sm: var(--veil-radius-sm);
+  --radius-md: var(--veil-radius-md);
+  --radius-lg: var(--veil-radius-lg);
+  --radius-xl: var(--veil-radius-xl);
+  --radius-full: var(--veil-radius-full);
+  --font-heading: var(--veil-font-family-heading);
+  --font-sans: var(--veil-font-family-body);
+  --text-xs: var(--veil-font-size-xs);
+  --text-sm: var(--veil-font-size-sm);
+  --text-base: var(--veil-font-size-md);
+  --text-lg: var(--veil-font-size-lg);
+  --text-xl: var(--veil-font-size-xl);
+  --font-weight-normal: var(--veil-font-weight-regular);
+  --font-weight-medium: var(--veil-font-weight-medium);
+  --font-weight-semibold: var(--veil-font-weight-semibold);
+  --leading-tight: var(--veil-line-height-tight);
+  --leading-normal: var(--veil-line-height-normal);
+  --leading-relaxed: var(--veil-line-height-normal);
+  --shadow-xs: var(--veil-shadow-subtle);
+  --shadow-sm: var(--veil-shadow-subtle);
+  --shadow-md: var(--veil-shadow-floating);
+  --shadow-lg: var(--veil-shadow-overlay);
+  --spacing: var(--veil-spacing-space-1);
 }
 
 :root {
-  --radius: 0.45rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.148 0.004 228.8);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.148 0.004 228.8);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.148 0.004 228.8);
-  --primary: oklch(0.218 0.008 223.9);
-  --primary-foreground: oklch(0.987 0.002 197.1);
-  --secondary: oklch(0.963 0.002 197.1);
-  --secondary-foreground: oklch(0.218 0.008 223.9);
-  --muted: oklch(0.963 0.002 197.1);
-  --muted-foreground: oklch(0.56 0.021 213.5);
-  --accent: oklch(0.963 0.002 197.1);
-  --accent-foreground: oklch(0.218 0.008 223.9);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.925 0.005 214.3);
-  --input: oklch(0.925 0.005 214.3);
-  --ring: oklch(0.723 0.014 214.4);
-  --chart-1: oklch(0.872 0.007 219.6);
-  --chart-2: oklch(0.56 0.021 213.5);
-  --chart-3: oklch(0.45 0.017 213.2);
-  --chart-4: oklch(0.378 0.015 216);
-  --chart-5: oklch(0.275 0.011 216.9);
-  --sidebar: oklch(0.987 0.002 197.1);
-  --sidebar-foreground: oklch(0.148 0.004 228.8);
-  --sidebar-primary: oklch(0.218 0.008 223.9);
-  --sidebar-primary-foreground: oklch(0.987 0.002 197.1);
-  --sidebar-accent: oklch(0.963 0.002 197.1);
-  --sidebar-accent-foreground: oklch(0.218 0.008 223.9);
-  --sidebar-border: oklch(0.925 0.005 214.3);
-  --sidebar-ring: oklch(0.723 0.014 214.4);
+  color-scheme: light;
+  --background: var(--veil-color-bg-canvas);
+  --foreground: var(--veil-color-fg-primary);
+  --card: var(--veil-color-bg-surface);
+  --card-foreground: var(--veil-color-fg-primary);
+  --popover: var(--veil-color-bg-raised);
+  --popover-foreground: var(--veil-color-fg-primary);
+  --primary: var(--veil-color-bg-action-primary);
+  --primary-foreground: var(--veil-color-fg-on-action-primary);
+  --secondary: var(--veil-color-bg-subtle);
+  --secondary-foreground: var(--veil-color-fg-primary);
+  --muted: var(--veil-color-bg-subtle);
+  --muted-foreground: var(--veil-color-fg-secondary);
+  --accent: var(--veil-color-bg-subtle);
+  --accent-foreground: var(--veil-color-fg-primary);
+  --destructive: var(--veil-color-fg-feedback-error);
+  --destructive-foreground: var(--veil-color-fg-inverse);
+  --border: var(--veil-color-stroke-default);
+  --input: var(--veil-color-stroke-control);
+  --ring: var(--veil-color-stroke-focus);
 }
 
-.dark {
-  --background: oklch(0.148 0.004 228.8);
-  --foreground: oklch(0.987 0.002 197.1);
-  --card: oklch(0.218 0.008 223.9);
-  --card-foreground: oklch(0.987 0.002 197.1);
-  --popover: oklch(0.218 0.008 223.9);
-  --popover-foreground: oklch(0.987 0.002 197.1);
-  --primary: oklch(0.925 0.005 214.3);
-  --primary-foreground: oklch(0.218 0.008 223.9);
-  --secondary: oklch(0.275 0.011 216.9);
-  --secondary-foreground: oklch(0.987 0.002 197.1);
-  --muted: oklch(0.275 0.011 216.9);
-  --muted-foreground: oklch(0.723 0.014 214.4);
-  --accent: oklch(0.275 0.011 216.9);
-  --accent-foreground: oklch(0.987 0.002 197.1);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.56 0.021 213.5);
-  --chart-1: oklch(0.872 0.007 219.6);
-  --chart-2: oklch(0.56 0.021 213.5);
-  --chart-3: oklch(0.45 0.017 213.2);
-  --chart-4: oklch(0.378 0.015 216);
-  --chart-5: oklch(0.275 0.011 216.9);
-  --sidebar: oklch(0.218 0.008 223.9);
-  --sidebar-foreground: oklch(0.987 0.002 197.1);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.987 0.002 197.1);
-  --sidebar-accent: oklch(0.275 0.011 216.9);
-  --sidebar-accent-foreground: oklch(0.987 0.002 197.1);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.56 0.021 213.5);
+:root.dark {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    color-scheme: dark;
+  }
 }
 
 @layer base {

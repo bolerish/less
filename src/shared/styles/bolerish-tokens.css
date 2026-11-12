@@ -1,0 +1,2 @@
+/* Import from JS: Tailwind's CSS @import bypasses the Vite loader.
+   build/bolerish-tokens.ts replaces this with the installed package's compiled tokens. */

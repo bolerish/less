@@ -57,7 +57,7 @@ function App() {
   };
 
   return (
-    <div className="w-72 flex flex-col bg-zinc-50 text-zinc-900">
+    <div className="w-72 flex flex-col bg-background text-foreground">
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex gap-1.5 items-center">
           <img src={wxtLogo} alt="Veil logo" width={22} />
@@ -67,7 +67,7 @@ function App() {
       </div>
 
       <div className="flex items-center justify-between px-4 pb-2">
-        <span className="flex items-center gap-1.5  font-medium  cursor-pointer select-none list-none  text-zinc-800">
+        <span className="flex items-center gap-1.5  font-medium  cursor-pointer select-none list-none  text-foreground">
           Hidden
         </span>
         <ButtonGroup>
@@ -114,11 +114,11 @@ function App() {
 
       <Accordion type="single" collapsible defaultValue="shortcuts">
         <AccordionItem value="shortcuts">
-          <AccordionTrigger className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-medium  cursor-pointer select-none list-none text-zinc-400">
+          <AccordionTrigger className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-medium  cursor-pointer select-none list-none text-muted-foreground">
             Shortcuts
           </AccordionTrigger>
           <AccordionContent className="flex flex-col gap-1.5 px-1  h-fit">
-            <div className="flex items-center gap-2 text-zinc-400">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <KbdGroup>
                 <Kbd>⇧</Kbd>
                 <Kbd>Ctrl</Kbd>
@@ -126,7 +126,7 @@ function App() {
               </KbdGroup>
               <span className="text-xs">Select</span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-400">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <KbdGroup>
                 <Kbd>⇧</Kbd>
                 <Kbd>Ctrl</Kbd>
@@ -134,7 +134,7 @@ function App() {
               </KbdGroup>
               <span className="text-xs">Restore</span>
             </div>
-            <div className="flex items-center gap-2 text-zinc-400">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Kbd>Esc</Kbd>
               <span className="text-xs">Exit</span>
             </div>

@@ -30,6 +30,7 @@ async function bootstrap(): Promise<void> {
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
   hidingEnabled = await getSiteHidingEnabled(origin);
+  if (!hidingEnabled) document.getElementById("__veil_preload__")?.remove();
 
   setupNavigationListener(onSpaNavigation);
   document.addEventListener("keydown", handleGlobalKeyDown, true);
@@ -42,6 +43,7 @@ async function bootstrap(): Promise<void> {
       watchAndReapplyHiding();
     } else {
       stopReapplyWatcher();
+      document.getElementById("__veil_preload__")?.remove();
       restoreAllHiddenElements(document);
     }
   });

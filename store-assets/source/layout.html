@@ -11,7 +11,7 @@
       .comparison{position:absolute;left:16px;top:64px;display:flex;gap:16px}.comparison figure{margin:0}.comparison figcaption{height:24px;font-size:14px;font-weight:500}.comparison img{width:616px;height:660px}
       .selection-shot{position:absolute;left:16px;top:72px;width:1248px;height:680px}
       .management-captures{position:absolute;left:16px;top:72px;display:flex;gap:8px}.managed-page{width:880px;height:680px}.managed-panel{width:360px;height:680px}
-      #promo{width:440px;height:280px}#promo .heading{height:56px;padding:10px 16px;gap:18px}#promo .brand{font-size:22px}#promo .heading p{font-size:16px}.promo-crop{position:absolute;left:16px;top:56px;width:408px;height:212px;overflow:hidden}.promo-crop img{width:408px}
+      #promo{width:440px;height:280px}#promo .heading{height:56px;padding:10px 16px;gap:18px}#promo .brand{font-size:22px}#promo .heading p{font-size:16px}.promo-crop{position:absolute;left:16px;top:56px;width:408px;height:212px;overflow:hidden}.promo-crop img{width:408px;transform:translateY(-56px)}
       #marquee{width:1400px;height:560px}#marquee .heading{height:64px}.marquee-shot{position:absolute;left:16px;top:64px;width:1368px;height:472px}#marquee .caption{bottom:2px;font-size:12px}
     </style>
   </head>
@@ -19,23 +19,23 @@
     <section class="asset" id="before-after">
       <header class="heading">
         <div class="brand"><img src="{{LOGO}}" alt="" />Veil</div>
-        <p>Hide a newsletter and a sponsored card.</p>
+        <p>Hide a related-reading sidebar on Wikipedia.</p>
       </header>
       <div class="comparison">
         <figure>
           <figcaption>Before</figcaption>
-          <img class="shot" src="{{BEFORE}}" alt="Local demo page before hiding" />
+          <img class="shot" src="{{BEFORE}}" alt="Wikipedia Reading article before hiding" />
         </figure>
         <figure>
           <figcaption>After</figcaption>
           <img
             class="shot"
             src="{{AFTER}}"
-            alt="The same page with its newsletter and sponsored card hidden"
+            alt="The same Wikipedia article with the related-reading sidebar hidden"
           />
         </figure>
       </div>
-      <p class="caption">Local demo · Same page and viewport · Actual Veil captures</p>
+      <p class="caption">en.wikipedia.org/wiki/Reading · Same page, viewport and scroll position</p>
     </section>
     <section class="asset" id="selection">
       <header class="heading">
@@ -45,9 +45,9 @@
       <img
         class="shot selection-shot"
         src="{{SELECTION}}"
-        alt="Actual Veil highlight around the newsletter and Hide toolbar on the demo page"
+        alt="Actual Veil highlight around the Wikipedia related-reading box and Hide toolbar"
       />
-      <p class="caption">Local demo · Actual selection tool</p>
+      <p class="caption">Wikipedia · Actual Veil selection tool</p>
     </section>
     <section class="asset" id="management">
       <header class="heading">
@@ -58,25 +58,25 @@
         <img
           class="shot managed-page"
           src="{{MANAGED_PAGE}}"
-          alt="Demo page with the newsletter and sponsored card hidden"
+          alt="Wikipedia article with the related-reading sidebar hidden"
         />
         <img
           class="shot managed-panel"
           src="{{PANEL}}"
-          alt="Actual side-panel document showing the two saved items and Restore controls"
+          alt="Actual side-panel document showing the saved item and Restore controls"
         />
       </div>
       <p class="caption">
-        Local demo · Side-panel document captured separately; shown beside the page
+        Wikipedia · Side-panel document captured separately; shown beside the page
       </p>
     </section>
     <section class="asset" id="promo">
       <header class="heading">
         <div class="brand"><img src="{{LOGO}}" alt="" />Veil</div>
-        <p>Hide page distractions.</p>
+        <p>Less clutter on Wikipedia.</p>
       </header>
       <div class="promo-crop">
-        <img class="shot" src="{{AFTER}}" alt="Top of the actual demo page after hiding" />
+        <img class="shot" src="{{AFTER}}" alt="Top of the actual Wikipedia article after hiding" />
       </div>
     </section>
     <section class="asset" id="marquee">
@@ -87,9 +87,9 @@
       <img
         class="shot marquee-shot"
         src="{{MARQUEE}}"
-        alt="Actual Veil selection tool highlighting the demo newsletter"
+        alt="Actual Veil selection tool highlighting the Wikipedia related-reading sidebar"
       />
-      <p class="caption">Local demo · Actual selection tool</p>
+      <p class="caption">Wikipedia · Actual Veil selection tool</p>
     </section>
     <script>
       const id = new URLSearchParams(location.search).get("asset") || "before-after";

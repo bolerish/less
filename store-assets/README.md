@@ -1,81 +1,77 @@
 # Veil — Chrome Web Store artwork
 
-English artwork for the implementation in `370ec62`. These files are prepared
-for the next extension release; the side-panel feature has not been published.
-Do not use the management screenshot for a store build that lacks this feature.
+Five English store images made from live Wikipedia and the actual Veil extension.
+No fictional website or generated screenshot is used. The side-panel feature in
+`370ec62` must be present in the store build that uses these images.
 
 ## Upload files
 
-| File                             | Size       | Purpose                                     |
-| -------------------------------- | ---------- | ------------------------------------------- |
-| `png/01-before-after.png`        | 1280 × 800 | The same demo page before and after hiding  |
-| `png/02-select-to-hide.png`      | 1280 × 800 | Real selection highlight and toolbar        |
-| `png/03-manage-hidden-items.png` | 1280 × 800 | Real saved records and restoration controls |
-| `png/promo-440x280.png`          | 440 × 280  | Small promotional tile                      |
-| `png/marquee-1400x560.png`       | 1400 × 560 | Optional marquee promotional tile           |
+| File                             | Size       | Content                                                                    |
+| -------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| `png/01-before-after.png`        | 1280 × 800 | Same Wikipedia article before and after hiding its related-reading sidebar |
+| `png/02-select-to-hide.png`      | 1280 × 800 | Actual Veil highlight and Hide toolbar on Wikipedia                        |
+| `png/03-manage-hidden-items.png` | 1280 × 800 | Article beside the actual panel with its saved record and Restore control  |
+| `png/promo-440x280.png`          | 440 × 280  | Veil logo and a crop of the actual article after hiding                    |
+| `png/marquee-1400x560.png`       | 1400 × 560 | Actual selection on the same public article                                |
 
-The final PNGs are opaque RGB images at the exact dimensions specified by
-[Chrome's store listing guide](https://developer.chrome.com/docs/webstore/cws-dashboard-listing).
-The outer canvas has square corners and fills every pixel. The artwork uses
-the existing Veil logo and compiled brand tokens. There are
-no decorative gradients, device frames, shadows, rounded screenshot cards, or
-large advertising headlines. Each asset has one short explanatory line.
+All exports are opaque RGB PNGs. The layout only places original captures and
+Veil's existing logo; it adds a compact explanation and source label. There are
+no generated images, fake browser frames, decorative cards, or large headlines.
 
-## Capture provenance
+## Public source and capture provenance
 
-`originals/` contains unedited captures. Fieldnotes is a fictional, local demo
-page, including its text, sponsored card, newsletter, and original SVG hill
-illustration. No accounts, browsing history, real ads, third-party brands, or
-remote photographs are involved. The page itself visibly says “Local demo”.
+Source: [Reading — Wikipedia](https://en.wikipedia.org/wiki/Reading), captured
+2026-11-13 (Asia/Seoul), without login in a fresh temporary Chromium profile.
+Wikipedia contributors own the article text and its revision history; the page
+links its attribution, reuse terms and the individual media descriptions.
+The visible book illustration remains part of the original site's related-reading
+box. Site text, styles, image sources and images were not replaced or retouched.
+Wikipedia is shown as an independent example of using Veil, without endorsement.
 
-The capture script routes the reserved `https://demo.veil.test/` origin to
-`source/demo.html` within Chromium. No request is sent to that domain. It loads
-the actual `dist/chrome-mv3` extension into a fresh temporary profile, selects
-and hides the newsletter and sponsored card using the real extension gestures,
-and reloads the page to capture persisted hiding. The management screen reads
-the resulting actual IndexedDB records. Its Restore button is exercised against
-the live page before the profile is discarded.
+`source/capture.mjs` loads the actual public URL over the network, with the locally
+built `dist/chrome-mv3` extension installed. It does not intercept or substitute
+Wikipedia responses. The former Fieldnotes demo file has been removed.
+`originals/` contains unedited page and extension-document screenshots.
 
-T3 preview rejected the extension URL with
-`unsupported-protocol: chrome-extension:`. Captures therefore use installed
-extension Chromium. `originals/panel.png` is the actual built side-panel document
-opened as an extension page, not a photograph of Chrome's native browser chrome.
-The management artwork explicitly labels this separate capture, placed beside
-the matching page for context; it does not claim to show Chrome’s native panel
-container. `popup.png` likewise captures the actual popup document. No browser frame or extension UI has been
-redrawn, fabricated, or retouched.
+A real keyboard shortcut enters Veil selection mode. A real pointer on the
+related-reading table's border highlights the complete box, then a click hides
+it through Veil. No page element is removed manually and no CSS is injected by
+the capture script. The extension saves its normal IndexedDB record and CSS
+cache. The script reloads the public page, verifies persisted hiding, and captures
+it again. The management document reads that saved record; its Restore button
+is clicked and restoration is verified both immediately and after another reload.
+
+The shared T3 browser opened the public page, but opening the extension page
+returned `unsupported-protocol: chrome-extension:`. Capturing therefore uses
+extension-capable Chromium through the existing Playwright script. The actual
+built popup and side-panel documents are opened as extension pages. In the
+management artwork the panel document is captured separately and placed beside
+the article; this is explicitly labelled, and does not reproduce Chrome's native
+side-panel container. Native browser chrome is not in any image.
 
 ## Composition and checks
 
-- **Before / after:** two complete 616 × 660 captures, each placed at native size.
-  The script asserts identical viewport, scroll position, header geometry, and
-  article text before and after. The newsletter and sponsored card are hidden
-  by Veil; the page’s resulting reflow is real.
-- **Selection:** one complete 1248 × 680 capture at native size. The highlight
-  and bottom Hide toolbar are actual extension UI. The separate popup is no
-  longer used as a floating artwork card.
-- **Management:** an 880 × 680 page capture beside the actual 360 × 680 panel
-  document, both at native size, with no artificial browser chrome. Both read
-  the same two saved hidden items. The caption identifies the separate capture.
-- **Small tile:** the existing logo, one short line, and the top portion of the
-  actual after capture. Only this asset scales and crops a screenshot (616 px
-  to 408 px wide, preserving its ratio); it does not advertise controls that
-  would become unreadably small at 440 × 280.
-- **Marquee:** one complete 1368 × 472 selection capture at native size, with a
-  compact logo and explanation above it.
-
-The HTML/CSS only places real PNGs and the existing `src/assets/logo.svg`.
-It never redraws, retouches, or generates product UI. `source/demo.html` is
-unchanged. Every export checks screenshot aspect ratios, canvas bounds, text
-overflow, exact dimensions, and opaque RGB output. Visually inspect both the
-raw captures and all five final PNGs after regeneration, including the real
-selection toolbar, Restore controls, and small tile’s intentional crop.
+- Before and after are complete 616 × 660 captures at native size, at the same
+  live URL, viewport and scroll position. Header and title geometry, complete
+  article DOM text, image source/alt attributes and paragraph typography must
+  match exactly. Only the related-reading box is hidden. Its removal causes the
+  site's own normal content reflow.
+- Selection is a complete 1248 × 680 capture at native size. The highlight and
+  toolbar are rendered by Veil. The marquee uses a complete 1368 × 472 capture;
+  this short viewport shows the upper part of the highlighted box.
+- Management places an 880 × 680 page beside the actual 360 × 680 extension panel,
+  both at native size. Its single record comes from the actual hide gesture.
+- The small tile scales the 616px after capture to 408px wide, preserving its
+  ratio, and crops the top 56 scaled pixels and its lower portion to keep the
+  article title and opening text visible. It has no tiny extension controls.
+- Every export checks image proportions, native-size placement (except the
+  intentional small tile crop), canvas bounds, text overflow, dimensions and RGB.
+  Inspect every original and final PNG visually after regeneration.
 
 ## Regenerate
 
-Build the extension, then provide an installed Playwright module and an
-extension-capable Chromium executable. No test or image-editing dependency is
-added to the application.
+Build the extension, then use an installed Playwright module and extension-capable
+Chromium. No dependency is added to the application:
 
 ```sh
 pnpm build
@@ -84,14 +80,22 @@ node store-assets/source/capture.mjs \
   --chromium /absolute/path/to/Chromium
 ```
 
-The script regenerates all original captures and final PNGs, checks comparison
-state, layout, dimensions, and RGB output, closes its browser, and deletes its temporary profile. Capture
-dates in the real panel naturally follow the date of regeneration.
+On this machine the existing package-manager configuration rejected `pnpm build`
+with `ERR_PNPM_IGNORED_BUILDS` before running the build. Without changing that
+configuration, `node_modules/.bin/wxt build` successfully produced the extension.
+The capture invocation used:
 
-`source/layout.html` owns the artwork layout and copy. `source/demo.html` owns
-the fictional page. `source/tokens.css` is regenerated from the actual compiled
-bolerish token bridge in the build; the images do not maintain a competing
-brand palette. The demo's editorial illustration has its own local colors.
+```sh
+node store-assets/source/capture.mjs \
+  --playwright /Users/jeongmin-yeong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs \
+  --chromium /Users/jeongmin-yeong/Library/Caches/ms-playwright/chromium-1155/chrome-mac/Chromium.app/Contents/MacOS/Chromium
+```
 
-`store-assets/` is outside the extension source and public directories and is
-not shipped in the app bundle. Nothing in this folder uploads to the store.
+The script closes Chromium and deletes the temporary profile. Wikipedia content
+and layout may change; a future run must pass the assertions and be visually
+reviewed again. The page is not frozen into a local imitation.
+
+`source/layout.html` owns composition and copy. `source/tokens.css` is generated
+from the actual compiled Veil token bridge. These assets are outside extension
+source/public directories and are not shipped in the extension. This work does
+not upload images or publish the extension.

@@ -1,4 +1,4 @@
-// Capture the built extension against a local fixture, then compose opaque store PNGs.
+// Capture the built extension on a live public Wikipedia page, then compose opaque store PNGs.
 /* eslint-disable no-await-in-loop */
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -50,7 +50,6 @@ try {
   assert.equal(formatted.errors.length, 0);
   tokens = formatted.code;
   await writeFile(join(source, "tokens.css"), tokens);
-  const demo = (await readFile(join(source, "demo.html"), "utf8")).replace("{{TOKENS}}", tokens);
   context = await chromium.launchPersistentContext(join(directory, "profile"), {
     executablePath: values.chromium,
     headless: true,
@@ -60,20 +59,12 @@ try {
     viewport: { width: 616, height: 660 },
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
   });
-  // All demo content comes from a local file; .test is reserved and never contacted.
-  await context.route("https://demo.veil.test/**", (route) =>
-    route.fulfill({ status: 200, contentType: "text/html", body: demo }),
-  );
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
   const extensionURL = `chrome-extension://${new URL(worker.url()).host}`;
   const site = await context.newPage();
-  await site.goto("https://demo.veil.test/reading");
-  const beforeState = await site.evaluate(() => ({
-    viewport: [innerWidth, innerHeight],
-    scroll: [scrollX, scrollY],
-    header: document.querySelector("header").getBoundingClientRect().toJSON(),
-    content: document.querySelector("article").textContent,
-  }));
+  await site.goto("https://en.wikipedia.org/wiki/Reading", { waitUntil: "networkidle" });
+  await site.evaluate(() => document.fonts.ready);
+  const beforeState = await readPageState(site);
   await site.screenshot({ path: join(originals, "before.png") });
 
   const popup = await context.newPage();
@@ -88,61 +79,58 @@ try {
 
   await site.setViewportSize({ width: 1248, height: 680 });
   await site.keyboard.press("Control+Shift+E");
-  const newsletter = await site.locator("#newsletter").boundingBox();
-  await site.mouse.move(newsletter.x + 12, newsletter.y + 12);
-  await site.waitForFunction(() => {
-    const highlight = document.querySelector("[data-veil-highlight]");
-    return highlight && getComputedStyle(highlight).display !== "none";
-  });
-  // The real toolbar has an entrance animation; wait for it to finish before capture.
+  const sidebar = await hoverSidebar(site);
   await site.waitForTimeout(350);
   await site.screenshot({ path: join(originals, "selection.png") });
   await site.setViewportSize({ width: 1368, height: 472 });
+  await hoverSidebar(site);
   await site.waitForTimeout(350);
   await site.screenshot({ path: join(originals, "marquee.png") });
   await site.setViewportSize({ width: 1248, height: 680 });
-  await site.mouse.click(newsletter.x + 12, newsletter.y + 12);
-  await waitHidden(site, "#newsletter");
+  await hoverSidebar(site);
+  await site.mouse.click(sidebar.x, sidebar.y);
+  await waitHidden(site, "table.sidebar");
   await site.keyboard.press("Escape");
-  await site.keyboard.press("Control+Shift+E");
-  const sponsor = await site.locator("#sponsor").boundingBox();
-  await site.mouse.move(sponsor.x + 12, sponsor.y + 12);
-  await site.mouse.click(sponsor.x + 12, sponsor.y + 12);
-  await waitHidden(site, "#sponsor");
-  await site.keyboard.press("Escape");
+  await site.mouse.move(0, 0);
   await site.setViewportSize({ width: 616, height: 660 });
   // Revisit to capture persisted hiding, rather than a transient selection state.
-  await site.reload();
-  await waitHidden(site, "#newsletter");
-  await waitHidden(site, "#sponsor");
-  const afterState = await site.evaluate(() => ({
-    viewport: [innerWidth, innerHeight],
-    scroll: [scrollX, scrollY],
-    header: document.querySelector("header").getBoundingClientRect().toJSON(),
-    content: document.querySelector("article").textContent,
-  }));
+  await site.reload({ waitUntil: "networkidle" });
+  await waitHidden(site, "table.sidebar");
+  const afterState = await readPageState(site);
   assert.deepEqual(
     afterState,
     beforeState,
-    "Before/after must share viewport, scroll, header, and article content",
+    "Same live URL, viewport, scroll, header, title, complete article text, images, and paragraph styles",
+  );
+  console.log(
+    "PASS live Wikipedia: sidebar hidden by Veil; persists after reload; article preserved",
   );
   await site.screenshot({ path: join(originals, "after.png") });
   await site.setViewportSize({ width: 880, height: 680 });
+  await site.mouse.move(0, 0);
+  await site.waitForTimeout(600);
   await site.screenshot({ path: join(originals, "managed-page.png") });
 
   const panel = await context.newPage();
   await panel.setViewportSize({ width: 360, height: 680 });
   await site.bringToFront();
   await panel.goto(`${extensionURL}/sidepanel.html`);
-  await panel.getByRole("heading", { name: "demo.veil.test", exact: true }).waitFor();
-  await panel.getByText("2 hidden items", { exact: true }).waitFor();
+  await panel.getByRole("heading", { name: "en.wikipedia.org", exact: true }).waitFor();
+  await panel.getByText("1 hidden item", { exact: true }).waitFor();
   await panel.screenshot({ path: join(originals, "panel.png") });
-  assert.equal(await panel.getByRole("button", { name: /^Restore / }).count(), 2);
+  assert.equal(await panel.getByRole("button", { name: /^Restore / }).count(), 1);
   // Confirm the captured control really restores a selected record on the live page.
-  await panel.getByRole("button", { name: /^Restore Sponsored/i }).click();
+  await panel.getByRole("button", { name: /^Restore / }).click();
   await site.waitForFunction(
-    () => getComputedStyle(document.querySelector("#sponsor")).display !== "none",
+    () => getComputedStyle(document.querySelector("table.sidebar")).display !== "none",
   );
+
+  await site.reload({ waitUntil: "networkidle" });
+  await site.waitForFunction(
+    () => getComputedStyle(document.querySelector("table.sidebar")).display !== "none",
+  );
+  assert.equal((await readPageState(site)).content, beforeState.content);
+  console.log("PASS actual saved record, panel Restore, and restoration after reload");
 
   const files = {
     BEFORE: "before.png",
@@ -228,4 +216,52 @@ async function waitHidden(page, selector) {
     (selector) => getComputedStyle(document.querySelector(selector)).display === "none",
     selector,
   );
+}
+
+async function readPageState(page) {
+  return page.evaluate(() => {
+    const paragraph = document.querySelector(".mw-parser-output p:not(.mw-empty-elt)");
+    const style = getComputedStyle(paragraph);
+    return {
+      url: location.href,
+      viewport: [innerWidth, innerHeight],
+      scroll: [scrollX, scrollY],
+      header: document.querySelector("header").getBoundingClientRect().toJSON(),
+      title: document.querySelector("#firstHeading").getBoundingClientRect().toJSON(),
+      content: document.querySelector(".mw-parser-output").textContent,
+      images: Array.from(document.querySelectorAll(".mw-parser-output img"), (image) => [
+        image.getAttribute("src"),
+        image.getAttribute("alt"),
+      ]),
+      paragraphStyle: [style.fontFamily, style.fontSize, style.lineHeight, style.color],
+    };
+  });
+}
+
+async function hoverSidebar(page) {
+  // Find a visible border point belonging to the complete table, using read-only hit testing.
+  const point = await page.evaluate(() => {
+    const table = document.querySelector("table.sidebar");
+    const b = table.getBoundingClientRect();
+    for (let offset = -1; offset <= 2; offset += 0.1) {
+      for (const [x, y] of [
+        [b.x + offset, b.y + 8],
+        [b.x + 8, b.y + offset],
+        [b.right - offset, b.y + 8],
+      ]) {
+        if (document.elementFromPoint(x, y) === table) return { x, y };
+      }
+    }
+    return null;
+  });
+  assert(point, "The live table must have a visible border point that a real pointer can select");
+  await page.mouse.move(point.x, point.y);
+  await page.waitForFunction(() => {
+    const highlight = document.querySelector("[data-veil-highlight]");
+    const box = document.querySelector("table.sidebar").getBoundingClientRect();
+    if (!highlight || getComputedStyle(highlight).display === "none") return false;
+    const selected = highlight.getBoundingClientRect();
+    return Math.abs(selected.width - box.width) < 8 && Math.abs(selected.height - box.height) < 8;
+  });
+  return point;
 }

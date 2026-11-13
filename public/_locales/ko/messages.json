@@ -4,5 +4,20 @@
   },
   "ext_description": {
     "message": "무엇이든 숨기세요."
+  },
+  "panel_current_site": {
+    "message": "현재 사이트"
+  },
+  "panel_hidden_count_one": {
+    "message": "숨긴 항목 $1개"
+  },
+  "panel_hidden_count_other": {
+    "message": "숨긴 항목 $1개"
+  },
+  "panel_loading": {
+    "message": "숨긴 항목 불러오는 중…"
+  },
+  "panel_count_help": {
+    "message": "이 사이트 전체에 현재 저장된 숨김 규칙 수입니다. 복원하면 개수가 줄어듭니다."
   }
 }

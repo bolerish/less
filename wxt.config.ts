@@ -9,6 +9,8 @@ export default defineConfig({
   srcDir: "src",
   outDir: "dist",
   entrypointsDir: "entries",
+  // The toolbar opens the in-page panel. Keep legacy documents out of both manifests.
+  filterEntrypoints: ["background", "content", "preload", "welcome", "unavailable"],
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
   autoIcons: {
     baseIconPath: "assets/logo.svg",

@@ -4,5 +4,20 @@
   },
   "ext_description": {
     "message": "なんでも隠せる。"
+  },
+  "panel_current_site": {
+    "message": "現在のサイト"
+  },
+  "panel_hidden_count_one": {
+    "message": "非表示の項目 $1 件"
+  },
+  "panel_hidden_count_other": {
+    "message": "非表示の項目 $1 件"
+  },
+  "panel_loading": {
+    "message": "非表示の項目を読み込み中…"
+  },
+  "panel_count_help": {
+    "message": "このサイト全体で現在保存されている非表示ルールの数です。復元すると数が減ります。"
   }
 }

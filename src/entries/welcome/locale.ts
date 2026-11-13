@@ -41,7 +41,7 @@ export const translations: Record<Locale, Translations> = {
       },
       {
         title: "Enter selection mode",
-        description: "Click the cursor icon in the popup, or use the shortcut.",
+        description: "Choose “Hide an item” in the Veil panel, or use the shortcut.",
         kbdLabel: "Toggle selection mode",
       },
       {
@@ -65,7 +65,7 @@ export const translations: Record<Locale, Translations> = {
       },
       {
         title: "선택 모드 진입",
-        description: "팝업의 커서 아이콘을 클릭하거나, 단축키를 사용하세요.",
+        description: "Veil 패널의 “Hide an item”을 클릭하거나 단축키를 사용하세요.",
         kbdLabel: "선택 모드 켜기/끄기",
       },
       {
@@ -89,7 +89,7 @@ export const translations: Record<Locale, Translations> = {
       {
         title: "選択モードに入る",
         description:
-          "ポップアップのカーソルアイコンをクリックするか、ショートカットを使ってください。",
+          "Veilパネルの「Hide an item」をクリックするか、ショートカットを使ってください。",
         kbdLabel: "選択モードの切り替え",
       },
       {
@@ -114,7 +114,7 @@ export const translations: Record<Locale, Translations> = {
       },
       {
         title: "Entra en modo selección",
-        description: "Haz clic en el icono de cursor en el popup o usa el atajo de teclado.",
+        description: "Elige «Hide an item» en el panel de Veil o usa el atajo de teclado.",
         kbdLabel: "Activar o desactivar modo selección",
       },
       {
@@ -138,7 +138,7 @@ export const translations: Record<Locale, Translations> = {
       },
       {
         title: "进入选择模式",
-        description: "点击弹出窗口中的光标图标，或使用快捷键。",
+        description: "点击 Veil 面板中的“Hide an item”，或使用快捷键。",
         kbdLabel: "切换选择模式",
       },
       {

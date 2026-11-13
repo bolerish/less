@@ -4,5 +4,20 @@
   },
   "ext_description": {
     "message": "Oculta cualquier cosa."
+  },
+  "panel_current_site": {
+    "message": "Sitio actual"
+  },
+  "panel_hidden_count_one": {
+    "message": "$1 elemento oculto"
+  },
+  "panel_hidden_count_other": {
+    "message": "$1 elementos ocultos"
+  },
+  "panel_loading": {
+    "message": "Cargando elementos ocultos…"
+  },
+  "panel_count_help": {
+    "message": "Reglas guardadas en este sitio. Al restaurar un elemento, el total disminuye."
   }
 }

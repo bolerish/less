@@ -4,5 +4,20 @@
   },
   "ext_description": {
     "message": "隐藏一切。"
+  },
+  "panel_current_site": {
+    "message": "当前网站"
+  },
+  "panel_hidden_count_one": {
+    "message": "已隐藏 $1 项"
+  },
+  "panel_hidden_count_other": {
+    "message": "已隐藏 $1 项"
+  },
+  "panel_loading": {
+    "message": "正在加载隐藏项目…"
+  },
+  "panel_count_help": {
+    "message": "此网站当前保存的隐藏规则数量。恢复项目后数量会减少。"
   }
 }

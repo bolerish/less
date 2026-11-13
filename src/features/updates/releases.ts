@@ -13,9 +13,9 @@ export const productUpdates: readonly ProductUpdate[] = [
     status: "unreleased",
     title: "Your hidden items, in one place",
     changes: [
-      "Open Manage hidden items from the popup to see what you have hidden on the current site.",
+      "Click the Veil toolbar icon to open your panel right on the current website.",
       "Restore an individual item or reset the site while keeping the page open.",
-      "Switch tabs and the list follows the site you are viewing.",
+      "See the current site’s saved hiding rules. Restoring an item decreases the count.",
     ],
   },
 ];

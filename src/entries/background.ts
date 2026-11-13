@@ -33,6 +33,8 @@ function isContentPortMessage(v: unknown): v is ContentPortMessage {
 }
 
 let allCSSCache: Record<string, string[]> | null = null;
+const toolbarAction =
+  import.meta.env.MANIFEST_VERSION === 2 ? browser.browserAction : browser.action;
 
 async function getCache(): Promise<Record<string, string[]>> {
   allCSSCache = await loadAllCSSCache();
@@ -58,14 +60,20 @@ function extractCSSForURL(
 }
 
 export default defineBackground(() => {
+  toolbarAction.onClicked.addListener((tab) => {
+    void togglePagePanel(tab);
+  });
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    if (
-      sender.id !== browser.runtime.id ||
-      !sender.url?.startsWith(browser.runtime.getURL("/")) ||
-      !isManagementRequest(message)
-    )
-      return;
-    void handleManagement(message).then(sendResponse);
+    if (sender.id !== browser.runtime.id || !isManagementRequest(message)) return;
+    void (async () => {
+      if (!(await canManageSite(sender, message.origin))) {
+        sendResponse({ ok: false, error: "Veil can only manage the site in this tab." });
+        return;
+      }
+      sendResponse(await handleManagement(message));
+    })().catch(() =>
+      sendResponse({ ok: false, error: "The page changed. Reopen Veil and try again." }),
+    );
     return true;
   });
   browser.runtime.onInstalled.addListener(({ reason }) => {
@@ -188,3 +196,39 @@ export default defineBackground(() => {
     });
   });
 });
+
+async function canManageSite(
+  sender: Browser.runtime.MessageSender,
+  origin: string,
+): Promise<boolean> {
+  if (sender.url?.startsWith(browser.runtime.getURL("/"))) return true;
+  if (sender.tab?.id === undefined || sender.frameId !== 0 || !sender.url) return false;
+  const frame = await browser.webNavigation.getFrame({ tabId: sender.tab.id, frameId: 0 });
+  if (!frame || !/^https?:$/.test(new URL(frame.url).protocol)) return false;
+  return new URL(sender.url).origin === origin && new URL(frame.url).origin === origin;
+}
+
+async function togglePagePanel(tab: Browser.tabs.Tab): Promise<void> {
+  if (tab.id === undefined) return;
+  try {
+    const response = await browser.tabs.sendMessage(
+      tab.id,
+      { type: "TOGGLE_PAGE_PANEL" },
+      { frameId: 0 },
+    );
+    if (!response?.ok) throw new Error("No panel receiver");
+    await toolbarAction.setBadgeText({ tabId: tab.id, text: "" });
+    await toolbarAction.setTitle({ tabId: tab.id, title: "Veil" });
+  } catch {
+    try {
+      await toolbarAction.setBadgeText({ tabId: tab.id, text: "!" });
+      await toolbarAction.setTitle({
+        tabId: tab.id,
+        title: "Veil cannot open here. Open a regular website or reload the page.",
+      });
+    } catch {
+      /* The tab may have closed while opening the panel. */
+    }
+    await browser.tabs.create({ url: browser.runtime.getURL("/unavailable.html") });
+  }
+}

@@ -6,5 +6,10 @@ export const isHiddenElement = (element: Element): boolean =>
 
 export const isHideExcludedElement = (element: Element): boolean => {
   const tag = element.tagName.toLowerCase();
-  return tag === "html" || tag === "body" || tag === "head";
+  return (
+    tag === "html" ||
+    tag === "body" ||
+    tag === "head" ||
+    element.closest("[data-veil-panel]") !== null
+  );
 };

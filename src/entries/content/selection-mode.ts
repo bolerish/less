@@ -7,6 +7,7 @@ import {
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
 import { invalidateRecordCache } from "./hiding-watcher";
+import { PANEL_HOST_ATTRIBUTE } from "./page-panel";
 import {
   shieldIframes,
   syncShieldPositions,
@@ -27,6 +28,14 @@ import {
 } from "./selection-toolbar";
 
 export let selectionActive = false;
+const selectionListeners = new Set<(active: boolean) => void>();
+
+export function subscribeSelection(listener: (active: boolean) => void): () => void {
+  selectionListeners.add(listener);
+  return () => {
+    selectionListeners.delete(listener);
+  };
+}
 
 let hoveredEl: HTMLElement | null = null;
 let sessionHiddenCount = 0;
@@ -51,6 +60,7 @@ export function startSelectionMode(): void {
   document.addEventListener("keydown", handleKeyDown, true);
   window.addEventListener("scroll", handleViewportChange, true);
   window.addEventListener("resize", handleViewportChange);
+  for (const listener of selectionListeners) listener(true);
 }
 
 export function stopSelectionMode(): void {
@@ -67,6 +77,7 @@ export function stopSelectionMode(): void {
   unmountSelectionUI();
   flashViewportGlow();
   unshieldAllIframes();
+  for (const listener of selectionListeners) listener(false);
 }
 
 export function reconcileUndoStack(retainedIds: string[]): void {
@@ -108,7 +119,10 @@ function handlePointerMove(event: PointerEvent): void {
 }
 
 function handleClick(event: MouseEvent): void {
-  if ((event.target as HTMLElement).closest(`[${STATUS_BAR_ATTR}]`) !== null) return;
+  if (
+    (event.target as HTMLElement).closest(`[${STATUS_BAR_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`) !== null
+  )
+    return;
 
   event.preventDefault();
   event.stopPropagation();
@@ -165,6 +179,7 @@ async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
     const record = deriveHiddenElementRecord(current, document);
     applyHiddenElement(current, false);
     try {
+      // eslint-disable-next-line no-await-in-loop -- Each ancestor depends on the previous hide.
       const response = await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
       if (!response.ok) throw new Error("Could not save hidden item");
       invalidateRecordCache();
@@ -201,7 +216,8 @@ function resolveTarget(x: number, y: number): HTMLElement | null {
 
 function isOverlayOrHidden(el: HTMLElement): boolean {
   return (
-    el.closest(`[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}],[${CORNER_ATTR}]`) !==
-      null || el.getAttribute("data-bare-hidden") === "true"
+    el.closest(
+      `[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}],[${CORNER_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`,
+    ) !== null || isHiddenElement(el)
   );
 }

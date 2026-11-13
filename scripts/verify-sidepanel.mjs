@@ -1,7 +1,8 @@
-// Build first. Uses the actual installed extension, IndexedDB, storage, and content scripts.
-// node scripts/verify-sidepanel.mjs --playwright /path/to/playwright/index.mjs --chromium /path/to/Chromium
-/* eslint-disable no-await-in-loop */
+/* eslint-disable no-await-in-loop -- Browser interactions and viewport checks are sequential. */
+// Build first. Chrome's Extensions.triggerAction dispatches the real toolbar action.
+// node scripts/verify-sidepanel.mjs --playwright /path/to/playwright/index.mjs --chromium /path/to/Chrome
 import assert from "node:assert/strict";
+import vm from "node:vm";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
@@ -14,360 +15,599 @@ const { values } = parseArgs({
     playwright: { type: "string" },
     chromium: { type: "string" },
     build: { type: "string", default: "dist/chrome-mv3" },
-    screenshot: { type: "string" },
+    "firefox-build": { type: "string" },
+    screenshot: { type: "string", default: "/tmp/veil-in-page-panel.png" },
   },
 });
-assert(values.playwright && values.chromium, "Pass --playwright and --chromium");
+assert(
+  values.playwright && values.chromium,
+  "Pass --playwright and --chromium (Chrome with Extensions.triggerAction)",
+);
 const { chromium } = await import(pathToFileURL(resolve(values.playwright)).href);
-const directory = await mkdtemp(join(tmpdir(), "veil-sidepanel-"));
+const directory = await mkdtemp(join(tmpdir(), "veil-page-panel-"));
+const fixture =
+  '<!doctype html><html lang="en"><head><title>Veil test</title><style>body{margin:20px;font:16px/1.5 sans-serif}section{height:120px;background:#eee;margin:20px 0;padding:20px}#spacer{height:700px}</style></head><body><button id="before">Page focus</button><h1>Reading page</h1><section id="one">메모 PC 바로가기 아주 긴 원문은 상세에서만 표시합니다</section><section id="two">Second distraction, with lengthy raw text for details</section><p>Keep this content</p><div id="spacer"></div><section id="three">Far away distraction</section><p>Keep reading</p></body></html>';
 const server = createServer((_req, res) => {
-  res.writeHead(200, { "Content-Type": "text/html", "Cache-Control": "no-store" });
-  res.end(
-    '<!doctype html><html lang="en"><head><title>Veil fixture</title><style>section{height:100px;margin:16px;padding:16px;background:#eee}body{font:16px sans-serif}</style></head><body><h1>Fixture</h1><section id="one">First distraction</section><section id="two">Second distraction</section><p>Keep this content</p></body></html>',
-  );
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(fixture);
 });
 let context;
 try {
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const extension = resolve(values.build);
-  const manifest = JSON.parse(await readFile(join(extension, "manifest.json"), "utf8"));
-  assert.equal(manifest.side_panel.default_path, "sidepanel.html");
-  assert.equal(manifest.minimum_chrome_version, "116");
-  assert(manifest.permissions.includes("sidePanel"));
-  assert(
-    !manifest.permissions.includes("tabs"),
-    "Existing webNavigation permission should suffice",
-  );
-  const html = await readFile(join(extension, "sidepanel.html"), "utf8");
-  const cssPath = html.match(/rel="stylesheet"[^>]+href="([^"]+)"/)[1];
-  const css = await readFile(join(extension, cssPath), "utf8");
-  assert(
-    css.includes("--veil-color-bg-canvas:var(--"),
-    "Panel aliases must reference package tokens rather than emit a second token definition",
-  );
+  const manifest = JSON.parse(await readFile(join(values.build, "manifest.json"), "utf8"));
+  assert(!manifest.action.default_popup && !manifest.side_panel && !manifest.sidebar_action);
+  assert(!manifest.permissions.includes("sidePanel") && !manifest.permissions.includes("tabs"));
+  for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
+    const catalog = JSON.parse(
+      await readFile(join(values.build, "_locales", locale, "messages.json"), "utf8"),
+    );
+    for (const key of ["panel_current_site", "panel_loading", "panel_count_help"])
+      assert(catalog[key]?.message, `${locale}: ${key}`);
+    for (const key of ["panel_hidden_count_one", "panel_hidden_count_other"])
+      assert(catalog[key]?.message.includes("$1"), `${locale}: count placeholder`);
+  }
+  if (values["firefox-build"]) {
+    const registered = {};
+    const event = (name) => ({
+      addListener: (fn) => {
+        registered[name] = fn;
+      },
+    });
+    const browser = {
+      runtime: {
+        id: "veil-test",
+        onMessage: event("message"),
+        onInstalled: event("install"),
+        onStartup: event("startup"),
+        onConnect: event("connect"),
+        getURL: (path) => `moz-extension://test${path}`,
+      },
+      browserAction: { onClicked: event("action") },
+      storage: { onChanged: event("storage") },
+      webNavigation: { onHistoryStateUpdated: event("navigation") },
+    };
+    vm.runInNewContext(
+      await readFile(join(values["firefox-build"], "background.js"), "utf8"),
+      { browser, console, URL, setTimeout, clearTimeout },
+      { timeout: 2000 },
+    );
+    assert.equal(typeof registered.action, "function");
+    assert.equal(typeof registered.message, "function");
+    console.log(
+      "PASS built Firefox MV2 background registers browserAction without browser.action (API fixture)",
+    );
+  }
   context = await chromium.launchPersistentContext(join(directory, "profile"), {
     executablePath: values.chromium,
     headless: true,
-    viewport: { width: 1000, height: 800 },
-    args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
+    ignoreDefaultArgs: ["--disable-extensions"],
+    viewport: { width: 1100, height: 800 },
+    args: ["--enable-unsafe-extension-debugging"],
   });
+  context.setDefaultTimeout(7000);
+  const browserCDP = await context.browser().newBrowserCDPSession();
+  const { id } = await browserCDP.send("Extensions.loadUnpacked", { path: resolve(values.build) });
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
-  const extensionURL = `chrome-extension://${new URL(worker.url()).host}`;
+  await worker.evaluate(() => chrome.runtime.getManifest());
+  await waitFor(
+    async () => context.pages().some((p) => p.url().endsWith("/welcome.html")),
+    "install finished",
+  );
+  const errors = [];
+  context.on("page", (p) => p.on("pageerror", (e) => errors.push(e.message)));
   const site = await context.newPage();
   await site.goto(`${origin}/fixture`);
-  await site.keyboard.press("Control+Shift+E");
+  await waitFor(
+    async () =>
+      await worker.evaluate(async () => {
+        const tabs = await chrome.tabs.query({});
+        let tab;
+        for (const t of tabs) {
+          const f = await chrome.webNavigation
+            .getFrame({ tabId: t.id, frameId: 0 })
+            .catch(() => null);
+          if (f?.url.includes("/fixture")) tab = t;
+        }
+        if (!tab) return false;
+        try {
+          await chrome.tabs.sendMessage(tab.id, { type: "GET_UNDO_COUNT" });
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+    "content ready",
+  );
+  const session = await context.newCDPSession(site);
+  const tabTargets = new WeakMap();
+  async function action(page = site) {
+    await page.bringToFront();
+    const { targetInfos } = await browserCDP.send("Target.getTargets", {
+      filter: [{ type: "tab" }],
+    });
+    const target = tabTargets.get(page) ?? targetInfos.find((t) => t.url === page.url());
+    tabTargets.set(page, target);
+    assert(target, "tab target exists");
+    await browserCDP.send("Extensions.triggerAction", { id, targetId: target.targetId });
+  }
+  async function panel(fn, arg) {
+    const { root } = await session.send("DOM.getDocument", { depth: -1, pierce: true });
+    const node = findNode(root, (n) => n.nodeName === "DIALOG");
+    assert(node, "in-page dialog exists");
+    const { object } = await session.send("DOM.resolveNode", { backendNodeId: node.backendNodeId });
+    const result = await session.send("Runtime.callFunctionOn", {
+      objectId: object.objectId,
+      functionDeclaration: `function(arg){return (${fn.toString()})(this,arg)}`,
+      arguments: [{ value: arg }],
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    if (result.exceptionDetails)
+      throw new Error(
+        result.exceptionDetails.text + JSON.stringify(result.exceptionDetails.exception),
+      );
+    return result.result.value;
+  }
+  async function click(selector) {
+    await waitFor(
+      () => panel((d) => !d.innerText.includes("Finding this item")),
+      "preview settled before click",
+    );
+    await waitFor(
+      () => panel((d, s) => !!d.querySelector(s) && !d.querySelector(s).disabled, selector),
+      `button exists: ${selector}`,
+    );
+    const rect = await panel((d, s) => {
+      const e = d.querySelector(s);
+      if (!e) throw Error(s);
+      e.scrollIntoView({ block: "nearest" });
+      const r = e.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, selector);
+    await site.mouse.click(rect.x, rect.y);
+  }
+  async function textIncludes(text) {
+    return panel((d, t) => d.innerText.includes(t), text);
+  }
+  async function count() {
+    return worker.evaluate(async (o) => {
+      const db = await new Promise((res, rej) => {
+        const r = indexedDB.open("veil-db");
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+      try {
+        return await new Promise((res, rej) => {
+          const r = db.transaction("records").objectStore("records").getAll();
+          r.onsuccess = () => res(r.result.filter((x) => x.pageContext.origin === o).length);
+          r.onerror = () => rej(r.error);
+        });
+      } finally {
+        db.close();
+      }
+    }, origin);
+  }
+  async function hidden(selector, expected = true, page = site) {
+    await page.waitForFunction(
+      ({ selector, expected }) =>
+        (getComputedStyle(document.querySelector(selector)).display === "none") === expected,
+      { selector, expected },
+    );
+  }
+  async function hide(selector) {
+    await site.keyboard.press("Control+Shift+E");
+    await site.locator(selector).click();
+    await site.keyboard.press("Escape");
+    await hidden(selector);
+  }
+
+  await site.locator("#before").focus();
+  const before = await site.locator("#one").boundingBox();
+  await action();
+  await waitFor(() => site.locator("[data-veil-panel]").count(), "toolbar opens panel");
+  await waitFor(() => textIncludes("Nothing hidden on this site"), "empty state");
+  assert.equal(
+    await site.locator("[data-veil-panel]").evaluate((e) => e.shadowRoot),
+    null,
+    "closed shadow",
+  );
+  assert.equal((await site.locator("#one").boundingBox()).x, before.x, "no page reflow");
+  assert.equal(
+    await panel((d) => d.getRootNode().activeElement.getAttribute("aria-label")),
+    "Close Veil",
+  );
+  await action();
+  assert.equal(await site.locator("[data-veil-panel]").count(), 0);
+  assert.equal(await site.evaluate(() => document.activeElement.id), "before", "focus restored");
+  await action();
+  await action();
+  await action();
+  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "rapid toggles keep one panel");
+  await click(".select-button");
+  assert.equal(await site.locator("[data-veil-panel]").count(), 0, "selection folds panel");
   await site.locator("#one").click();
   await site.keyboard.press("Escape");
-  await site.waitForFunction(
-    () => getComputedStyle(document.querySelector("#one")).display === "none",
-  );
-  console.log("Selected and hid first fixture item");
+  await hidden("#one");
+  await waitFor(() => textIncludes("section ·"), "selection returns to panel");
+  assert.equal(await count(), 1);
   assert.equal(
-    (await worker.evaluate(() => chrome.runtime.getContexts({ contextTypes: ["SIDE_PANEL"] })))
-      .length,
+    await panel((d) => d.querySelector(".locate-button").textContent.length <= 21),
+    true,
+    "brief tag/content label",
+  );
+  assert.equal(
+    await panel((d) =>
+      d.innerText.includes("메모 PC 바로가기 아주 긴 원문은 상세에서만 표시합니다"),
+    ),
+    false,
+    "raw text collapsed",
+  );
+  assert.equal(
+    await panel((d) => d.querySelectorAll(".record-disclosure,button button").length),
     0,
-    "Install and hiding must not auto-open the panel",
+    "no disclosure or nested buttons",
   );
-  const popup = await context.newPage();
-  await site.bringToFront();
-  await popup.goto(`${extensionURL}/popup.html`);
-  await popup.getByRole("button", { name: "Manage hidden items" }).waitFor();
-  await popup.waitForFunction(
-    () =>
-      !Array.from(document.querySelectorAll("button")).find(
-        (button) => button.textContent === "Manage hidden items",
-      ).disabled,
-  );
-  const popupClosed = popup.waitForEvent("close");
-  await popup.getByRole("button", { name: "Manage hidden items" }).click();
-  await popupClosed;
-  const nativeContexts = await worker.evaluate(async () => {
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const contexts = await chrome.runtime.getContexts({ contextTypes: ["SIDE_PANEL"] });
-      if (contexts.length) return contexts;
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    }
-    return [];
+  const icon = await panel((d) => {
+    const svg = d.querySelector('[aria-label^="Restore item"] svg');
+    if (!svg) return null;
+    const r = svg.getBoundingClientRect();
+    return {
+      width: r.width,
+      height: r.height,
+      fill: getComputedStyle(svg).fill,
+      path: !!svg.querySelector("path"),
+    };
   });
-  assert.equal(nativeContexts.length, 1, "User gesture must create a native side-panel document");
-  console.log(
-    "Native sidePanel.open accepted; rendered side-panel contexts:",
-    nativeContexts.length,
+  assert(
+    icon?.path && icon.width === 16 && icon.height === 16 && icon.fill !== "rgba(0, 0, 0, 0)",
+    "restore SVG rendered at visible size",
   );
-  console.log(
-    "Panel targets",
-    context.pages().map((page) => page.url()),
-  );
-  // Inspect the same built document in a background extension tab as well.
-  // Load the same built document in a background extension tab for rendered UI checks.
-  const panel = await context.newPage();
-  await site.bringToFront();
-  await panel.goto(`${extensionURL}/sidepanel.html`);
-  await panel
-    .getByRole("heading", { name: `127.0.0.1:${server.address().port}`, exact: true })
-    .waitFor();
-  await panel.getByRole("heading", { name: "First distraction", exact: true }).waitFor();
-  console.log("Actual DB record is visible in built panel");
-  console.log(
-    "panel styles",
-    await panel.evaluate(() => ({
-      background: getComputedStyle(document.body).backgroundColor,
-      color: getComputedStyle(document.body).color,
-      button: getComputedStyle(document.querySelector("button")).height,
-      width: document.documentElement.scrollWidth,
-    })),
-  );
-  await panel.setViewportSize({ width: 375, height: 720 });
-  if (values.screenshot) await panel.screenshot({ path: resolve(values.screenshot) });
-  await panel.getByRole("button", { name: "Restore First distraction", exact: true }).click();
-  await panel.getByRole("heading", { name: "Nothing hidden on this site" }).waitFor();
-  await site.waitForFunction(
-    () => getComputedStyle(document.querySelector("#one")).display !== "none",
-  );
+  await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-restore-icon.png") });
+  await click('[aria-label^="Restore item"]');
+  await hidden("#one", false);
+  await waitFor(async () => (await count()) === 0, "restore DB");
+  await waitFor(() => textIncludes("Nothing hidden on this site"), "restore count zero");
+  console.log("PASS toolbar, selection return, simple rows, individual restore");
+  await site.keyboard.press("Escape");
+  await hide("#one");
+  await hide("#two");
+  await hide("#three");
   await site.reload();
-  await site.waitForFunction(
-    () => getComputedStyle(document.querySelector("#one")).display !== "none",
-  );
-  console.log("Individual restore removed DB and CSS hiding and survived reload");
-
-  // Save two items through the real selection gesture, then revisit in another tab.
-  await hide(site, "#one");
-  await hide(site, "#two");
-  await panel.getByRole("heading", { name: "Second distraction", exact: true }).waitFor();
+  await hidden("#one");
+  await hidden("#two");
+  await hidden("#three");
   const sibling = await context.newPage();
   await sibling.goto(`${origin}/fixture`);
-  await sibling.waitForFunction(
-    () =>
-      getComputedStyle(document.querySelector("#one")).display === "none" &&
-      getComputedStyle(document.querySelector("#two")).display === "none",
-  );
-  await panel.getByRole("heading", { name: "First distraction", exact: true }).waitFor();
-  await panel.getByRole("button", { name: "Restore First distraction", exact: true }).click();
-  await Promise.all(
-    [site, sibling].map((page) =>
-      page.waitForFunction(
-        () =>
-          getComputedStyle(document.querySelector("#one")).display !== "none" &&
-          getComputedStyle(document.querySelector("#two")).display === "none",
-      ),
-    ),
-  );
-  console.log("Restoration reached all open site tabs and retained the other hidden item");
-
-  // Force one real API call to fail. Confirm UI error and unchanged persisted state.
-  await worker.evaluate(() => {
-    const native = chrome.storage.local.set.bind(chrome.storage.local);
-    chrome.storage.local.set = (...args) => {
-      if (Object.hasOwn(args[0], "veil:css:all")) {
-        chrome.storage.local.set = native;
-        return Promise.reject(new Error("Injected cache write failure"));
-      }
-      return native(...args);
-    };
-  });
-  await panel.getByRole("button", { name: "Restore Second distraction", exact: true }).click();
-  await panel.getByRole("alert").filter({ hasText: "could not read or save" }).waitFor();
-  await panel.getByRole("button", { name: "Retry loading" }).click();
-  await panel.getByRole("heading", { name: "Second distraction", exact: true }).waitFor();
-  assert.equal(await site.locator("#two").evaluate((el) => getComputedStyle(el).display), "none");
-  await sibling.reload();
-  await sibling.waitForFunction(
-    () => getComputedStyle(document.querySelector("#two")).display === "none",
-  );
-  console.log("Cache write failure is visible; DB and preload rule preserved");
-
-  const cacheBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
-  await worker.evaluate(() => {
-    const native = IDBObjectStore.prototype.delete;
-    IDBObjectStore.prototype.delete = function () {
-      IDBObjectStore.prototype.delete = native;
-      throw new Error("Injected DB deletion failure");
-    };
-  });
-  await panel.getByRole("button", { name: "Restore Second distraction", exact: true }).click();
-  await panel.getByRole("alert").filter({ hasText: "could not read or save" }).waitFor();
+  await hidden("#one", true, sibling);
+  await site.bringToFront();
+  await action();
+  await waitFor(() => panel((d) => d.querySelectorAll(".record").length === 3), "three saved rows");
+  console.log("PASS reload hidden rules, three records");
+  const cssBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
+  const visibleScroll = await site.evaluate(() => scrollY);
+  await click(".record:nth-child(3) .locate-button");
+  await hidden("#one", false);
+  assert.equal(await count(), 3, "preview retains DB");
   assert.deepEqual(
     await worker.evaluate(() => chrome.storage.local.get("veil:css:all")),
-    cacheBefore,
-    "Failed DB mutation must roll back its CSS cache",
+    cssBefore,
+    "preview retains preload cache",
   );
-  await panel.getByRole("button", { name: "Retry loading" }).click();
-  await panel.getByRole("heading", { name: "Second distraction", exact: true }).waitFor();
-  console.log("DB deletion failure is visible and CSS cache rollback verified");
-
-  await worker.evaluate(() => {
-    globalThis.__veilReadMethods = {
-      getAll: IDBIndex.prototype.getAll,
-      openCursor: IDBIndex.prototype.openCursor,
-    };
-    IDBIndex.prototype.getAll = function () {
-      throw new Error("Injected DB read failure");
-    };
-    IDBIndex.prototype.openCursor = function () {
-      throw new Error("Injected DB read failure");
-    };
-  });
-  await panel.getByRole("button", { name: "Refresh", exact: true }).click();
-  await panel.getByRole("alert").filter({ hasText: "could not read or save" }).waitFor();
-  await worker.evaluate(() => {
-    Object.assign(IDBIndex.prototype, globalThis.__veilReadMethods);
-  });
-  await panel.getByRole("button", { name: "Retry loading" }).click();
-  await panel.getByRole("alert").waitFor({ state: "hidden" });
-  console.log("DB read failure and retry verified without a false empty state");
-
-  await panel.getByRole("button", { name: "Reset this site…", exact: true }).click();
-  assert.equal(await panel.evaluate(() => document.activeElement?.textContent), "Cancel");
-  await panel.keyboard.press("Enter");
-  await panel.getByRole("heading", { name: "Second distraction", exact: true }).waitFor();
-  await panel.getByRole("button", { name: "Reset this site…", exact: true }).click();
-  await worker.evaluate(() => {
-    const native = chrome.tabs.sendMessage.bind(chrome.tabs);
-    chrome.tabs.sendMessage = (...args) => {
-      if (args[1]?.type === "REFRESH_HIDING") {
-        chrome.tabs.sendMessage = native;
-        return Promise.reject(new Error("Injected tab delivery failure"));
-      }
-      return native(...args);
-    };
-  });
-  await panel.getByRole("button", { name: "Reset site", exact: true }).click();
-  await panel.getByRole("button", { name: "Retry page sync", exact: true }).waitFor();
-  await panel.getByRole("button", { name: "Retry page sync", exact: true }).click();
-  await panel
-    .getByRole("button", { name: "Retry page sync", exact: true })
-    .waitFor({ state: "hidden" });
-  await panel.getByRole("heading", { name: "Nothing hidden on this site" }).waitFor();
-  await Promise.all(
-    [site, sibling].map((page) =>
-      page.waitForFunction(
-        () => getComputedStyle(document.querySelector("#two")).display !== "none",
-      ),
-    ),
+  assert.equal(
+    await panel((d) => d.getRootNode().activeElement.classList.contains("locate-button")),
+    true,
+    "preview keeps panel keyboard focus",
   );
-  await sibling.reload();
-  await sibling.waitForFunction(
-    () => getComputedStyle(document.querySelector("#two")).display !== "none",
+  assert.equal(
+    await site.evaluate(() => scrollY),
+    visibleScroll,
+    "onscreen target does not force scrolling",
   );
-  console.log("Reset confirmation, cancellation, DB/cache/DOM restore and reload verified");
-
-  // Fail saving a new item: it must visibly recover and never enter the undo stack.
-  await worker.evaluate(() => {
-    const native = chrome.storage.local.set.bind(chrome.storage.local);
-    chrome.storage.local.set = (...args) => {
-      if (Object.hasOwn(args[0], "veil:css:all")) {
-        chrome.storage.local.set = native;
-        return Promise.reject(new Error("Injected save failure"));
-      }
-      return native(...args);
-    };
+  assert.equal(
+    await site.locator("#one").evaluate((e) => getComputedStyle(e).outlineStyle),
+    "solid",
+  );
+  await waitFor(() => textIncludes("Temporarily showing"), "preview status committed");
+  await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-preview-desktop.png") });
+  await site.keyboard.press("Escape");
+  await site.setViewportSize({ width: 375, height: 720 });
+  await click(".record:nth-child(3) .locate-button");
+  await hidden("#one", false);
+  assert.equal(
+    await panel((d) => {
+      const r = document.querySelector("#one").getBoundingClientRect();
+      return r.top < d.getBoundingClientRect().top && r.bottom > 0;
+    }),
+    true,
+    "mobile preview leaves actual target visible above the panel",
+  );
+  await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-preview-375.png") });
+  await worker.evaluate(
+    (o) => chrome.storage.local.set({ [`veil:hiding-enabled:${encodeURIComponent(o)}`]: false }),
+    origin,
+  );
+  await hidden("#one", false);
+  await hidden("#two", false);
+  await waitFor(
+    () => panel((d) => d.dataset.preview === "false"),
+    "pause clears temporary preview",
+  );
+  await site.keyboard.press("Escape");
+  await hidden("#one", false);
+  await worker.evaluate(
+    (o) => chrome.storage.local.remove(`veil:hiding-enabled:${encodeURIComponent(o)}`),
+    origin,
+  );
+  await hidden("#one");
+  await hidden("#two");
+  await hidden("#three");
+  await site.setViewportSize({ width: 1100, height: 800 });
+  await action();
+  await site.evaluate(() => {
+    const target = document.querySelector("#one");
+    const parent = document.createElement("div");
+    parent.id = "hidden-parent";
+    parent.style.display = "none";
+    target.before(parent);
+    parent.append(target);
   });
-  await sibling.keyboard.press("Control+Shift+E");
-  await sibling.locator("#one").click();
-  await waitForAXText(sibling, "Could not save this item");
-  await sibling.waitForFunction(
+  await click(".record:nth-child(3) .locate-button");
+  await waitFor(() => textIncludes("hidden container"), "hidden ancestor reported honestly");
+  assert.equal(await panel((d) => d.dataset.preview), "false");
+  await site.evaluate(() =>
+    document.querySelector("#hidden-parent").replaceWith(document.querySelector("#one")),
+  );
+  await click(".record:nth-child(2) .locate-button");
+  await hidden("#one");
+  await hidden("#two", false);
+
+  await site.keyboard.press("Escape");
+  await hidden("#two");
+  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "Esc ends preview first");
+  await click(".record:nth-child(1) .locate-button");
+  await hidden("#three", false);
+  assert(
+    await site.locator("#three").evaluate((e) => e.getBoundingClientRect().top < innerHeight),
+    "preview scrolls actual target",
+  );
+  await click('.record:nth-child(1) [aria-label^="Restore item"]');
+  await hidden("#three", false);
+  await hidden("#three", false, sibling);
+  await waitFor(async () => (await count()) === 2, "preview then persistent restore");
+  await click(".record:nth-child(1) .locate-button");
+  await hidden("#two", false);
+  await action();
+  await hidden("#two");
+  await action();
+  await click(".select-button");
+  await hidden("#two");
+  await site.keyboard.press("Escape");
+  assert.equal(await site.locator("[data-veil-panel]").count(), 1);
+  await click('.record:nth-child(1) [aria-label^="Restore item"]');
+  await hidden("#two", false);
+  await hidden("#two", false, sibling);
+  await waitFor(async () => (await count()) === 1, "restore across tabs");
+  await hidden("#one");
+  await hidden("#one", true, sibling);
+  await waitFor(
     () =>
-      getComputedStyle(document.querySelector("#one")).display !== "none" &&
-      getComputedStyle(document.querySelector("#one")).opacity !== "0",
+      panel(
+        (d) =>
+          d.querySelectorAll(".record").length === 1 && !d.querySelector(".locate-button").disabled,
+      ),
+    "restore settled before keyboard",
   );
-  await sibling.keyboard.press("Escape");
-  await panel.getByRole("button", { name: "Refresh", exact: true }).click();
-  await panel.getByRole("heading", { name: "Nothing hidden on this site" }).waitFor();
-  await sibling.reload();
-  await sibling.waitForFunction(
-    () => getComputedStyle(document.querySelector("#one")).display !== "none",
-  );
-  console.log("Failed selection save visibly recovers and does not leave a DB record");
-
-  // Keyboard tab navigation uses the actual bolerish Tabs primitive.
-  await panel.getByRole("tab", { name: "Hidden items", exact: true }).focus();
-  await panel.keyboard.press("ArrowRight");
-  await panel.keyboard.press("Enter");
-  await panel.getByRole("heading", { name: "Updates", exact: true }).waitFor();
-  await panel.getByText("Next update · Not yet released", { exact: true }).waitFor();
-  await panel.getByRole("tab", { name: "Updates", exact: true }).focus();
-  await panel.keyboard.press("ArrowLeft");
-  await panel.keyboard.press("Enter");
-  await panel.getByRole("heading", { name: "Nothing hidden on this site" }).waitFor();
-  console.log("Updates and arrow-key navigation verified");
-
-  // A fresh origin has no activeTab grant. The existing webNavigation permission is enough.
-  const other = await context.newPage();
-  await other.goto(`http://localhost:${server.address().port}/other`);
-  await panel
-    .getByRole("heading", { name: `localhost:${server.address().port}`, exact: true })
-    .waitFor();
-  await site.bringToFront();
-  await panel
-    .getByRole("heading", { name: `127.0.0.1:${server.address().port}`, exact: true })
-    .waitFor();
-  await other.bringToFront();
-  await other.goto("about:blank");
-  await panel.getByRole("heading", { name: "Open a website", exact: true }).waitFor();
-  await other.close();
-  await site.bringToFront();
-  await panel
-    .getByRole("heading", { name: `127.0.0.1:${server.address().port}`, exact: true })
-    .waitFor();
-  console.log(
-    "Tab switching, new origin without activeTab, unsupported page and tab close verified",
-  );
-
-  await site.locator("#one").evaluate((element) => {
-    element.textContent = "LongDistractionWithoutBreaks".repeat(12);
+  await panel((d) => {
+    d.querySelector(".locate-button").focus();
   });
-  await hide(site, "#one");
-  await panel.getByRole("button", { name: /^Restore LongDistraction/ }).waitFor();
-  for (const width of [320, 375, 768]) {
-    await panel.setViewportSize({ width, height: 720 });
+  await site.keyboard.press("Tab");
+
+  await waitFor(
+    () => panel((d) => !!d.querySelector('[role="tooltip"]')),
+    "focus tooltip stays in shadow",
+  );
+  await site.keyboard.press("Escape");
+  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "tooltip Escape takes priority");
+  await click(".panel-header button:first-of-type");
+  await waitFor(() => textIncludes("The latest changes"), "updates timeline");
+  await site.keyboard.press("Escape");
+  await waitFor(() => textIncludes("Hidden items"), "updates back");
+  assert.equal(await panel((d) => d.getRootNode().activeElement.textContent), "Updates");
+
+  console.log("PASS preview and persistent restore, tooltip and updates");
+  for (const width of [320, 375, 1100]) {
+    await site.setViewportSize({ width, height: 720 });
     for (const colorScheme of ["light", "dark"]) {
-      await panel.emulateMedia({ colorScheme });
-      assert(
-        await panel.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-        `No horizontal clipping at ${width}/${colorScheme}`,
+      await site.emulateMedia({ colorScheme });
+      await waitFor(
+        () =>
+          panel(
+            (d, bg) => getComputedStyle(d).backgroundColor === bg,
+            colorScheme === "light" ? "rgb(255, 255, 255)" : "rgb(17, 17, 17)",
+          ),
+        "theme background",
       );
-      const colors = await panel.evaluate(() => ({
-        background: getComputedStyle(document.body).backgroundColor,
-        foreground: getComputedStyle(document.body).color,
+      const geometry = await panel((d) => ({
+        width: d.getBoundingClientRect().width,
+        scroll: d.scrollWidth,
+        client: d.clientWidth,
+        font: getComputedStyle(d).fontSize,
+        button: getComputedStyle(d.querySelector("button")).height,
       }));
-      assert.notEqual(colors.background, "rgba(0, 0, 0, 0)");
-      assert.notEqual(colors.background, colors.foreground);
+      assert(
+        geometry.width <= width && geometry.scroll <= geometry.client,
+        "no horizontal clipping",
+      );
+      assert.equal(geometry.font, "14px");
+      assert.equal(geometry.button, "32px");
+      for (let i = 0; i < 14; i++) {
+        await site.keyboard.press("Tab");
+        assert.equal(
+          await panel((d) => d.contains(d.getRootNode().activeElement)),
+          true,
+          "modal keyboard focus stays inside",
+        );
+      }
+      await site.screenshot({
+        path: values.screenshot.replace(/\.png$/, `-${width}-${colorScheme}.png`),
+      });
     }
   }
-  await panel.setViewportSize({ width: 160, height: 360 });
-  assert(
-    await panel.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-    "Reflow at the effective width of a 320px panel at 200%",
+  const normal = await panel((d) => ({
+    font: getComputedStyle(d).fontFamily,
+    padding: getComputedStyle(d.querySelector(".panel")).paddingLeft,
+    button: getComputedStyle(d.querySelector("button")).height,
+  }));
+  await site.addStyleTag({
+    content:
+      "html{font-size:60px!important;--bolerish-density:4;--bolerish-unit:60px;--bolerish-font-body:serif}div,button,section{all:unset!important;display:block!important;color:red!important;background:magenta!important}*{font-family:serif!important}",
+  });
+  assert.deepEqual(
+    await panel((d) => ({
+      font: getComputedStyle(d).fontFamily,
+      padding: getComputedStyle(d.querySelector(".panel")).paddingLeft,
+      button: getComputedStyle(d.querySelector("button")).height,
+    })),
+    normal,
+    "hostile page CSS isolated",
   );
-  console.log("320/375/768px, light/dark and 200% effective-width reflow verified");
-  console.log("PASS: actual extension sidepanel workflows");
+  await site.keyboard.press("Escape");
+  await site.reload();
+  await hidden("#one");
+  await hidden("#two", false);
+  await hidden("#three", false);
+  await action();
+  await click(".record .locate-button");
+  await hidden("#one", false);
+  await site.evaluate(() => history.pushState({}, "", "/elsewhere"));
+  await hidden("#one");
+  await click(".record .locate-button");
+  await waitFor(() => textIncludes("another page"), "different-path preview unavailable");
+  await site.evaluate(() => document.querySelector("[data-veil-panel]").remove());
+  await waitFor(
+    () =>
+      site
+        .locator("[data-veil-panel]")
+        .count()
+        .then((n) => n === 0),
+    "host removal cleanup",
+  );
+  await action();
+  await waitFor(() => textIncludes("Hidden items"), "reopen after removed host");
+  await worker.evaluate(() => {
+    const original = chrome.storage.local.set.bind(chrome.storage.local);
+    chrome.storage.local.set = async () => {
+      chrome.storage.local.set = original;
+      throw Error("injected storage write failure");
+    };
+  });
+  await click('[aria-label^="Restore item"]');
+  await waitFor(() => textIncludes("could not read or save"), "save failure shown at operation");
+  assert.equal(await count(), 1, "failed restore preserves DB");
+
+  await panel((d) =>
+    Array.from(d.querySelectorAll("button"))
+      .find((b) => b.textContent.includes("Reset this site"))
+      .scrollIntoView(),
+  );
+  await click(".reset button");
+  await site.keyboard.press("Escape");
+  assert.equal(
+    await panel((d) => !!d.querySelector('[aria-label="Confirm site reset"]')),
+    false,
+    "Esc cancels reset first",
+  );
+  await click(".reset button");
+  await click(".reset .actions button:first-child");
+  await waitFor(async () => (await count()) === 0, "reset DB");
+  await hidden("#one", false);
+  await hidden("#one", false, sibling);
+  await site.reload();
+  await hidden("#one", false);
+  await action();
+  await waitFor(() => textIncludes("Nothing hidden"), "reset persists reload");
+  await site.keyboard.press("Escape");
+
+  // Content-origin authority is checked on actual messages sent from the isolated world.
+  const { frameTree } = await session.send("Page.getFrameTree");
+  const { executionContextId } = await session.send("Page.createIsolatedWorld", {
+    frameId: frameTree.frame.id,
+    worldName: "veil-authority-probe",
+  });
+  // Execute with the extension's own isolated context, located through Runtime events.
+  const contexts = [];
+  session.on("Runtime.executionContextCreated", (e) => contexts.push(e.context));
+  await session.send("Runtime.disable");
+  await session.send("Runtime.enable");
+  await waitFor(
+    () => contexts.some((c) => c.origin === `chrome-extension://${id}`),
+    "extension isolated world",
+  );
+  const extensionWorld = contexts.find((c) => c.origin === `chrome-extension://${id}`);
+  const rejected = await session.send("Runtime.evaluate", {
+    contextId: extensionWorld.id,
+    expression:
+      'chrome.runtime.sendMessage({type:"RESET_HIDDEN_SITE",origin:"https://example.com"})',
+    awaitPromise: true,
+    returnByValue: true,
+  });
+  assert.equal(rejected.result.value.ok, false, "cross-origin management rejected");
+  assert(executionContextId);
+  await site.evaluate((o) => {
+    const iframe = document.createElement("iframe");
+    iframe.src = `${o}/frame`;
+    document.body.append(iframe);
+  }, origin);
+  await waitFor(() => site.frames().length === 2, "iframe loaded");
+  const iframeAuthority = await worker.evaluate(async (o) => {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tabs[0].id, allFrames: true },
+      func: async (origin) => {
+        if (window === top) return null;
+        return chrome.runtime.sendMessage({ type: "LIST_HIDDEN_ITEMS", origin });
+      },
+      args: [o],
+    });
+    return results.find((result) => result.frameId !== 0)?.result;
+  }, origin);
+  assert.equal(iframeAuthority.ok, false, "iframe management rejected despite matching origin");
+  const unsupported = await context.newPage();
+  await unsupported.goto("chrome://version");
+  await action(unsupported);
+  await waitFor(
+    () => context.pages().some((p) => p.url().endsWith("/unavailable.html")),
+    "unsupported page opens guidance",
+  );
+  const guidance = context.pages().find((p) => p.url().endsWith("/unavailable.html"));
+  await guidance.getByRole("heading", { name: "Veil could not open on that page" }).waitFor();
+  assert.equal(errors.length, 0, errors.join("\n"));
+  console.log(
+    "PASS: real toolbar action, isolated in-page UI, preview cleanup, restore/reset DB+CSS+open tabs+reload, keyboard/Escape, 320/375, themes, hostile CSS, origin validation, unsupported guidance",
+  );
+  console.log(
+    `Screenshots: ${values.screenshot.replace(/\.png$/, "-{320,375,1100}-{light,dark}.png")}`,
+  );
 } finally {
-  if (context) await context.close();
+  await context?.close();
   await new Promise((done) => server.close(done));
   await rm(directory, { recursive: true, force: true });
 }
-
-async function hide(page, selector) {
-  await page.keyboard.press("Control+Shift+E");
-  await page.locator(selector).click();
-  await page.keyboard.press("Escape");
-  await page.waitForFunction(
-    (selector) => getComputedStyle(document.querySelector(selector)).display === "none",
-    selector,
-  );
-}
-
-async function waitForAXText(page, text) {
-  const session = await context.newCDPSession(page);
-  try {
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const { nodes } = await session.send("Accessibility.getFullAXTree");
-      if (nodes.some((node) => String(node.name?.value).includes(text))) return;
-      await page.waitForTimeout(20);
-    }
-    assert.fail(`Accessible message was not announced: ${text}`);
-  } finally {
-    await session.detach();
+function findNode(node, predicate) {
+  if (predicate(node)) return node;
+  for (const child of [...(node.children ?? []), ...(node.shadowRoots ?? [])]) {
+    const match = findNode(child, predicate);
+    if (match) return match;
   }
+}
+async function waitFor(check, label) {
+  const until = Date.now() + 7000;
+  while (Date.now() < until) {
+    try {
+      if (await check()) return;
+    } catch {}
+    await new Promise((done) => setTimeout(done, 40));
+  }
+  assert.fail(label);
 }

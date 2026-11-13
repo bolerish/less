@@ -38,26 +38,11 @@ function App() {
 
   const handleOpenPanel = (): void => {
     setPanelError("");
-    // Call directly in the click handler: awaiting a query first loses the user gesture.
-    let opening: Promise<void>;
-    if (import.meta.env.FIREFOX) {
-      const firefox = browser as typeof browser & { sidebarAction: { open(): Promise<void> } };
-      opening = firefox.sidebarAction.open();
-    } else {
-      if (!currentTab) {
-        setPanelError("Open a website before opening the panel.");
-        return;
-      }
-      opening = browser.sidePanel.open({ windowId: currentTab.windowId });
-    }
-    void opening
+    if (!currentTab) return;
+    void browser.tabs
+      .sendMessage(currentTab.id, { type: "TOGGLE_PAGE_PANEL" }, { frameId: 0 })
       .then(() => window.close())
-      .catch((error) => {
-        console.warn("[Veil] could not open the side panel", error);
-        setPanelError(
-          "Could not open the panel. Try again, or open Veil from your browser’s sidebar menu.",
-        );
-      });
+      .catch(() => setPanelError("Reload the website, then click the Veil toolbar icon."));
   };
 
   return (

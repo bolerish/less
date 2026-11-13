@@ -4,5 +4,20 @@
   },
   "ext_description": {
     "message": "Hide anything."
+  },
+  "panel_current_site": {
+    "message": "Current site"
+  },
+  "panel_hidden_count_one": {
+    "message": "$1 hidden item"
+  },
+  "panel_hidden_count_other": {
+    "message": "$1 hidden items"
+  },
+  "panel_loading": {
+    "message": "Loading hidden items…"
+  },
+  "panel_count_help": {
+    "message": "Saved hiding rules across this site. Restoring an item decreases this count."
   }
 }

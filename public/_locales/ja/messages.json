@@ -9,10 +9,10 @@
     "message": "現在のサイト"
   },
   "panel_hidden_count_one": {
-    "message": "非表示の項目 $1 件"
+    "message": "$1件"
   },
   "panel_hidden_count_other": {
-    "message": "非表示の項目 $1 件"
+    "message": "$1件"
   },
   "panel_loading": {
     "message": "非表示の項目を読み込み中…"
@@ -35,11 +35,8 @@
   "panel_kind_content": {
     "message": "コンテンツ"
   },
-  "panel_preview_back": {
-    "message": "非表示の項目に戻る"
-  },
   "panel_preview_description": {
-    "message": "一時的に表示しています。非表示ルールは保持されます。"
+    "message": "項目をプレビュー中"
   },
   "panel_restore_label": {
     "message": "項目 $1 を再表示: $2"
@@ -163,5 +160,11 @@
   },
   "panel_reset_group": {
     "message": "すべて再表示の確認"
+  },
+  "panel_hidden_noun_one": {
+    "message": "非表示の項目"
+  },
+  "panel_hidden_noun_other": {
+    "message": "非表示の項目"
   }
 }

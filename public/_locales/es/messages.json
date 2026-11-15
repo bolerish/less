@@ -9,10 +9,10 @@
     "message": "Sitio actual"
   },
   "panel_hidden_count_one": {
-    "message": "$1 elemento oculto"
+    "message": "$1"
   },
   "panel_hidden_count_other": {
-    "message": "$1 elementos ocultos"
+    "message": "$1"
   },
   "panel_loading": {
     "message": "Cargando elementos ocultos…"
@@ -35,11 +35,8 @@
   "panel_kind_content": {
     "message": "Contenido"
   },
-  "panel_preview_back": {
-    "message": "Volver a los elementos ocultos"
-  },
   "panel_preview_description": {
-    "message": "Vista temporal. La regla de ocultación se mantiene."
+    "message": "Vista previa del elemento"
   },
   "panel_restore_label": {
     "message": "Mostrar elemento $1: $2"
@@ -163,5 +160,11 @@
   },
   "panel_reset_group": {
     "message": "Confirmar mostrar todos"
+  },
+  "panel_hidden_noun_one": {
+    "message": "Elemento oculto"
+  },
+  "panel_hidden_noun_other": {
+    "message": "Elementos ocultos"
   }
 }

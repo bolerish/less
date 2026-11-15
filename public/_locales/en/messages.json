@@ -9,10 +9,10 @@
     "message": "Current site"
   },
   "panel_hidden_count_one": {
-    "message": "$1 hidden item"
+    "message": "$1"
   },
   "panel_hidden_count_other": {
-    "message": "$1 hidden items"
+    "message": "$1"
   },
   "panel_loading": {
     "message": "Loading hidden items…"
@@ -35,11 +35,8 @@
   "panel_kind_content": {
     "message": "Content"
   },
-  "panel_preview_back": {
-    "message": "Back to hidden items"
-  },
   "panel_preview_description": {
-    "message": "Showing this item temporarily. Its hiding rule stays saved."
+    "message": "Previewing item"
   },
   "panel_restore_label": {
     "message": "Unhide $1: $2"
@@ -163,5 +160,11 @@
   },
   "panel_reset_group": {
     "message": "Confirm unhide all"
+  },
+  "panel_hidden_noun_one": {
+    "message": "Hidden item"
+  },
+  "panel_hidden_noun_other": {
+    "message": "Hidden items"
   }
 }

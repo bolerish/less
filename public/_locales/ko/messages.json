@@ -9,10 +9,10 @@
     "message": "현재 사이트"
   },
   "panel_hidden_count_one": {
-    "message": "숨긴 항목 $1개"
+    "message": "$1개"
   },
   "panel_hidden_count_other": {
-    "message": "숨긴 항목 $1개"
+    "message": "$1개"
   },
   "panel_loading": {
     "message": "숨긴 항목 불러오는 중…"
@@ -35,11 +35,8 @@
   "panel_kind_content": {
     "message": "콘텐츠"
   },
-  "panel_preview_back": {
-    "message": "숨긴 항목으로 돌아가기"
-  },
   "panel_preview_description": {
-    "message": "잠시 표시 중입니다. 숨김 규칙은 유지됩니다."
+    "message": "항목 미리보기 중"
   },
   "panel_restore_label": {
     "message": "항목 $1 숨김 해제: $2"
@@ -163,5 +160,11 @@
   },
   "panel_reset_group": {
     "message": "모두 숨김 해제 확인"
+  },
+  "panel_hidden_noun_one": {
+    "message": "숨긴 항목"
+  },
+  "panel_hidden_noun_other": {
+    "message": "숨긴 항목"
   }
 }

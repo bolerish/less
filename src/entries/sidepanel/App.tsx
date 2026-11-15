@@ -300,6 +300,7 @@ function HiddenItems({
     }
   }
 
+  const hiddenCount = records === null ? null : getHiddenCount(records.length);
   return (
     <section
       aria-busy={busy}
@@ -324,12 +325,17 @@ function HiddenItems({
           aria-description={message("panel_count_help")}
         >
           <CardContent>
-            <p className="eyebrow">{message("panel_current_site")}</p>
-            <h1 ref={heading} tabIndex={-1} className="site-title">
-              {origin.replace(/^https?:\/\//, "")}
-            </h1>
+            <div className="site-identity">
+              <p className="eyebrow">{message("panel_current_site")}</p>
+              <h1 ref={heading} tabIndex={-1} className="site-title">
+                {origin.replace(/^https?:\/\//, "")}
+              </h1>
+            </div>
             <p className="hidden-count" aria-live="polite">
-              {records === null ? message("panel_loading") : getHiddenCountLabel(records.length)}
+              <span className="count-value">{hiddenCount?.value ?? "…"}</span>{" "}
+              <span className="count-noun">
+                {hiddenCount?.noun ?? message("panel_hidden_items")}
+              </span>
             </p>
           </CardContent>
         </Card>
@@ -363,16 +369,9 @@ function HiddenItems({
         ) : null}
         {enabled === false ? <p className="muted">{message("panel_paused")}</p> : null}
       </div>
-      {previewState.message ? (
-        <div className="preview-notice" role="status">
-          <p>{previewState.message}</p>
-          {previewState.id ? (
-            <Button variant="ghost" size="sm" onClick={() => preview?.clear(true)}>
-              {message("panel_preview_back")}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+      <p className="preview-status" role="status">
+        {previewState.message}
+      </p>
       <div className="list-toolbar">
         <h2>{message("panel_hidden_items")}</h2>
         <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
@@ -563,9 +562,12 @@ function getRecordLabel(record: ManagedRecord): string {
   return `${name} · ${characters.slice(0, 24).join("").trimEnd()}${characters.length > 24 ? "…" : ""}`;
 }
 
-function getHiddenCountLabel(count: number): string {
+function getHiddenCount(count: number): { value: string; noun: string } {
   const formatted = new Intl.NumberFormat(browser.i18n.getUILanguage()).format(count);
   const singular = new Intl.PluralRules(browser.i18n.getUILanguage()).select(count) === "one";
-  const key = singular ? "panel_hidden_count_one" : "panel_hidden_count_other";
-  return message(key, [formatted]);
+  const suffix = singular ? "one" : "other";
+  return {
+    value: message(`panel_hidden_count_${suffix}`, [formatted]),
+    noun: message(`panel_hidden_noun_${suffix}`),
+  };
 }

@@ -184,8 +184,23 @@ time {
   margin: 0;
 }
 .hidden-count {
-  margin-top: var(--veil-spacing-space-1);
-  margin-bottom: var(--veil-spacing-space-3);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  text-align: end;
+}
+.count-value {
+  font-size: var(--veil-font-size-xl);
+  font-weight: var(--veil-font-weight-semibold);
+  line-height: var(--veil-line-height-tight);
+  overflow-wrap: anywhere;
+}
+.count-noun {
+  font-size: var(--veil-font-size-xs);
+  color: var(--veil-color-fg-secondary);
 }
 .select-button {
   width: 100%;
@@ -256,10 +271,14 @@ time {
   border-radius: var(--veil-radius-sm);
   font-size: var(--veil-font-size-xs);
 }
-.preview-notice {
-  border-block-start: 1px solid var(--veil-color-stroke-default);
-  padding-block-start: var(--veil-spacing-space-2);
-  margin-block: var(--veil-spacing-space-3);
+.preview-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .record-label {
   flex: 1;
@@ -335,13 +354,26 @@ time {
 }
 
 .site-card {
+  container: site-card / inline-size;
   margin-bottom: var(--veil-spacing-space-4);
 }
 .site-card > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--veil-spacing-space-4);
   padding: var(--veil-spacing-space-3);
 }
-.site-card .hidden-count {
-  margin-bottom: 0;
+.site-identity {
+  min-width: 0;
+}
+@container site-card (max-width: 14em) {
+  .site-card > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hidden-count {
+    text-align: start;
+  }
 }
 
 .record-tag {
@@ -349,15 +381,6 @@ time {
   color: var(--veil-color-fg-secondary);
   font-weight: var(--veil-font-weight-regular);
 }
-[data-preview-layout="compact"] .preview-notice {
-  margin-block: var(--veil-spacing-space-2);
-}
-[data-preview-layout="compact"] .panel > div > section > .preview-notice {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow: auto;
-}
-
 @media (max-width: 15em) {
   .panel-header > button:last-child {
     margin-inline-start: auto;

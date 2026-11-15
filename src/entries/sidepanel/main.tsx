@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { useActiveSite } from "./useActiveSite";
 import "@bolerish/ui/global.css";
+import "~shared/styles/bolerish-tokens.css";
 import "./style.css";
 
 const preference = window.matchMedia("(prefers-color-scheme: dark)");

@@ -4,6 +4,10 @@ import type { HiddenItemPreview, PreviewState } from "../content/hidden-item-pre
 import { Card, CardContent } from "@bolerish/ui/card";
 import { Button } from "@bolerish/ui/button";
 import { Badge } from "@bolerish/ui/badge";
+import { Item } from "@bolerish/ui/item";
+import { Empty, EmptyDescription } from "@bolerish/ui/empty";
+import { Heading } from "@bolerish/ui/heading";
+import { Switch } from "@bolerish/ui/switch";
 import {
   Timeline,
   TimelineContent,
@@ -95,9 +99,15 @@ export default function App({
               <CaretLeftIcon aria-hidden="true" />
               {message("panel_back")}
             </Button>
-            <h1 ref={updatesHeading} tabIndex={-1} className="updates-heading">
+            <Heading
+              level={1}
+              size="subsection"
+              ref={updatesHeading}
+              tabIndex={-1}
+              className="updates-heading"
+            >
               {message("panel_updates")}
-            </h1>
+            </Heading>
           </>
         )}
         <Button
@@ -327,9 +337,9 @@ function HiddenItems({
           <CardContent>
             <div className="site-identity">
               <p className="eyebrow">{message("panel_current_site")}</p>
-              <h1 ref={heading} tabIndex={-1} className="site-title">
+              <Heading level={1} size="section" ref={heading} tabIndex={-1} className="site-title">
                 {origin.replace(/^https?:\/\//, "")}
-              </h1>
+              </Heading>
             </div>
             <p className="hidden-count" aria-live="polite">
               <span className="count-value">{hiddenCount?.value ?? "…"}</span>{" "}
@@ -340,12 +350,11 @@ function HiddenItems({
           </CardContent>
         </Card>
         <label className="preference">
-          <input
-            type="checkbox"
+          <Switch
+            size="sm"
             checked={enabled ?? true}
             disabled={enabled === null || busy}
-            onChange={(event) => {
-              const value = event.currentTarget.checked;
+            onCheckedChange={(value) => {
               void setSiteHidingEnabled(origin, value).catch(() =>
                 setError(message("panel_preference_error")),
               );
@@ -404,10 +413,12 @@ function HiddenItems({
       ) : null}
       {records === null && !error ? <p role="status">{message("panel_loading")}</p> : null}
       {records?.length === 0 ? (
-        <div className="empty">
-          <h2>{message("panel_empty_title")}</h2>
-          <p>{message("panel_empty_help")}</p>
-        </div>
+        <Empty className="empty">
+          <Heading level={2} size="subsection">
+            {message("panel_empty_title")}
+          </Heading>
+          <EmptyDescription>{message("panel_empty_help")}</EmptyDescription>
+        </Empty>
       ) : null}
       {records && records.length > 0 ? (
         <>
@@ -417,7 +428,7 @@ function HiddenItems({
                 const label = getRecordLabel(record);
                 return (
                   <li key={record.id} className="record">
-                    <div className="record-row">
+                    <Item size="xs" className="record-row">
                       <Button
                         className="locate-button"
                         variant="ghost"
@@ -442,7 +453,7 @@ function HiddenItems({
                           void mutate({ type: "RESTORE_HIDDEN_ITEM", origin, id: record.id })
                         }
                       />
-                    </div>
+                    </Item>
                   </li>
                 );
               })}

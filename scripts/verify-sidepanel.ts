@@ -326,6 +326,33 @@ try {
     await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.getAttribute("aria-label")),
     messages.panel_close,
   );
+  await click('.preference [role="switch"]');
+  await waitFor(
+    () =>
+      panel((d) => d.querySelector('[role="switch"]')?.getAttribute("aria-checked") === "false"),
+    "switch reflects the saved paused state",
+  );
+  assert.equal(
+    await worker.evaluate(async (o) => {
+      const key = `veil:hiding-enabled:${encodeURIComponent(o)}`;
+      return (await chrome.storage.local.get(key))[key];
+    }, origin),
+    false,
+    "pointer toggling persists the site preference",
+  );
+  await site.keyboard.press("Space");
+  await waitFor(
+    () => panel((d) => d.querySelector('[role="switch"]')?.getAttribute("aria-checked") === "true"),
+    "keyboard toggling resumes hiding",
+  );
+  assert.equal(
+    await worker.evaluate(async (o) => {
+      const key = `veil:hiding-enabled:${encodeURIComponent(o)}`;
+      return key in (await chrome.storage.local.get(key));
+    }, origin),
+    false,
+    "resuming clears the paused preference",
+  );
   await action(site, false);
   await waitFor(
     () =>

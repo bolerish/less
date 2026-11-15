@@ -88,12 +88,6 @@ svg {
   gap: var(--veil-spacing-space-2);
   margin-bottom: var(--veil-spacing-space-3);
 }
-.preference input {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  accent-color: var(--veil-color-fg-primary);
-}
 .panel {
   padding-inline: var(--veil-spacing-space-4);
   padding-bottom: max(var(--veil-spacing-space-4), env(safe-area-inset-bottom));
@@ -228,6 +222,9 @@ time {
   border-bottom: 1px solid var(--veil-color-stroke-default);
 }
 .record-row {
+  min-height: 0;
+  border: 0;
+  padding-inline: 0;
   padding-block: var(--veil-spacing-space-2);
   display: flex;
   align-items: center;
@@ -306,9 +303,16 @@ time {
   margin: 0;
 }
 .empty {
-  padding-block: var(--veil-spacing-space-6);
+  align-items: stretch;
+  gap: 0;
+  border: 0;
+  border-radius: 0;
+  padding: var(--veil-spacing-space-6) 0;
+  text-align: start;
 }
 .empty p {
+  font-size: inherit;
+  line-height: inherit;
   color: var(--veil-color-fg-secondary);
 }
 .reset {

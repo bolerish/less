@@ -1,5 +1,6 @@
 import { themeClassNames } from "@bolerish/ui/theme";
 import packageCSS from "@bolerish/ui/global.css?inline";
+import tokens from "~shared/styles/bolerish-tokens.css?inline";
 import { createRoot, type Root } from "react-dom/client";
 import App from "../sidepanel/App";
 import { getPanelMessage } from "~features/record/management-messages";
@@ -123,7 +124,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const isolatedCSS = packageCSS
       .replaceAll(":root", ".veil-theme")
       .replace(/(-?[\d.]+)rem\b/g, (_, value: string) => `${Number(value) * 16}px`);
-    style.textContent = `${isolatedCSS}\n${panelCSS}`;
+    style.textContent = `${isolatedCSS}\n${tokens}\n${panelCSS}`;
     dialog = document.createElement("dialog");
     dialog.lang = browser.i18n.getUILanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));

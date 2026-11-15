@@ -69,7 +69,7 @@
     "message": "準備中…"
   },
   "panel_paused": {
-    "message": "非表示を一時停止しています。上で有効にすると項目を非表示にできます。"
+    "message": "このサイトの非表示設定はオフです。オンにすると項目を非表示にできます。"
   },
   "panel_refresh": {
     "message": "一覧を再読み込み"
@@ -84,7 +84,7 @@
     "message": "非表示ルールを更新しました。"
   },
   "panel_reset_done": {
-    "message": "このサイトの項目をすべて再表示しました。"
+    "message": "このサイトの非表示ルールをすべて削除しました。"
   },
   "panel_empty_title": {
     "message": "非表示の項目はありません"
@@ -114,7 +114,7 @@
     "message": "項目を読み込めませんでした。再試行してください。"
   },
   "panel_save_error": {
-    "message": "変更を保存できませんでした。再試行してください。解決しない場合は Less を再読み込みしてください。"
+    "message": "変更を保存できませんでした。もう一度お試しください。"
   },
   "panel_selection_error": {
     "message": "選択を開始できませんでした。ページを再読み込みして再試行してください。"
@@ -129,7 +129,7 @@
     "message": "インストール済みのバージョン $1"
   },
   "panel_unreleased": {
-    "message": "リリース予定"
+    "message": "未リリース"
   },
   "panel_released": {
     "message": "リリース済み"
@@ -144,7 +144,7 @@
     "message": "このページに項目が見つかりません。非表示ルールは保持されます。"
   },
   "panel_hidden_parent": {
-    "message": "非表示の親領域に隠れています。非表示ルールは保持されます。"
+    "message": "この項目は別の非表示領域の中にあります。非表示ルールは保持されます。"
   },
   "panel_covered": {
     "message": "ページのレイアウトに隠れています。非表示ルールは保持されます。"
@@ -178,5 +178,65 @@
   },
   "panel_version_updates_unread": {
     "message": "v$1 · 未読の更新情報"
+  },
+  "panel_selection_prompt": {
+    "message": "隠す項目を選択"
+  },
+  "panel_selection_count_one": {
+    "message": "$1件を非表示"
+  },
+  "panel_selection_count_other": {
+    "message": "$1件を非表示"
+  },
+  "panel_selection_close": {
+    "message": "選択を終了"
+  },
+  "panel_selection_undo": {
+    "message": "直前の非表示を取り消す"
+  },
+  "panel_selection_restore_error": {
+    "message": "項目を再表示できませんでした。もう一度お試しください。"
+  },
+  "panel_selection_save_error": {
+    "message": "非表示設定を保存できませんでした。もう一度お試しください。"
+  },
+  "panel_unavailable_title": {
+    "message": "Less — ウェブサイトを開く"
+  },
+  "panel_unavailable_heading": {
+    "message": "このページではLessを開けません"
+  },
+  "panel_unavailable_action": {
+    "message": "ウェブサイトを開いてから、ブラウザーのツールバーにあるLessのアイコンをクリックしてください。"
+  },
+  "panel_unavailable_protected": {
+    "message": "ブラウザーの設定や拡張機能ストアなど、保護されたページではLessのパネルを開けません。"
+  },
+  "panel_unavailable_reload": {
+    "message": "Lessをインストールまたは更新した直後は、ウェブサイトを再読み込みしてもう一度お試しください。保存済みの非表示ルールは保持されます。"
+  },
+  "panel_toolbar_unavailable": {
+    "message": "ここではLessを開けません。ウェブサイトを開くか、ページを再読み込みしてください。"
+  },
+  "panel_release_1_2_0_title": {
+    "message": "よりシンプルなパネル、新しい名前はLess"
+  },
+  "panel_release_1_2_0_change_1": {
+    "message": "保存済みの非表示ルールとサイト設定はそのまま保持されます。"
+  },
+  "panel_release_1_2_0_change_2": {
+    "message": "一覧のツールバーから再読み込みやすべての再表示ができます。下部のバージョンを押すと更新情報が開きます。"
+  },
+  "panel_release_1_2_0_change_3": {
+    "message": "まだ開いていないリリース済みの更新情報があると、未読マークが表示されます。"
+  },
+  "panel_release_1_2_0_change_4": {
+    "message": "ツールバーのLessアイコンをクリックすると、現在のウェブサイトでパネルが開きます。"
+  },
+  "panel_release_1_2_0_change_5": {
+    "message": "ページを開いたまま、項目を個別に再表示したり、このサイトの非表示ルールをすべて削除したりできます。"
+  },
+  "panel_release_1_2_0_change_6": {
+    "message": "件数は現在のサイトに保存されている非表示ルールの数です。再表示すると減ります。"
   }
 }

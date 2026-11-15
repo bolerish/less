@@ -1,6 +1,6 @@
 import english from "../../../public/_locales/en/messages.json";
 
-type PanelMessage = Extract<keyof typeof english, `panel_${string}`>;
+export type PanelMessage = Extract<keyof typeof english, `panel_${string}`>;
 
 export function getPanelMessage(key: PanelMessage, substitutions: string[] = []): string {
   const translated = browser.i18n.getMessage(key, substitutions);

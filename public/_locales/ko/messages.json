@@ -69,7 +69,7 @@
     "message": "준비 중…"
   },
   "panel_paused": {
-    "message": "숨김이 일시 중지됐습니다. 위에서 켜면 항목을 숨길 수 있습니다."
+    "message": "이 사이트의 숨김이 꺼져 있습니다. 숨김을 켜면 항목을 숨길 수 있습니다."
   },
   "panel_refresh": {
     "message": "목록 새로고침"
@@ -84,7 +84,7 @@
     "message": "숨김 규칙을 변경했습니다."
   },
   "panel_reset_done": {
-    "message": "이 사이트의 숨김을 모두 해제했습니다."
+    "message": "이 사이트의 숨김 규칙을 모두 삭제했습니다."
   },
   "panel_empty_title": {
     "message": "숨긴 항목이 없습니다"
@@ -114,7 +114,7 @@
     "message": "숨긴 항목을 불러오지 못했습니다. 다시 시도하세요."
   },
   "panel_save_error": {
-    "message": "변경을 저장하지 못했습니다. 다시 시도하고, 문제가 계속되면 Less을 다시 로드하세요."
+    "message": "변경을 저장하지 못했습니다. 다시 시도해 주세요."
   },
   "panel_selection_error": {
     "message": "선택을 시작하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
@@ -129,7 +129,7 @@
     "message": "설치된 버전 $1"
   },
   "panel_unreleased": {
-    "message": "출시 예정"
+    "message": "아직 출시되지 않음"
   },
   "panel_released": {
     "message": "출시됨"
@@ -144,7 +144,7 @@
     "message": "이 페이지에서 항목을 찾지 못했습니다. 숨김 규칙은 유지됩니다."
   },
   "panel_hidden_parent": {
-    "message": "숨겨진 상위 영역에 가려진 항목입니다. 숨김 규칙은 유지됩니다."
+    "message": "다른 숨긴 영역 안에 있는 항목입니다. 숨김 규칙은 유지됩니다."
   },
   "panel_covered": {
     "message": "페이지 레이아웃에 가려진 항목입니다. 숨김 규칙은 유지됩니다."
@@ -178,5 +178,65 @@
   },
   "panel_version_updates_unread": {
     "message": "v$1 · 읽지 않은 업데이트"
+  },
+  "panel_selection_prompt": {
+    "message": "숨길 항목 선택"
+  },
+  "panel_selection_count_one": {
+    "message": "$1개 숨김"
+  },
+  "panel_selection_count_other": {
+    "message": "$1개 숨김"
+  },
+  "panel_selection_close": {
+    "message": "선택 종료"
+  },
+  "panel_selection_undo": {
+    "message": "마지막 숨김 취소"
+  },
+  "panel_selection_restore_error": {
+    "message": "숨김을 해제하지 못했습니다. 다시 시도해 주세요."
+  },
+  "panel_selection_save_error": {
+    "message": "숨김 설정을 저장하지 못했습니다. 다시 시도해 주세요."
+  },
+  "panel_unavailable_title": {
+    "message": "Less — 웹사이트 열기"
+  },
+  "panel_unavailable_heading": {
+    "message": "이 페이지에서 Less를 열 수 없습니다"
+  },
+  "panel_unavailable_action": {
+    "message": "웹사이트를 연 뒤 브라우저 툴바에서 Less 아이콘을 클릭하세요."
+  },
+  "panel_unavailable_protected": {
+    "message": "브라우저 설정, 확장 프로그램 스토어 등 보호된 페이지에서는 Less 패널을 열 수 없습니다."
+  },
+  "panel_unavailable_reload": {
+    "message": "Less를 방금 설치하거나 업데이트했다면 웹사이트를 새로고침하고 다시 시도하세요. 저장된 숨김 규칙은 유지됩니다."
+  },
+  "panel_toolbar_unavailable": {
+    "message": "여기서는 Less를 열 수 없습니다. 웹사이트를 열거나 페이지를 새로고침하세요."
+  },
+  "panel_release_1_2_0_title": {
+    "message": "더 간편해진 패널, 새로운 이름 Less"
+  },
+  "panel_release_1_2_0_change_1": {
+    "message": "저장된 숨김 규칙과 사이트 설정은 그대로 유지됩니다."
+  },
+  "panel_release_1_2_0_change_2": {
+    "message": "목록 도구막대에서 새로고침하거나 숨김을 모두 해제할 수 있습니다. 하단의 버전을 누르면 업데이트 내용을 볼 수 있습니다."
+  },
+  "panel_release_1_2_0_change_3": {
+    "message": "아직 읽지 않은 정식 업데이트가 있으면 표시가 나타납니다."
+  },
+  "panel_release_1_2_0_change_4": {
+    "message": "툴바의 Less 아이콘을 클릭하면 현재 웹사이트에서 패널이 열립니다."
+  },
+  "panel_release_1_2_0_change_5": {
+    "message": "페이지를 열어 둔 채로 개별 항목의 숨김을 해제하거나 이 사이트의 숨김 규칙을 모두 삭제할 수 있습니다."
+  },
+  "panel_release_1_2_0_change_6": {
+    "message": "개수는 현재 사이트에 저장된 숨김 규칙 수입니다. 숨김을 해제하면 줄어듭니다."
   }
 }

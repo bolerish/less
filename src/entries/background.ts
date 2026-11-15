@@ -1,3 +1,4 @@
+import { getPanelMessage } from "../features/record/management-messages";
 import {
   handleManagement,
   isManagementRequest,
@@ -224,7 +225,7 @@ async function togglePagePanel(tab: Browser.tabs.Tab): Promise<void> {
       await toolbarAction.setBadgeText({ tabId: tab.id, text: "!" });
       await toolbarAction.setTitle({
         tabId: tab.id,
-        title: "Less cannot open here. Open a regular website or reload the page.",
+        title: getPanelMessage("panel_toolbar_unavailable"),
       });
     } catch {
       /* The tab may have closed while opening the panel. */

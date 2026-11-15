@@ -1,3 +1,4 @@
+import { getPanelMessage as message } from "../../features/record/management-messages";
 import { createSelectionSurface, setSelectionHostStyles } from "./selection-surface";
 
 export const HIGHLIGHT_ATTR = "data-veil-highlight";
@@ -6,7 +7,7 @@ export const STATUS_BAR_ATTR = "data-veil-ui";
 let _highlightEl: HTMLDivElement | null = null;
 let _statusBarEl: HTMLDivElement | null = null;
 let _statusInfoEl: HTMLSpanElement | null = null;
-let _statusRestoreEl: HTMLDivElement | null = null;
+let _statusRestoreEl: HTMLButtonElement | null = null;
 
 export function mountSelectionUI(onClose: () => void, onUndo: () => void): void {
   _highlightEl = buildHighlightOverlay();
@@ -51,9 +52,18 @@ export function updateHighlight(target: HTMLElement | null): void {
 export function updateStatusBarContent(count: number, hasUndo: boolean): void {
   if (_statusInfoEl) {
     _statusInfoEl.removeAttribute("role");
-    _statusInfoEl.textContent = count > 0 ? `${count} Hidden` : "Hide";
+    _statusInfoEl.textContent =
+      count > 0
+        ? message(
+            new Intl.PluralRules(browser.i18n.getUILanguage()).select(count) === "one"
+              ? "panel_selection_count_one"
+              : "panel_selection_count_other",
+            [new Intl.NumberFormat(browser.i18n.getUILanguage()).format(count)],
+          )
+        : message("panel_selection_prompt");
   }
   if (_statusRestoreEl) {
+    _statusRestoreEl.disabled = !hasUndo;
     _statusRestoreEl.style.opacity = hasUndo ? "1" : "0";
     _statusRestoreEl.style.transform = hasUndo
       ? "scale(1) translateY(0)"
@@ -125,8 +135,8 @@ function buildHighlightOverlay(): HTMLDivElement {
 function buildStatusBar(
   onClose: () => void,
   onUndo: () => void,
-): { wrapper: HTMLDivElement; infoEl: HTMLSpanElement; restoreEl: HTMLDivElement } {
-  const applyPillStyle = (el: HTMLDivElement): void => {
+): { wrapper: HTMLDivElement; infoEl: HTMLSpanElement; restoreEl: HTMLButtonElement } {
+  const applyPillStyle = (el: HTMLElement): void => {
     Object.assign(el.style, {
       background: "var(--veil-color-bg-raised)",
       color: "var(--veil-color-fg-primary)",
@@ -176,12 +186,21 @@ function buildStatusBar(
   mainPill.style.pointerEvents = "none";
 
   const infoEl = document.createElement("span");
-  infoEl.textContent = "Hide";
+  infoEl.textContent = message("panel_selection_prompt");
   mainPill.appendChild(infoEl);
 
   mainPill.appendChild(makeSeparator());
 
-  const closeBtn = document.createElement("span");
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.setAttribute("aria-label", message("panel_selection_close"));
+  Object.assign(closeBtn.style, {
+    appearance: "none",
+    background: "none",
+    border: "0",
+    padding: "0",
+    font: "inherit",
+  });
   closeBtn.textContent = "✕";
   Object.assign(closeBtn.style, {
     fontSize: "var(--veil-font-size-xs)",
@@ -198,7 +217,10 @@ function buildStatusBar(
   mainPill.appendChild(closeBtn);
   surface.appendChild(mainPill);
 
-  const restoreEl = document.createElement("div");
+  const restoreEl = document.createElement("button");
+  restoreEl.type = "button";
+  restoreEl.setAttribute("aria-label", message("panel_selection_undo"));
+  restoreEl.style.appearance = "none";
   applyPillStyle(restoreEl);
   Object.assign(restoreEl.style, {
     padding: "var(--veil-spacing-space-2) var(--veil-spacing-space-3)",
@@ -210,6 +232,7 @@ function buildStatusBar(
   });
   const undoIcon = document.createElement("span");
   undoIcon.textContent = "↺";
+  undoIcon.setAttribute("aria-hidden", "true");
   Object.assign(undoIcon.style, {
     fontSize: "var(--veil-font-size-md)",
     lineHeight: "1",

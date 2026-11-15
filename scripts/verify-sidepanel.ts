@@ -2052,7 +2052,7 @@ try {
   );
   const guidance = context.pages().find((p) => p.url().endsWith("/unavailable.html"));
   assert(guidance);
-  await guidance.getByRole("heading", { name: "Less could not open on that page" }).waitFor();
+  await guidance.getByRole("heading", { name: messages.panel_unavailable_heading }).waitFor();
   assert.equal(errors.length, 0, errors.join("\n"));
   console.log(
     "PASS: real toolbar action, isolated in-page UI, preview cleanup, restore/reset DB+CSS+open tabs+reload, keyboard/Escape, 320/375, themes, hostile CSS, origin validation, unsupported guidance",

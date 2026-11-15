@@ -32,16 +32,18 @@
   </head>
   <body>
     <main>
-      <h1>Less could not open on that page</h1>
-      <p>Open a regular website, then click the Less icon in your browser toolbar.</p>
-      <p>
-        Browser settings, extension stores, and other protected pages do not allow Less to open a
-        panel.
+      <h1 data-message="panel_unavailable_heading">Less could not open on this page</h1>
+      <p data-message="panel_unavailable_action">
+        Open a website, then click the Less icon in your browser toolbar.
       </p>
-      <p>
+      <p data-message="panel_unavailable_protected">
+        Less cannot open its panel on browser settings, extension stores or other protected pages.
+      </p>
+      <p data-message="panel_unavailable_reload">
         If you just installed or updated Less, reload the website and try again. Your saved hiding
         rules are kept.
       </p>
     </main>
+    <script type="module" src="./main.ts"></script>
   </body>
 </html>

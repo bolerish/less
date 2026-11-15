@@ -69,7 +69,7 @@
     "message": "Preparando…"
   },
   "panel_paused": {
-    "message": "La ocultación está en pausa. Actívala arriba para ocultar elementos."
+    "message": "La ocultación está desactivada en este sitio. Actívala para ocultar un elemento."
   },
   "panel_refresh": {
     "message": "Recargar lista"
@@ -84,7 +84,7 @@
     "message": "Reglas de ocultación actualizadas."
   },
   "panel_reset_done": {
-    "message": "Se muestran todos los elementos de este sitio."
+    "message": "Se han eliminado todas las reglas de ocultación de este sitio."
   },
   "panel_empty_title": {
     "message": "No hay elementos ocultos"
@@ -96,7 +96,7 @@
     "message": "Mostrar todos"
   },
   "panel_reset_confirm": {
-    "message": "¿Mostrar los $1 elementos de este sitio? Se eliminarán sus reglas de ocultación."
+    "message": "¿Mostrar todos los elementos ocultos de este sitio ($1)? Se eliminarán sus reglas de ocultación."
   },
   "panel_reset_all": {
     "message": "Mostrar todos"
@@ -114,7 +114,7 @@
     "message": "No se pudieron cargar los elementos. Inténtalo de nuevo."
   },
   "panel_save_error": {
-    "message": "No se pudieron guardar los cambios. Reintenta y, si el problema continúa, recarga Less."
+    "message": "No se pudieron guardar los cambios. Inténtalo de nuevo."
   },
   "panel_selection_error": {
     "message": "No se pudo iniciar la selección. Recarga la página e inténtalo de nuevo."
@@ -129,7 +129,7 @@
     "message": "Versión instalada $1"
   },
   "panel_unreleased": {
-    "message": "Próximamente"
+    "message": "Sin publicar"
   },
   "panel_released": {
     "message": "Publicada"
@@ -144,7 +144,7 @@
     "message": "No se encontró el elemento en esta página. Su regla no cambia."
   },
   "panel_hidden_parent": {
-    "message": "Un contenedor oculto tapa este elemento. Su regla no cambia."
+    "message": "Este elemento está dentro de otra área oculta. Su regla de ocultación no cambia."
   },
   "panel_covered": {
     "message": "El diseño de la página tapa este elemento. Su regla no cambia."
@@ -178,5 +178,65 @@
   },
   "panel_version_updates_unread": {
     "message": "v$1 · Novedades sin leer"
+  },
+  "panel_selection_prompt": {
+    "message": "Elige un elemento"
+  },
+  "panel_selection_count_one": {
+    "message": "$1 oculto"
+  },
+  "panel_selection_count_other": {
+    "message": "$1 ocultos"
+  },
+  "panel_selection_close": {
+    "message": "Salir de la selección"
+  },
+  "panel_selection_undo": {
+    "message": "Deshacer la última ocultación"
+  },
+  "panel_selection_restore_error": {
+    "message": "No se pudo mostrar el elemento. Inténtalo de nuevo."
+  },
+  "panel_selection_save_error": {
+    "message": "No se pudo guardar la ocultación. Inténtalo de nuevo."
+  },
+  "panel_unavailable_title": {
+    "message": "Less — Abre un sitio web"
+  },
+  "panel_unavailable_heading": {
+    "message": "No se pudo abrir Less en esta página"
+  },
+  "panel_unavailable_action": {
+    "message": "Abre un sitio web y haz clic en el icono de Less en la barra de herramientas."
+  },
+  "panel_unavailable_protected": {
+    "message": "Less no puede abrir su panel en los ajustes del navegador, las tiendas de extensiones ni otras páginas protegidas."
+  },
+  "panel_unavailable_reload": {
+    "message": "Si acabas de instalar o actualizar Less, recarga el sitio web e inténtalo de nuevo. Tus reglas de ocultación guardadas se conservan."
+  },
+  "panel_toolbar_unavailable": {
+    "message": "Less no se puede abrir aquí. Abre un sitio web o recarga la página."
+  },
+  "panel_release_1_2_0_title": {
+    "message": "Un panel más sencillo, ahora llamado Less"
+  },
+  "panel_release_1_2_0_change_1": {
+    "message": "Less conserva tus reglas de ocultación y los ajustes de cada sitio."
+  },
+  "panel_release_1_2_0_change_2": {
+    "message": "Actualiza la lista o muestra todos los elementos desde su barra de herramientas. Abre las novedades desde la versión que aparece abajo."
+  },
+  "panel_release_1_2_0_change_3": {
+    "message": "Un indicador señala las novedades publicadas que aún no has abierto."
+  },
+  "panel_release_1_2_0_change_4": {
+    "message": "Haz clic en el icono de Less para abrir el panel en el sitio web actual."
+  },
+  "panel_release_1_2_0_change_5": {
+    "message": "Muestra un elemento o elimina las reglas de ocultación de este sitio sin cerrar la página."
+  },
+  "panel_release_1_2_0_change_6": {
+    "message": "El recuento muestra las reglas de ocultación guardadas en este sitio. Disminuye al mostrar un elemento."
   }
 }

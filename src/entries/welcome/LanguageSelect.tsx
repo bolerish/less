@@ -9,11 +9,12 @@ import {
 import { type Locale, LOCALES } from "./locale";
 
 type Props = {
+  ariaLabel: string;
   value: Locale;
   onValueChange: (value: Locale) => void;
 };
 
-export function LanguageSelect({ value, onValueChange }: Props) {
+export function LanguageSelect({ value, onValueChange, ariaLabel }: Props) {
   return (
     <Select
       value={value}
@@ -23,7 +24,7 @@ export function LanguageSelect({ value, onValueChange }: Props) {
         if (locale) onValueChange(locale.value);
       }}
     >
-      <SelectTrigger className="language-select">
+      <SelectTrigger aria-label={ariaLabel} className="language-select">
         <SelectValue />
       </SelectTrigger>
       <SelectPopup className="language-options" alignItemWithTrigger>

@@ -181,10 +181,10 @@ function Updates() {
                   },
                 )}
               </TimelineTime>
-              <h3>{update.title}</h3>
+              <h3>{message(update.titleKey)}</h3>
               <ul>
-                {update.changes.map((change) => (
-                  <li key={change}>{change}</li>
+                {update.changeKeys.map((change) => (
+                  <li key={change}>{message(change)}</li>
                 ))}
               </ul>
             </TimelineContent>

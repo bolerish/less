@@ -69,7 +69,7 @@
     "message": "准备中…"
   },
   "panel_paused": {
-    "message": "隐藏已暂停。请在上方开启后隐藏项目。"
+    "message": "此网站的隐藏功能已关闭。开启后即可隐藏项目。"
   },
   "panel_refresh": {
     "message": "刷新列表"
@@ -84,7 +84,7 @@
     "message": "隐藏规则已更新。"
   },
   "panel_reset_done": {
-    "message": "此网站的所有项目已恢复显示。"
+    "message": "已移除此网站的全部隐藏规则。"
   },
   "panel_empty_title": {
     "message": "暂无隐藏项目"
@@ -114,7 +114,7 @@
     "message": "无法加载隐藏项目，请重试。"
   },
   "panel_save_error": {
-    "message": "无法保存更改。请重试；若问题持续，请重新加载 Less。"
+    "message": "无法保存更改，请重试。"
   },
   "panel_selection_error": {
     "message": "无法开始选择。请刷新页面后重试。"
@@ -129,7 +129,7 @@
     "message": "已安装版本 $1"
   },
   "panel_unreleased": {
-    "message": "即将发布"
+    "message": "尚未发布"
   },
   "panel_released": {
     "message": "已发布"
@@ -144,7 +144,7 @@
     "message": "在此页面找不到项目，隐藏规则保持不变。"
   },
   "panel_hidden_parent": {
-    "message": "此项目被隐藏的上级区域遮挡，隐藏规则保持不变。"
+    "message": "此项目位于另一个已隐藏的区域内，隐藏规则保持不变。"
   },
   "panel_covered": {
     "message": "此项目被页面布局遮挡，隐藏规则保持不变。"
@@ -178,5 +178,65 @@
   },
   "panel_version_updates_unread": {
     "message": "v$1 · 有未读更新"
+  },
+  "panel_selection_prompt": {
+    "message": "选择要隐藏的项目"
+  },
+  "panel_selection_count_one": {
+    "message": "已隐藏$1项"
+  },
+  "panel_selection_count_other": {
+    "message": "已隐藏$1项"
+  },
+  "panel_selection_close": {
+    "message": "退出选择"
+  },
+  "panel_selection_undo": {
+    "message": "撤销上一次隐藏"
+  },
+  "panel_selection_restore_error": {
+    "message": "无法取消隐藏此项目，请重试。"
+  },
+  "panel_selection_save_error": {
+    "message": "无法保存隐藏设置，请重试。"
+  },
+  "panel_unavailable_title": {
+    "message": "Less — 打开网站"
+  },
+  "panel_unavailable_heading": {
+    "message": "无法在此页面打开 Less"
+  },
+  "panel_unavailable_action": {
+    "message": "请打开网站，然后点击浏览器工具栏中的 Less 图标。"
+  },
+  "panel_unavailable_protected": {
+    "message": "Less 无法在浏览器设置、扩展程序商店等受保护的页面打开面板。"
+  },
+  "panel_unavailable_reload": {
+    "message": "如果刚安装或更新了 Less，请刷新网站后重试。已保存的隐藏规则会保留。"
+  },
+  "panel_toolbar_unavailable": {
+    "message": "无法在此处打开 Less。请打开网站或刷新页面。"
+  },
+  "panel_release_1_2_0_title": {
+    "message": "更简洁的面板，全新名称 Less"
+  },
+  "panel_release_1_2_0_change_1": {
+    "message": "Less 会保留已保存的隐藏规则和网站设置。"
+  },
+  "panel_release_1_2_0_change_2": {
+    "message": "可在列表工具栏中刷新列表或取消全部隐藏。点击底部版本号可查看更新内容。"
+  },
+  "panel_release_1_2_0_change_3": {
+    "message": "尚未查看的已发布更新会显示未读标记。"
+  },
+  "panel_release_1_2_0_change_4": {
+    "message": "点击工具栏中的 Less 图标，即可在当前网站打开面板。"
+  },
+  "panel_release_1_2_0_change_5": {
+    "message": "无需关闭页面，即可取消单个项目的隐藏，或移除此网站的全部隐藏规则。"
+  },
+  "panel_release_1_2_0_change_6": {
+    "message": "计数表示当前网站已保存的隐藏规则数，取消隐藏后会减少。"
   }
 }

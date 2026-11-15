@@ -23,7 +23,8 @@ function App() {
 
   useEffect(() => {
     document.documentElement.lang = LOCALE_TO_LANG[locale];
-  }, [locale]);
+    document.title = t.documentTitle;
+  }, [locale, t.documentTitle]);
 
   return (
     <main className="welcome">
@@ -31,12 +32,12 @@ function App() {
         {/* Header */}
         <div className="welcome-header">
           <div className="welcome-brand">
-            <img src={wxtLogo} alt="Less logo" width={32} />
+            <img src={wxtLogo} alt="" width={32} />
             <Heading level={1} size="page" className="welcome-title">
               {t.title}
             </Heading>
           </div>
-          <LanguageSelect value={locale} onValueChange={setLocale} />
+          <LanguageSelect ariaLabel={t.languageLabel} value={locale} onValueChange={setLocale} />
         </div>
 
         <Separator className="welcome-divider" />

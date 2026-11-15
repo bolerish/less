@@ -69,7 +69,7 @@
     "message": "Starting…"
   },
   "panel_paused": {
-    "message": "Hiding is paused. Turn it on above to hide an item."
+    "message": "Hiding is off for this site. Turn it on to hide an item."
   },
   "panel_refresh": {
     "message": "Refresh list"
@@ -84,7 +84,7 @@
     "message": "Hiding rules updated."
   },
   "panel_reset_done": {
-    "message": "All items on this site are unhidden."
+    "message": "All hiding rules for this site have been removed."
   },
   "panel_empty_title": {
     "message": "Nothing hidden here"
@@ -96,7 +96,7 @@
     "message": "Unhide all"
   },
   "panel_reset_confirm": {
-    "message": "Unhide all $1 items on this site? Their hiding rules will be removed."
+    "message": "Unhide every saved item on this site ($1)? Their hiding rules will be removed."
   },
   "panel_reset_all": {
     "message": "Unhide all"
@@ -114,7 +114,7 @@
     "message": "Could not load hidden items. Try again."
   },
   "panel_save_error": {
-    "message": "Could not save changes. Try again. If this continues, reload Less."
+    "message": "Could not save changes. Try again."
   },
   "panel_selection_error": {
     "message": "Could not start selection. Reload the page and try again."
@@ -144,7 +144,7 @@
     "message": "Item not found on this page. Its hiding rule is unchanged."
   },
   "panel_hidden_parent": {
-    "message": "A hidden container covers this item. Its hiding rule is unchanged."
+    "message": "This item is inside another hidden area. Its hiding rule is unchanged."
   },
   "panel_covered": {
     "message": "The page layout covers this item. Its hiding rule is unchanged."
@@ -178,5 +178,65 @@
   },
   "panel_version_updates_unread": {
     "message": "v$1 · Unread updates"
+  },
+  "panel_selection_prompt": {
+    "message": "Select an item"
+  },
+  "panel_selection_count_one": {
+    "message": "$1 hidden"
+  },
+  "panel_selection_count_other": {
+    "message": "$1 hidden"
+  },
+  "panel_selection_close": {
+    "message": "Exit selection"
+  },
+  "panel_selection_undo": {
+    "message": "Undo the last hide"
+  },
+  "panel_selection_restore_error": {
+    "message": "Could not unhide this item. Try again."
+  },
+  "panel_selection_save_error": {
+    "message": "Could not save this item. Try again."
+  },
+  "panel_unavailable_title": {
+    "message": "Less — Open a website"
+  },
+  "panel_unavailable_heading": {
+    "message": "Less could not open on this page"
+  },
+  "panel_unavailable_action": {
+    "message": "Open a website, then click the Less icon in your browser toolbar."
+  },
+  "panel_unavailable_protected": {
+    "message": "Less cannot open its panel on browser settings, extension stores or other protected pages."
+  },
+  "panel_unavailable_reload": {
+    "message": "If you just installed or updated Less, reload the website and try again. Your saved hiding rules are kept."
+  },
+  "panel_toolbar_unavailable": {
+    "message": "Less cannot open here. Open a website or reload the page."
+  },
+  "panel_release_1_2_0_title": {
+    "message": "A simpler panel, now called Less"
+  },
+  "panel_release_1_2_0_change_1": {
+    "message": "Less keeps your saved hiding rules and site settings."
+  },
+  "panel_release_1_2_0_change_2": {
+    "message": "Refresh the hidden-item list or unhide all items from the list toolbar. Open updates from the version at the bottom."
+  },
+  "panel_release_1_2_0_change_3": {
+    "message": "An unread indicator appears for released updates you have not opened yet."
+  },
+  "panel_release_1_2_0_change_4": {
+    "message": "Click the Less toolbar icon to open the panel on the current website."
+  },
+  "panel_release_1_2_0_change_5": {
+    "message": "Unhide one item or clear this site’s hiding rules while keeping the page open."
+  },
+  "panel_release_1_2_0_change_6": {
+    "message": "The count shows saved hiding rules for the current site. Unhiding an item lowers it."
   }
 }

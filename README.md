@@ -2,7 +2,7 @@
 
 <img src="/src/assets/logo.png" alt="Less logo" width="100" />
 
-Hide elements on any webpage.
+Hide what you don’t need.
 
 ---
 

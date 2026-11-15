@@ -166,5 +166,11 @@
   },
   "panel_hidden_noun_other": {
     "message": "Hidden items"
+  },
+  "panel_updates_unread": {
+    "message": "Updates · Unread"
+  },
+  "panel_latest": {
+    "message": "Latest"
   }
 }

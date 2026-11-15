@@ -3,7 +3,7 @@
 // node scripts/verify-sidepanel.ts --chromium /path/to/Chrome
 import assert from "node:assert/strict";
 import vm from "node:vm";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -18,6 +18,11 @@ type DOMNode = {
 };
 type TabTarget = { targetId: string; url: string };
 type ExecutionContext = { id: number; origin: string };
+import { productUpdates } from "../src/features/updates/releases.ts";
+import {
+  getLatestReleasedUpdate,
+  UPDATES_SEEN_VERSION_KEY,
+} from "../src/features/updates/notice.ts";
 import type { HiddenElementRecord } from "../src/features/record/schema.ts";
 
 const { values } = parseArgs({
@@ -25,6 +30,7 @@ const { values } = parseArgs({
     chromium: { type: "string" },
     build: { type: "string", default: "dist/chrome-mv3" },
     "firefox-build": { type: "string" },
+    "released-update-fixture": { type: "boolean", default: false },
     screenshot: { type: "string", default: "/tmp/veil-in-page-panel.png" },
   },
 });
@@ -65,6 +71,30 @@ try {
   assert(address && typeof address !== "string");
   const origin = `http://127.0.0.1:${address.port}`;
   const manifest = JSON.parse(await readFile(join(values.build, "manifest.json"), "utf8"));
+  if (values["released-update-fixture"]) {
+    const sourceBuild = values.build;
+    values.build = join(directory, "released-update-fixture");
+    await cp(sourceBuild, values.build, { recursive: true });
+    const contentPath = join(values.build, "content-scripts/content.js");
+    const source = await readFile(contentPath, "utf8");
+    const draft = productUpdates.find((update) => update.status === "unreleased");
+    assert(draft, "an unreleased entry provides isolated notification fixture data");
+    const version = [
+      `version:${JSON.stringify(draft.version)}`,
+      "version:`" + draft.version + "`",
+    ].find((marker) => source.includes(marker));
+    const status = /status:(["`])unreleased\1/;
+    assert(version && status.test(source), "fixture finds the bundled release metadata");
+    await writeFile(
+      contentPath,
+      source
+        .replace(version, `version:${JSON.stringify(manifest.version)}`)
+        .replace(status, 'status:"released"'),
+    );
+    console.log(
+      "FIXTURE ONLY: a temporary build copy simulates an installed released update; production files stay unreleased",
+    );
+  }
   assert.equal(manifest.short_name, "Less");
   assert.equal(manifest.action.default_title, "Less");
   assert.equal(manifest.name, "__MSG_ext_name__");
@@ -343,6 +373,86 @@ try {
     await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.getAttribute("aria-label")),
     messages.panel_close,
   );
+  const unreadVersion = values["released-update-fixture"]
+    ? manifest.version
+    : getLatestReleasedUpdate(productUpdates, manifest.version)?.version;
+  await waitFor(
+    () => panel((d) => !d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled),
+    "initial records load before update notice checks",
+  );
+  if (unreadVersion) {
+    await waitFor(
+      () => panel((d) => !!d.querySelector(".update-notice-dot")),
+      "first unread released update displays a dot",
+    );
+    const badge = await panel((d) => {
+      const button = d.querySelector<HTMLElement>(".updates-button")!,
+        dot = button.querySelector<HTMLElement>(".update-notice-dot")!;
+      const a = button.getBoundingClientRect(),
+        b = dot.getBoundingClientRect();
+      return {
+        label: button.getAttribute("aria-label"),
+        side: b.left > a.left + a.width / 2 && b.top < a.top + a.height / 2,
+        hidden: dot.getAttribute("aria-hidden"),
+      };
+    });
+    assert.equal(badge.label, messages.panel_updates_unread);
+    assert(
+      badge.side && badge.hidden === "true",
+      "decorative unread dot occupies the top right of the full icon target",
+    );
+    await click(".updates-button");
+    await waitFor(
+      () => panel((d) => !!d.querySelector(".updates ol li")),
+      "updates actually opens before marking read",
+    );
+    await waitFor(
+      async () =>
+        (await worker.evaluate((key) => chrome.storage.local.get(key), UPDATES_SEEN_VERSION_KEY))[
+          UPDATES_SEEN_VERSION_KEY
+        ] === unreadVersion,
+      "viewed release version persisted",
+    );
+    await site.keyboard.press("Escape");
+    await waitFor(
+      () => panel((d) => !d.querySelector(".update-notice-dot")),
+      "opening the timeline clears unread dot",
+    );
+    await action();
+    await waitFor(
+      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      "close read panel",
+    );
+    await action();
+    assert.equal(
+      await panel((d) => !!d.querySelector(".update-notice-dot")),
+      false,
+      "read state survives panel remount",
+    );
+    await worker.evaluate((key) => chrome.storage.local.remove(key), UPDATES_SEEN_VERSION_KEY);
+    await waitFor(
+      () => panel((d) => !!d.querySelector(".update-notice-dot")),
+      "external storage change synchronizes unread state",
+    );
+    await worker.evaluate(({ key, version }) => chrome.storage.local.set({ [key]: version }), {
+      key: UPDATES_SEEN_VERSION_KEY,
+      version: unreadVersion,
+    });
+    await waitFor(
+      () => panel((d) => !d.querySelector(".update-notice-dot")),
+      "external read state synchronizes without reopening",
+    );
+    console.log(
+      "PASS unread dot position/name, opening marks read, persistent remount and cross-context storage synchronization",
+    );
+  } else {
+    assert.equal(
+      await panel((d) => !!d.querySelector(".update-notice-dot")),
+      false,
+      "unreleased/future updates do not claim new released content",
+    );
+    console.log("PASS no misleading unread badge for bundled unreleased content");
+  }
   await click('.preference [role="switch"]');
   await waitFor(
     () =>
@@ -634,7 +744,7 @@ try {
   await site.keyboard.press("Escape");
   await waitFor(() => textIncludes(messages.panel_hidden_items), "updates back");
   assert.equal(
-    await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.textContent),
+    await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.getAttribute("aria-label")),
     messages.panel_updates,
   );
 

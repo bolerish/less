@@ -16,7 +16,13 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@bolerish/ui/timeline";
-import { ArrowClockwiseIcon, CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
+import {
+  ArrowClockwiseIcon,
+  CaretLeftIcon,
+  ClockCounterClockwiseIcon,
+  CursorClickIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import {
   useEffect,
   useEffectEvent,
@@ -35,6 +41,8 @@ import {
   type ManagementRequest,
 } from "~features/record/management";
 import { productUpdates } from "~features/updates/releases";
+import { getLatestReleasedUpdate } from "~features/updates/notice";
+import { useUpdateNotice } from "~features/updates/use-update-notice";
 import {
   getSiteHidingEnabled,
   setSiteHidingEnabled,
@@ -55,6 +63,7 @@ export default function App({
   onSelect: () => void;
 }) {
   const [view, setView] = useState<"hidden" | "updates">("hidden");
+  const hasUnreadUpdates = useUpdateNotice(view === "updates");
   const updatesButton = useRef<HTMLButtonElement>(null);
   const updatesHeading = useRef<HTMLHeadingElement>(null);
   const previousView = useRef(view);
@@ -120,6 +129,7 @@ export default function App({
       <div hidden={view !== "hidden"}>
         <TooltipProvider>
           <HiddenItems
+            hasUnreadUpdates={hasUnreadUpdates}
             updatesButton={updatesButton}
             onUpdates={() => {
               preview?.clear();
@@ -138,6 +148,7 @@ export default function App({
 }
 
 function Updates() {
+  const latest = getLatestReleasedUpdate(productUpdates, browser.runtime.getManifest().version);
   return (
     <section className="updates" aria-label={message("panel_updates")}>
       <p className="muted">{message("panel_updates_help")}</p>
@@ -147,19 +158,27 @@ function Updates() {
             <TimelineIndicator />
             <TimelineContent>
               <TimelineTitle>
-                <h2 className="update-version">
-                  {update.version} ·{" "}
-                  {update.status === "unreleased"
-                    ? message("panel_unreleased")
-                    : message("panel_released")}
-                </h2>
+                <div className="update-heading">
+                  <h2 className="update-version">{update.version}</h2>
+                  <Badge variant="outline">
+                    {update.status === "unreleased"
+                      ? message("panel_unreleased")
+                      : message("panel_released")}
+                  </Badge>
+                  {update === latest ? (
+                    <Badge variant="primary">{message("panel_latest")}</Badge>
+                  ) : null}
+                </div>
               </TimelineTitle>
               <TimelineTime dateTime={update.date}>
-                {new Date(`${update.date}T00:00:00`).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
+                {new Date(`${update.date}T00:00:00`).toLocaleDateString(
+                  browser.i18n.getUILanguage(),
+                  {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  },
+                )}
               </TimelineTime>
               <h3>{update.title}</h3>
               <ul>
@@ -179,6 +198,7 @@ function Updates() {
 }
 
 function HiddenItems({
+  hasUnreadUpdates,
   updatesButton,
   onUpdates,
   origin,
@@ -186,6 +206,7 @@ function HiddenItems({
   preview,
   portalContainer,
 }: {
+  hasUnreadUpdates: boolean;
   updatesButton: RefObject<HTMLButtonElement | null>;
   onUpdates: () => void;
   origin: string;
@@ -495,15 +516,18 @@ function HiddenItems({
       ) : null}
       <footer className="reset">
         <div className="footer-links">
-          <Button
-            ref={updatesButton}
+          <IconTooltipButton
+            buttonRef={updatesButton}
             className="updates-button"
-            variant="ghost"
-            size="sm"
+            label={hasUnreadUpdates ? message("panel_updates_unread") : message("panel_updates")}
+            tooltip={hasUnreadUpdates ? message("panel_updates_unread") : message("panel_updates")}
+            disabled={false}
+            portalContainer={portalContainer}
             onClick={onUpdates}
           >
-            {message("panel_updates")}
-          </Button>
+            <ClockCounterClockwiseIcon aria-hidden="true" />
+            {hasUnreadUpdates ? <span className="update-notice-dot" aria-hidden="true" /> : null}
+          </IconTooltipButton>
           {records && records.length > 0 && !confirmReset ? (
             <Button
               className="reset-button"
@@ -549,6 +573,7 @@ function HiddenItems({
 }
 
 function IconTooltipButton({
+  buttonRef,
   label,
   tooltip,
   className,
@@ -558,6 +583,7 @@ function IconTooltipButton({
   onClick,
   portalContainer,
 }: {
+  buttonRef?: RefObject<HTMLButtonElement | null>;
   label: string;
   tooltip: string;
   className: string;
@@ -574,6 +600,7 @@ function IconTooltipButton({
       <TooltipTrigger
         render={
           <Button
+            ref={buttonRef}
             variant="ghost"
             size="icon"
             disabled={disabled}

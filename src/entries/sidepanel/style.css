@@ -328,7 +328,7 @@ time {
   flex-wrap: wrap;
   gap: var(--veil-spacing-space-2) var(--veil-spacing-space-4);
 }
-.footer-links > button {
+.footer-links > .reset-button {
   min-width: 0;
   max-width: 100%;
   height: auto;
@@ -345,7 +345,28 @@ time {
   flex-wrap: wrap;
   gap: var(--veil-spacing-space-2);
 }
+.updates-button {
+  flex-shrink: 0;
+}
+.update-notice-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--veil-radius-full);
+  background: var(--veil-color-fg-primary);
+  box-shadow: 0 0 0 2px var(--veil-app-background, var(--veil-color-bg-canvas));
+  pointer-events: none;
+}
+.update-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--veil-spacing-space-2);
+}
 .updates {
+  overflow-wrap: anywhere;
   flex: 1;
   min-height: 0;
   overflow: auto;

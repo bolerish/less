@@ -166,5 +166,11 @@
   },
   "panel_hidden_noun_other": {
     "message": "非表示の項目"
+  },
+  "panel_updates_unread": {
+    "message": "更新情報 · 未読あり"
+  },
+  "panel_latest": {
+    "message": "最新"
   }
 }

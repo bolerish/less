@@ -166,5 +166,11 @@
   },
   "panel_hidden_noun_other": {
     "message": "隐藏项目"
+  },
+  "panel_updates_unread": {
+    "message": "更新 · 有未读消息"
+  },
+  "panel_latest": {
+    "message": "最新"
   }
 }

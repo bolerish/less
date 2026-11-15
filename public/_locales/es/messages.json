@@ -166,5 +166,11 @@
   },
   "panel_hidden_noun_other": {
     "message": "Elementos ocultos"
+  },
+  "panel_updates_unread": {
+    "message": "Novedades · Sin leer"
+  },
+  "panel_latest": {
+    "message": "Más reciente"
   }
 }

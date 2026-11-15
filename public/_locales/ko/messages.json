@@ -166,5 +166,11 @@
   },
   "panel_hidden_noun_other": {
     "message": "숨긴 항목"
+  },
+  "panel_updates_unread": {
+    "message": "업데이트 · 읽지 않은 소식"
+  },
+  "panel_latest": {
+    "message": "최신"
   }
 }

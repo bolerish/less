@@ -1,0 +1,4 @@
+/* NativeSelect's fixed minimum exceeds the panel at 200% browser zoom. */
+.language-control > select {
+  min-width: 0;
+}

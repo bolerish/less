@@ -1,3 +1,4 @@
+import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Badge } from "@bolerish/ui/badge";
@@ -9,11 +10,13 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@bolerish/ui/timeline";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { productUpdates } from "~features/updates/releases";
 import { getLatestReleasedUpdate } from "~features/updates/notice";
 
 export function Updates() {
+  const message = usePanelMessage();
+  const language = useLanguage();
   const latest = getLatestReleasedUpdate(productUpdates, browser.runtime.getManifest().version);
   return (
     <section
@@ -58,14 +61,11 @@ export function Updates() {
                 </div>
               </TimelineTitle>
               <TimelineTime dateTime={update.date}>
-                {new Date(`${update.date}T00:00:00`).toLocaleDateString(
-                  browser.i18n.getUILanguage(),
-                  {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  },
-                )}
+                {new Date(`${update.date}T00:00:00`).toLocaleDateString(language, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
               </TimelineTime>
               <h3 {...stylex.props(styles.updateTitle)}>{message(update.titleKey)}</h3>
               <ul {...stylex.props(styles.updateList)}>

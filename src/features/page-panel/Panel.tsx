@@ -1,3 +1,5 @@
+import { Settings } from "./settings/Settings";
+import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { TooltipProvider } from "@bolerish/ui/tooltip";
@@ -7,7 +9,7 @@ import { CaretLeftIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import logo from "~assets/logo.png";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { useUpdateNotice } from "~features/updates/use-update-notice";
 import { HiddenItems } from "./hidden-items/HiddenItems";
 import { Updates } from "./updates/Updates";
@@ -25,30 +27,44 @@ export default function Panel({
   onClose: () => void;
   onSelect: () => void;
 }) {
-  const [view, setView] = useState<"hidden" | "updates">("hidden");
+  const message = usePanelMessage();
+  const language = useLanguage();
+  const [view, setView] = useState<"hidden" | "updates" | "settings">("hidden");
   const hasUnreadUpdates = useUpdateNotice(view === "updates");
   const updatesButton = useRef<HTMLButtonElement>(null);
-  const updatesHeading = useRef<HTMLHeadingElement>(null);
+  const settingsButton = useRef<HTMLButtonElement>(null);
+  const viewHeading = useRef<HTMLHeadingElement>(null);
   const previousView = useRef(view);
   const closeButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = closeButton.current?.closest("dialog");
+    if (dialog) {
+      dialog.lang = language;
+      dialog.setAttribute("aria-label", message("panel_dialog"));
+    }
+  }, [message, language]);
 
   useEffect(() => {
     closeButton.current?.focus();
   }, []);
 
   useEffect(() => {
-    if (view === "updates") updatesHeading.current?.focus();
+    if (view !== "hidden") viewHeading.current?.focus();
     else if (previousView.current === "updates")
       updatesButton.current?.focus({ preventScroll: true });
+    else if (previousView.current === "settings")
+      settingsButton.current?.focus({ preventScroll: true });
     previousView.current = view;
-    updatesHeading.current?.closest("dialog")?.scrollTo(0, 0);
+    viewHeading.current?.closest("dialog")?.scrollTo(0, 0);
   }, [view]);
 
   return (
     <main
+      lang={language}
       className={["panel", stylex.props(styles.panel).className].join(" ")}
       onKeyDown={(event) => {
-        if (event.key === "Escape" && view === "updates") {
+        if (event.key === "Escape" && view !== "hidden") {
           event.preventDefault();
           event.stopPropagation();
           setView("hidden");
@@ -82,13 +98,11 @@ export default function Panel({
             <Heading
               level={1}
               size="subsection"
-              ref={updatesHeading}
+              ref={viewHeading}
               tabIndex={-1}
-              className={["updates-heading", stylex.props(styles.updatesHeading).className].join(
-                " ",
-              )}
+              className={["updates-heading", stylex.props(styles.viewHeading).className].join(" ")}
             >
-              {message("panel_updates")}
+              {message(view === "settings" ? "panel_settings" : "panel_updates")}
             </Heading>
           </>
         )}
@@ -106,6 +120,11 @@ export default function Panel({
       <div hidden={view !== "hidden"} {...stylex.props(styles.content)}>
         <TooltipProvider>
           <HiddenItems
+            settingsButton={settingsButton}
+            onSettings={() => {
+              preview?.clear();
+              setView("settings");
+            }}
             hasUnreadUpdates={hasUnreadUpdates}
             updatesButton={updatesButton}
             onUpdates={() => {
@@ -120,6 +139,7 @@ export default function Panel({
         </TooltipProvider>
       </div>
       {view === "updates" ? <Updates /> : null}
+      {view === "settings" ? <Settings /> : null}
     </main>
   );
 }
@@ -164,7 +184,7 @@ const styles = stylex.create({
     height: 16,
     flexShrink: 0,
   },
-  updatesHeading: {
+  viewHeading: {
     ":is(.updates-heading)": {
       outline: { ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
       outlineOffset: { ":focus-visible": 3 },

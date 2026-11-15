@@ -1,3 +1,5 @@
+import { getLanguage, subscribeLocale } from "~shared/locale/preference";
+import type { PanelMessage } from "~features/record/management-messages";
 import * as stylex from "@stylexjs/stylex";
 import {
   colorVars,
@@ -15,23 +17,47 @@ import { getPaintedRect } from "~shared/lib/painted-rect";
 export const HIGHLIGHT_ATTR = "data-less-highlight";
 export const STATUS_BAR_ATTR = "data-less-ui";
 
+let unsubscribeLocale: (() => void) | undefined;
+let statusCount = 0;
+let statusHasUndo = false;
+let statusError: PanelMessage | null = null;
+
 let _highlightEl: HTMLDivElement | null = null;
 let _statusBarEl: HTMLDivElement | null = null;
 let _statusInfoEl: HTMLSpanElement | null = null;
 let _statusRestoreEl: HTMLButtonElement | null = null;
 
 export function mountSelectionUI(onClose: () => void, onUndo: () => void): void {
+  statusCount = 0;
+  statusHasUndo = false;
+  statusError = null;
   _highlightEl = buildHighlightOverlay();
   document.documentElement.appendChild(_highlightEl);
 
-  const { wrapper, infoEl, restoreEl } = buildStatusBar(onClose, onUndo);
+  const { wrapper, infoEl, restoreEl, closeBtn } = buildStatusBar(onClose, onUndo);
   _statusBarEl = wrapper;
   _statusInfoEl = infoEl;
   _statusRestoreEl = restoreEl;
   document.documentElement.appendChild(_statusBarEl);
+  const syncLanguage = () => {
+    wrapper.lang = getLanguage();
+    infoEl.title = message("panel_selection_keys");
+    closeBtn.setAttribute("aria-label", message("panel_selection_close"));
+    restoreEl.setAttribute("aria-label", message("panel_selection_undo"));
+    const error = statusError;
+    updateStatusBarContent(statusCount, statusHasUndo);
+    if (error) updateStatusBarError(error);
+  };
+  syncLanguage();
+  unsubscribeLocale = subscribeLocale(syncLanguage);
 }
 
 export function unmountSelectionUI(): void {
+  unsubscribeLocale?.();
+  unsubscribeLocale = undefined;
+  statusCount = 0;
+  statusHasUndo = false;
+  statusError = null;
   _highlightEl?.remove();
   _highlightEl = null;
   _statusBarEl?.remove();
@@ -61,15 +87,18 @@ export function updateHighlight(target: HTMLElement | null): void {
 }
 
 export function updateStatusBarContent(count: number, hasUndo: boolean): void {
+  statusCount = count;
+  statusHasUndo = hasUndo;
+  statusError = null;
   if (_statusInfoEl) {
     _statusInfoEl.removeAttribute("role");
     _statusInfoEl.textContent =
       count > 0
         ? message(
-            new Intl.PluralRules(browser.i18n.getUILanguage()).select(count) === "one"
+            new Intl.PluralRules(getLanguage()).select(count) === "one"
               ? "panel_selection_count_one"
               : "panel_selection_count_other",
-            [new Intl.NumberFormat(browser.i18n.getUILanguage()).format(count)],
+            [new Intl.NumberFormat(getLanguage()).format(count)],
           )
         : message("panel_selection_prompt");
   }
@@ -78,10 +107,11 @@ export function updateStatusBarContent(count: number, hasUndo: boolean): void {
   }
 }
 
-export function updateStatusBarError(message: string): void {
+export function updateStatusBarError(key: PanelMessage): void {
+  statusError = key;
   if (!_statusInfoEl) return;
   _statusInfoEl.setAttribute("role", "alert");
-  _statusInfoEl.textContent = message;
+  _statusInfoEl.textContent = message(key);
 }
 
 function buildHighlightOverlay(): HTMLDivElement {
@@ -94,7 +124,12 @@ function buildHighlightOverlay(): HTMLDivElement {
 function buildStatusBar(
   onClose: () => void,
   onUndo: () => void,
-): { wrapper: HTMLDivElement; infoEl: HTMLSpanElement; restoreEl: HTMLButtonElement } {
+): {
+  wrapper: HTMLDivElement;
+  infoEl: HTMLSpanElement;
+  restoreEl: HTMLButtonElement;
+  closeBtn: HTMLButtonElement;
+} {
   const { host: wrapper, surface } = createSelectionSurface(
     STATUS_BAR_ATTR,
     isPageDark(),
@@ -159,7 +194,7 @@ function buildStatusBar(
   });
   surface.appendChild(restoreEl);
 
-  return { wrapper, infoEl, restoreEl };
+  return { wrapper, infoEl, restoreEl, closeBtn };
 }
 
 function createSeparator(): HTMLSpanElement {

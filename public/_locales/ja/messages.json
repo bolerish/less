@@ -229,5 +229,17 @@
   },
   "panel_failure_generic": {
     "message": "Lessを開けませんでした。もう一度お試しください。"
+  },
+  "panel_settings": {
+    "message": "設定"
+  },
+  "panel_language": {
+    "message": "言語"
+  },
+  "panel_language_auto": {
+    "message": "ブラウザーの言語"
+  },
+  "panel_language_error": {
+    "message": "言語を保存できませんでした。もう一度お試しください。"
   }
 }

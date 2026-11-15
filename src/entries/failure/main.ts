@@ -1,3 +1,4 @@
+import { initializeLocale, getLanguage, subscribeLocale } from "~shared/locale/preference";
 import logo from "~assets/logo.png";
 import { getPanelMessage } from "~features/record/management-messages";
 import "~shared/styles/preferred-theme";
@@ -7,8 +8,13 @@ import { typo } from "@bolerish/tokens/semantic.stylex";
 const params = new URLSearchParams(location.search);
 const reason = params.get("reason");
 const key = reason === "protected" || reason === "reload" ? reason : "generic";
-document.documentElement.lang = browser.i18n.getUILanguage().replace("_", "-");
-document.getElementById("message")!.textContent = getPanelMessage(`panel_failure_${key}`);
+function renderMessage() {
+  document.documentElement.lang = getLanguage();
+  document.getElementById("message")!.textContent = getPanelMessage(`panel_failure_${key}`);
+}
+await initializeLocale();
+renderMessage();
+subscribeLocale(renderMessage);
 (document.getElementById("logo") as HTMLImageElement).src = logo;
 
 if (params.has("request")) {

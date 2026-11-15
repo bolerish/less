@@ -229,5 +229,17 @@
   },
   "panel_failure_generic": {
     "message": "Less를 열지 못했어요. 다시 시도하세요."
+  },
+  "panel_settings": {
+    "message": "설정"
+  },
+  "panel_language": {
+    "message": "언어"
+  },
+  "panel_language_auto": {
+    "message": "브라우저 언어"
+  },
+  "panel_language_error": {
+    "message": "언어를 저장하지 못했어요. 다시 시도해 주세요."
   }
 }

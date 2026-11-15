@@ -377,15 +377,16 @@ try {
   async function selectionSurface<T>(
     attribute: string,
     fn: (surface: HTMLElement) => T,
+    targetSession = session,
   ): Promise<T> {
-    const { root } = await session.send("DOM.getDocument", { depth: -1, pierce: true });
+    const { root } = await targetSession.send("DOM.getDocument", { depth: -1, pierce: true });
     const host = findNode(root, (n) => n.attributes?.includes(attribute) ?? false);
     const surface = host?.shadowRoots?.[0]?.children?.find((n) => n.nodeName === "DIV");
     assert(surface, `${attribute}: closed shadow surface exists`);
-    const { object } = await session.send("DOM.resolveNode", {
+    const { object } = await targetSession.send("DOM.resolveNode", {
       backendNodeId: surface.backendNodeId,
     });
-    const result = await session.send("Runtime.callFunctionOn", {
+    const result = await targetSession.send("Runtime.callFunctionOn", {
       objectId: object.objectId,
       functionDeclaration: `function(){return (${fn.toString()})(this)}`,
       returnByValue: true,
@@ -2329,14 +2330,80 @@ try {
   await session.send("Runtime.enable");
   const uiWorld = uiContexts.find((c) => c.origin === `chrome-extension://${id}`);
   assert(uiWorld, "content isolated world for localized real UI");
-  const savedI18n = await session.send("Runtime.evaluate", {
-    contextId: uiWorld.id,
-    expression: `(() => {
-      const getMessage = chrome.i18n.getMessage;
-      const getUILanguage = chrome.i18n.getUILanguage;
-      return () => { chrome.i18n.getMessage = getMessage; chrome.i18n.getUILanguage = getUILanguage; };
-    })()`,
+  // Exercise the user's actual language control with another live extension document.
+  const welcomePage = await activeContext.newPage();
+  await welcomePage.goto(`chrome-extension://${id}/welcome.html`);
+  await welcomePage.getByRole("combobox").waitFor();
+  await site.bringToFront();
+  await click(".settings-button");
+  assert.equal(
+    await panel((d) => d.querySelector("select")!.value),
+    "auto",
+    "browser language is the default",
+  );
+  await panel((d) => d.querySelector("select")!.focus());
+  // Native option menus are owned by macOS in headless Chrome; dispatch its standard change event.
+  await panel((d) => {
+    const select = d.querySelector("select")!;
+    select.value = "es";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
   });
+  await waitFor(
+    () => panel((d) => d.querySelector("select")!.value === "es" && d.lang === "es"),
+    "language change updates mounted settings",
+  );
+  assert.equal(
+    await worker.evaluate(
+      async () => (await chrome.storage.local.get("less:locale"))["less:locale"],
+    ),
+    "es",
+  );
+  await welcomePage.getByRole("combobox", { name: "Idioma" }).waitFor();
+  await welcomePage.getByRole("heading", { name: "Oculta lo innecesario con Less." }).waitFor();
+  await welcomePage.reload();
+  await welcomePage.getByRole("combobox", { name: "Idioma" }).waitFor();
+  await welcomePage.getByRole("combobox", { name: "Idioma" }).click();
+  await welcomePage.getByRole("option", { name: "日本語" }).click();
+  await waitFor(
+    () => panel((d) => d.querySelector("select")!.value === "ja" && d.lang === "ja"),
+    "welcome selection synchronizes mounted panel",
+  );
+  const siblingSession = await activeContext.newCDPSession(sibling);
+  await sibling.bringToFront();
+  await sibling.keyboard.press("Control+Shift+E");
+  await sibling.locator("[data-less-ui]").waitFor();
+  await welcomePage.getByRole("combobox", { name: "言語" }).click();
+  await welcomePage.getByRole("option", { name: "Español" }).click();
+  const spanish = JSON.parse(
+    await readFile(join(values.build, "_locales/es/messages.json"), "utf8"),
+  );
+  await waitFor(async () => {
+    const toolbar = await selectionSurface(
+      "data-less-ui",
+      (surface) => ({
+        text: surface.querySelector("span")!.textContent,
+        keys: surface.querySelector("span")!.title,
+        close: surface.querySelector("button")!.getAttribute("aria-label"),
+      }),
+      siblingSession,
+    );
+    return (
+      toolbar.text === spanish.panel_selection_prompt.message &&
+      toolbar.keys === spanish.panel_selection_keys.message &&
+      toolbar.close === spanish.panel_selection_close.message
+    );
+  }, "another tab's active selection toolbar translates without remounting");
+  await sibling.bringToFront();
+  await sibling.keyboard.press("Escape");
+  await siblingSession.detach();
+  await site.bringToFront();
+  await site.keyboard.press("Escape");
+  await waitFor(() => panel((d) => !d.querySelector("select")), "return to hidden items");
+  await worker.evaluate(() => chrome.storage.local.set({ "less:locale": "auto" }));
+  await welcomePage.close();
+  console.log(
+    "PASS real language control: default auto, selection change, persistence/reload, welcome and panel cross-context synchronization",
+  );
   for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
     const catalog = JSON.parse(
       await readFile(join(values.build, "_locales", locale, "messages.json"), "utf8"),
@@ -2346,17 +2413,7 @@ try {
       async () => (await site.locator("[data-less-panel]").count()) === 0,
       "close before locale switch",
     );
-    await session.send("Runtime.evaluate", {
-      contextId: uiWorld.id,
-      expression: `(() => {
-        const catalog = ${JSON.stringify(catalog)};
-        chrome.i18n.getMessage = (key, substitutions = []) => {
-          const values = typeof substitutions === "string" ? [substitutions] : substitutions;
-          return (catalog[key]?.message ?? "").replace(/\\$(\\d+)/g, (_, index) => values[Number(index) - 1] ?? "");
-        };
-        chrome.i18n.getUILanguage = () => ${JSON.stringify(locale.replace("_", "-"))};
-      })()`,
-    });
+    await worker.evaluate((locale) => chrome.storage.local.set({ "less:locale": locale }), locale);
     await site.keyboard.press("Control+Shift+E");
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
@@ -2445,11 +2502,20 @@ try {
       assert.equal(
         await panel(
           (d) =>
+            (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".settings-button"),
+        ),
+        true,
+        "settings follows version in tab order",
+      );
+      await site.keyboard.press("Tab");
+      assert.equal(
+        await panel(
+          (d) =>
             (d.getRootNode() as ShadowRoot).activeElement ===
             d.querySelector(".panel-header button:last-child"),
         ),
         true,
-        "version footer loops back to close in tab order",
+        "settings footer loops back to close in tab order",
       );
       // Restore a middle position after keyboard focus scrolled the last row into view.
       await panel((d, top) => {
@@ -2491,6 +2557,98 @@ try {
         await panel((d) => d.querySelector(".site-title")!.textContent),
         before.site,
         "current site retained",
+      );
+      const footer = await panel((d) => ({
+        footer: d.querySelector(".panel-footer")!.getBoundingClientRect().toJSON(),
+        version: d.querySelector(".updates-button")!.getBoundingClientRect().toJSON(),
+        settings: d.querySelector(".settings-button")!.getBoundingClientRect().toJSON(),
+      }));
+      assert(
+        Math.abs(footer.version.left - footer.footer.left) < 1 &&
+          Math.abs(footer.settings.right - footer.footer.right) < 1,
+        "version and settings align to opposite footer ends",
+      );
+      await panel((d) => d.querySelector<HTMLElement>(".settings-button")!.focus());
+      await waitFor(
+        () =>
+          panel(
+            (d, label) =>
+              Array.from(d.querySelectorAll('[role="tooltip"]')).some(
+                (tooltip) =>
+                  tooltip.id ===
+                    d.querySelector(".settings-button")!.getAttribute("aria-describedby") &&
+                  tooltip.textContent === label,
+              ),
+            catalog.panel_settings.message,
+          ),
+        "translated settings tooltip",
+      );
+      await site.keyboard.press("Enter");
+      await waitFor(
+        () => panel((d) => !!d.querySelector("select")),
+        "keyboard opens language settings",
+      );
+      assert.equal(
+        await panel((d) => d.querySelector("h1")!.textContent),
+        catalog.panel_settings.message,
+      );
+      await site.keyboard.press("Tab");
+      await site.keyboard.press("Tab");
+      await site.keyboard.press("Tab");
+      assert.equal(
+        await panel(
+          (d) => (d.getRootNode() as ShadowRoot).activeElement === d.querySelector("select"),
+        ),
+        true,
+        "language control is keyboard reachable",
+      );
+      assert.equal(await panel((d) => d.querySelector("select")!.value), locale);
+      assert.equal(
+        await panel((d) => d.querySelectorAll("option").length),
+        6,
+        "only auto and five supported locales",
+      );
+      for (const theme of ["light", "dark"] as const) {
+        await site.emulateMedia({ colorScheme: theme });
+        await waitFor(
+          () => panel((d) => d.getAnimations({ subtree: true }).length === 0),
+          "settings theme transition settled",
+        );
+        const layout = await panel((d) => {
+          const select = d.querySelector("select")!;
+          const rect = select.getBoundingClientRect();
+          return {
+            left: rect.left,
+            right: rect.right,
+            width: d.clientWidth,
+            scroll: d.scrollWidth,
+            font: parseFloat(getComputedStyle(select).fontSize),
+          };
+        });
+        assert(
+          layout.left >= 0 &&
+            layout.right <= width &&
+            layout.scroll <= layout.width &&
+            layout.font >= 14,
+          `${locale}/${width}/${theme}: readable language control without clipping`,
+        );
+        await site.screenshot({
+          path: values.screenshot.replace(/\.png$/, `-settings-${locale}-${width}-${theme}.png`),
+        });
+      }
+      await site.keyboard.press("Escape");
+      await waitFor(
+        () =>
+          panel(
+            (d) =>
+              (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".settings-button"),
+          ),
+        "settings returns focus to gear",
+      );
+      assert.equal(
+        await panel((d) => d.querySelector<HTMLElement>(".records")!.scrollTop),
+        before.scroll,
+        "settings retains list scroll",
       );
       const backgrounds: string[] = [];
       for (const colorScheme of ["light", "dark"] as const) {
@@ -2628,10 +2786,7 @@ try {
     async () => (await site.locator("[data-less-panel]").count()) === 0,
     "close localized panel",
   );
-  await session.send("Runtime.callFunctionOn", {
-    objectId: savedI18n.result.objectId,
-    functionDeclaration: "function(){this()}",
-  });
+  await worker.evaluate(() => chrome.storage.local.remove("less:locale"));
   await action();
   await waitFor(
     () => panel((d) => d.querySelectorAll(".record").length >= 17),
@@ -2831,6 +2986,21 @@ try {
     "last row action remains reachable at 200% zoom",
   );
   await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-zoom-200.png") });
+  await click(".settings-button");
+  const settingsZoom = await panel((d) => {
+    const select = d.querySelector("select")!;
+    return {
+      right: select.getBoundingClientRect().right,
+      viewport: innerWidth,
+      scroll: d.scrollWidth,
+      width: d.clientWidth,
+    };
+  });
+  assert(
+    settingsZoom.right <= settingsZoom.viewport && settingsZoom.scroll <= settingsZoom.width,
+    "settings fit at 200% browser zoom",
+  );
+  await site.keyboard.press("Escape");
   await worker.evaluate((tabId) => chrome.tabs.setZoom(tabId, 1), zoomTab);
   await site.setViewportSize({ width: 375, height: 720 });
   await click('.locate-button[aria-label*="Weather"]');

@@ -14,13 +14,20 @@ import {
 import { useEffect, useState } from "react";
 import wxtLogo from "~assets/logo.png";
 import { LanguageSelect } from "./LanguageSelect";
-import { type Locale, LOCALE_TO_LANG, detectLocale, translations } from "./locale";
+import { translations } from "./locale";
+import { LOCALE_TO_LANG, detectLocale } from "~shared/locale/locales";
+import { useLocalePreference } from "~shared/locale/use-locale";
+import { setLocalePreference } from "~shared/locale/preference";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 // Steps at index 2 and 3 show inline shortcuts (⇧ Ctrl E and ⇧ Ctrl Z).
 const STEP_SHORTCUTS = [null, null, ["⇧", "Ctrl", "E"], ["⇧", "Ctrl", "Z"]] as const;
 
 function App() {
-  const [locale, setLocale] = useState<Locale>(detectLocale);
+  const preference = useLocalePreference();
+  const locale = preference === "auto" ? detectLocale(browser.i18n.getUILanguage()) : preference;
+  const message = usePanelMessage();
+  const [error, setError] = useState(false);
   const t = translations[locale];
 
   useEffect(() => {
@@ -43,9 +50,17 @@ function App() {
               {t.title}
             </Heading>
           </div>
-          <LanguageSelect ariaLabel={t.languageLabel} value={locale} onValueChange={setLocale} />
+          <LanguageSelect
+            ariaLabel={t.languageLabel}
+            value={locale}
+            onValueChange={(value) => {
+              setError(false);
+              void setLocalePreference(value).catch(() => setError(true));
+            }}
+          />
         </div>
 
+        {error ? <p role="alert">{message("panel_language_error")}</p> : null}
         <Separator className="welcome-divider" xstyle={styles.divider} />
 
         <Timeline>

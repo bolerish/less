@@ -1,3 +1,6 @@
+import { GearSixIcon } from "@phosphor-icons/react";
+import { Tooltip, TooltipTrigger } from "@bolerish/ui/tooltip";
+import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
 import * as stylex from "@stylexjs/stylex";
 import {
   colorVars,
@@ -20,15 +23,17 @@ import {
 } from "@bolerish/ui/alert-dialog";
 import { AlertDialog as AlertDialogPrimitive } from "@bolerish/ui/primitives";
 import { ScrollArea, ScrollAreaViewport, ScrollAreaContent } from "@bolerish/ui/scroll-area";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { HiddenItemPreview, PreviewState } from "~features/element-hiding/preview";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 import type { ManagementRequest } from "~features/record/management";
 import { useHiddenItems } from "./useHiddenItems";
 import { SiteOverview } from "./SiteOverview";
 import { RecordRow } from "./RecordRow";
 
 export function HiddenItems({
+  settingsButton,
+  onSettings,
   hasUnreadUpdates,
   updatesButton,
   onUpdates,
@@ -37,6 +42,8 @@ export function HiddenItems({
   preview,
   portalContainer,
 }: {
+  settingsButton: RefObject<HTMLButtonElement | null>;
+  onSettings: () => void;
   hasUnreadUpdates: boolean;
   updatesButton: RefObject<HTMLButtonElement | null>;
   onUpdates: () => void;
@@ -45,9 +52,12 @@ export function HiddenItems({
   preview?: HiddenItemPreview;
   portalContainer?: HTMLElement;
 }) {
+  const message = usePanelMessage();
   const { records, refreshing, error, setError, status, busy, unsynced, refresh, mutate } =
     useHiddenItems(origin);
   const [previewState, setPreviewState] = useState<PreviewState>({ id: null, message: "" });
+  const [settingsTooltipOpen, setSettingsTooltipOpen] = useState(false);
+  const settingsTooltipId = useId();
   const [confirmReset, setConfirmReset] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const resetButton = useRef<HTMLButtonElement>(null);
@@ -89,7 +99,7 @@ export function HiddenItems({
         className={["preview-status", stylex.props(styles.previewStatus).className].join(" ")}
         role="status"
       >
-        {previewState.message}
+        {previewState.message ? message(previewState.message) : ""}
       </p>
       <div className={["list-toolbar", stylex.props(styles.listToolbar).className].join(" ")}>
         <h2 {...stylex.props(styles.heading, styles.listHeading)}>
@@ -271,6 +281,51 @@ export function HiddenItems({
             />
           ) : null}
         </Button>
+        <Tooltip open={settingsTooltipOpen} onOpenChange={setSettingsTooltipOpen}>
+          <TooltipTrigger
+            render={
+              <Button
+                ref={settingsButton}
+                variant="ghost"
+                size="icon"
+                aria-label={message("panel_settings")}
+                aria-describedby={settingsTooltipOpen ? settingsTooltipId : undefined}
+                onFocus={() => setSettingsTooltipOpen(true)}
+                onBlur={() => setSettingsTooltipOpen(false)}
+                onPointerEnter={() => setSettingsTooltipOpen(true)}
+                onPointerLeave={() => setSettingsTooltipOpen(false)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && settingsTooltipOpen) {
+                    setSettingsTooltipOpen(false);
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }}
+                onClick={() => {
+                  setSettingsTooltipOpen(false);
+                  onSettings();
+                }}
+                className={[
+                  "settings-button less-control",
+                  stylex.props(styles.controlFocus).className,
+                ].join(" ")}
+              >
+                <GearSixIcon size={16} aria-hidden="true" />
+              </Button>
+            }
+          />
+          <TooltipPrimitive.Portal container={portalContainer}>
+            <TooltipPrimitive.Positioner side="top" sideOffset={6}>
+              <TooltipPrimitive.Popup
+                {...stylex.props(styles.settingsTooltip)}
+                role="tooltip"
+                id={settingsTooltipId}
+              >
+                {message("panel_settings")}
+              </TooltipPrimitive.Popup>
+            </TooltipPrimitive.Positioner>
+          </TooltipPrimitive.Portal>
+        </Tooltip>
       </footer>
     </section>
   );
@@ -393,11 +448,22 @@ const styles = stylex.create({
     margin: 0,
   },
   panelFooter: {
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: "auto",
     paddingTop: spacingVars.space3,
     borderTop: `1px solid ${colorVars.strokeDefault}`,
-    display: { default: "block", ":is([data-preview-layout='compact'] *)": "none" },
+    display: { default: "flex", ":is([data-preview-layout='compact'] *)": "none" },
     flexShrink: 0,
+  },
+  settingsTooltip: {
+    pointerEvents: "none",
+    border: `1px solid ${colorVars.strokeDefault}`,
+    background: colorVars.bgRaised,
+    color: colorVars.fgPrimary,
+    padding: spacingVars.space2,
+    borderRadius: radiusVars.sm,
+    fontSize: typo.fontSizeXs,
   },
   updatesButton: {
     flexShrink: "0",

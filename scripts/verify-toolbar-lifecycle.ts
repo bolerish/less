@@ -14,6 +14,11 @@ for (const [engine, bundle] of [
   const listeners = new Map<string, Listener[]>();
   const event = (name: string) => ({
     addListener: (fn: Listener) => listeners.set(name, [...(listeners.get(name) ?? []), fn]),
+    removeListener: (fn: Listener) =>
+      listeners.set(
+        name,
+        (listeners.get(name) ?? []).filter((listener) => listener !== fn),
+      ),
   });
   const emit = (name: string, ...args: unknown[]) =>
     listeners.get(name)?.forEach((fn) => fn(...args));
@@ -71,8 +76,8 @@ for (const [engine, bundle] of [
       get: async (id: number) => ({ focused: id === focusedWindow }),
       onFocusChanged: event("focus"),
     },
-    i18n: { getMessage: (key: string) => key },
-    storage: { onChanged: event("storage") },
+    i18n: { getUILanguage: () => "en-US" },
+    storage: { local: { get: async () => ({}) }, onChanged: event("storage") },
     webNavigation: {
       onHistoryStateUpdated: event("history"),
       getFrame: async ({ tabId }: { tabId: number }) => ({ url: tabs.get(tabId)!.url }),
@@ -101,7 +106,11 @@ for (const [engine, bundle] of [
   await drain();
   assert(opened.at(-1)?.includes("reason=reload"));
   assert.equal(popup.get(1), "");
-  assert.equal(titles.get(1), "panel_failure_reload");
+  assert.equal(
+    titles.get(1),
+    JSON.parse(await readFile("public/_locales/en/messages.json", "utf8")).panel_failure_reload
+      .message,
+  );
   receiver = async () => ({ ok: false });
   click();
   await drain();

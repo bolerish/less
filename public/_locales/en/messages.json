@@ -229,5 +229,17 @@
   },
   "panel_failure_generic": {
     "message": "Less could not open. Try again."
+  },
+  "panel_settings": {
+    "message": "Settings"
+  },
+  "panel_language": {
+    "message": "Language"
+  },
+  "panel_language_auto": {
+    "message": "Browser language"
+  },
+  "panel_language_error": {
+    "message": "Could not save the language. Try again."
   }
 }

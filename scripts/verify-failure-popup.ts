@@ -277,14 +277,7 @@ try {
     const catalog = JSON.parse(
       await readFile(join(values.build, "_locales", locale, "messages.json"), "utf8"),
     );
-    await documentPage.addInitScript(
-      ({ locale, catalog }) => {
-        chrome.i18n.getMessage = ((key: string) =>
-          catalog[key]?.message ?? "") as typeof chrome.i18n.getMessage;
-        chrome.i18n.getUILanguage = () => locale.replace("_", "-");
-      },
-      { locale, catalog },
-    );
+    await worker.evaluate((locale) => chrome.storage.local.set({ "less:locale": locale }), locale);
     for (const theme of ["light", "dark"] as const) {
       await documentPage.emulateMedia({ colorScheme: theme });
       for (const reason of ["protected", "reload", "generic"]) {

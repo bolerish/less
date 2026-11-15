@@ -229,5 +229,17 @@
   },
   "panel_failure_generic": {
     "message": "无法打开 Less，请重试。"
+  },
+  "panel_settings": {
+    "message": "设置"
+  },
+  "panel_language": {
+    "message": "语言"
+  },
+  "panel_language_auto": {
+    "message": "浏览器语言"
+  },
+  "panel_language_error": {
+    "message": "无法保存语言。请重试。"
   }
 }

@@ -1,3 +1,4 @@
+import { getLanguage } from "~shared/locale/preference";
 import { createRoot, type Root } from "react-dom/client";
 import Panel from "./Panel";
 import { getPanelMessage } from "~features/record/management-messages";
@@ -121,7 +122,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const shadow = host.attachShadow({ mode: "closed" });
     appendContentStyles(shadow);
     dialog = document.createElement("dialog");
-    dialog.lang = browser.i18n.getUILanguage();
+    dialog.lang = getLanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));
     dialog.setAttribute("data-bolerish-surface", "solid");
     dialog.addEventListener("keydown", (event) => {
@@ -129,7 +130,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       const scope = dialog.querySelector<HTMLElement>('[role="alertdialog"]') ?? dialog;
       const controls = Array.from(
         scope.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])',
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])',
         ),
       ).filter((element) => element.getClientRects().length > 0 && !element.closest("[hidden]"));
       const active = shadow.activeElement;

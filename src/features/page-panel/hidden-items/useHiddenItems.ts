@@ -4,14 +4,16 @@ import {
   type ManagedRecord,
   type ManagementRequest,
 } from "~features/record/management";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import type { PanelMessage } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 export function useHiddenItems(origin: string) {
+  const message = usePanelMessage();
   const [records, setRecords] = useState<ManagedRecord[] | null>(null);
   const [refreshing, setRefreshing] = useState(true);
   const pendingLoads = useRef(0);
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
+  const [error, setError] = useState<PanelMessage | "">("");
+  const [status, setStatus] = useState<PanelMessage | "">("");
   const [busy, setBusy] = useState(false);
   const [unsynced, setUnsynced] = useState(0);
 
@@ -28,7 +30,7 @@ export function useHiddenItems(origin: string) {
         setError("");
       }
     } catch {
-      if (mounted.current && current === revision.current) setError(message("panel_load_error"));
+      if (mounted.current && current === revision.current) setError("panel_load_error");
     } finally {
       --pendingLoads.current;
       if (mounted.current) setRefreshing(pendingLoads.current > 0);
@@ -85,17 +87,25 @@ export function useHiddenItems(origin: string) {
       ++revision.current;
       setRecords(response.records);
       setUnsynced(response.unsyncedTabs);
-      setStatus(
-        request.type === "RESET_HIDDEN_SITE" ? message("panel_reset_done") : message("panel_saved"),
-      );
+      setStatus(request.type === "RESET_HIDDEN_SITE" ? "panel_reset_done" : "panel_saved");
       return true;
     } catch {
-      if (mounted.current) setError(message("panel_save_error"));
+      if (mounted.current) setError("panel_save_error");
       return false;
     } finally {
       if (mounted.current) setBusy(false);
     }
   }
 
-  return { records, refreshing, error, setError, status, busy, unsynced, refresh, mutate };
+  return {
+    records,
+    refreshing,
+    error: error ? message(error) : "",
+    setError,
+    status: status ? message(status) : "",
+    busy,
+    unsynced,
+    refresh,
+    mutate,
+  };
 }

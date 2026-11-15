@@ -1,3 +1,5 @@
+import type { PanelMessage } from "~features/record/management-messages";
+import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Card, CardContent } from "@bolerish/ui/card";
@@ -6,7 +8,7 @@ import { Heading } from "@bolerish/ui/heading";
 import { Switch } from "@bolerish/ui/switch";
 import { CursorClickIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 import {
   getSiteHidingEnabled,
   setSiteHidingEnabled,
@@ -26,10 +28,12 @@ export function SiteOverview({
   busy: boolean;
   heading: RefObject<HTMLHeadingElement | null>;
   onSelect: () => void;
-  onError: (message: string) => void;
+  onError: (message: PanelMessage) => void;
 }) {
+  const message = usePanelMessage();
+  const language = useLanguage();
   const [selecting, setSelecting] = useState(false);
-  const [selectionError, setSelectionError] = useState("");
+  const [selectionError, setSelectionError] = useState(false);
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const mounted = useRef(false);
   useEffect(() => {
@@ -55,24 +59,24 @@ export function SiteOverview({
 
   async function startSelection(): Promise<void> {
     setSelecting(true);
-    setSelectionError("");
+    setSelectionError(false);
     try {
       onSelect();
     } catch {
-      if (mounted.current) setSelectionError(message("panel_selection_error"));
+      if (mounted.current) setSelectionError(true);
     } finally {
       if (mounted.current) setSelecting(false);
     }
   }
 
-  const hiddenCount = count === null ? null : getHiddenCount(count);
+  const hiddenCount = count === null ? null : getHiddenCount(count, language, message);
   return (
     <div className={["site-overview", stylex.props(styles.siteOverview).className].join(" ")}>
       <Card
         className="site-card"
         xstyle={styles.siteCard}
         role="group"
-        lang={browser.i18n.getUILanguage()}
+        lang={language}
         aria-label={message("panel_current_site")}
         aria-description={message("panel_count_help")}
       >
@@ -129,9 +133,7 @@ export function SiteOverview({
           checked={enabled ?? true}
           disabled={enabled === null || busy}
           onCheckedChange={(value) => {
-            void setSiteHidingEnabled(origin, value).catch(() =>
-              onError(message("panel_preference_error")),
-            );
+            void setSiteHidingEnabled(origin, value).catch(() => onError("panel_preference_error"));
           }}
           className={["less-control", stylex.props(styles.controlFocus).className].join(" ")}
         />
@@ -141,7 +143,7 @@ export function SiteOverview({
           className={["selection-error", stylex.props(styles.selectionError).className].join(" ")}
           role="alert"
         >
-          {selectionError}
+          {message("panel_selection_error")}
         </p>
       ) : null}
       {enabled === false ? (
@@ -157,9 +159,13 @@ export function SiteOverview({
   );
 }
 
-function getHiddenCount(count: number): { value: string; noun: string } {
-  const formatted = new Intl.NumberFormat(browser.i18n.getUILanguage()).format(count);
-  const singular = new Intl.PluralRules(browser.i18n.getUILanguage()).select(count) === "one";
+function getHiddenCount(
+  count: number,
+  language: string,
+  message: ReturnType<typeof usePanelMessage>,
+): { value: string; noun: string } {
+  const formatted = new Intl.NumberFormat(language).format(count);
+  const singular = new Intl.PluralRules(language).select(count) === "one";
   const suffix = singular ? "one" : "other";
   return {
     value: message(`panel_hidden_count_${suffix}`, [formatted]),

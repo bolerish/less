@@ -1,4 +1,3 @@
-import { getPanelMessage as message } from "~features/record/management-messages";
 import {
   applyHiddenElement,
   isHiddenElement,
@@ -116,7 +115,7 @@ export async function restoreLastHidden(): Promise<void> {
     undoStack.push(last);
     sessionHiddenCount++;
     applyHiddenElement(last.element);
-    updateStatusBarError(message("panel_selection_restore_error"));
+    updateStatusBarError("panel_selection_restore_error");
     return;
   }
   updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
@@ -212,7 +211,7 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
     updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
   } catch {
     restoreHiddenElement(element);
-    updateStatusBarError(message("panel_selection_save_error"));
+    updateStatusBarError("panel_selection_save_error");
     return;
   }
 }

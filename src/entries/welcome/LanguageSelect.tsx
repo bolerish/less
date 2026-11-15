@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bolerish/ui/select";
-import { type Locale, LOCALES } from "./locale";
+import { type Locale, LOCALES } from "~shared/locale/locales";
 
 type Props = {
   ariaLabel: string;

@@ -229,5 +229,17 @@
   },
   "panel_failure_generic": {
     "message": "No se pudo abrir Less. Inténtalo de nuevo."
+  },
+  "panel_settings": {
+    "message": "Ajustes"
+  },
+  "panel_language": {
+    "message": "Idioma"
+  },
+  "panel_language_auto": {
+    "message": "Idioma del navegador"
+  },
+  "panel_language_error": {
+    "message": "No se pudo guardar el idioma. Inténtalo de nuevo."
   }
 }

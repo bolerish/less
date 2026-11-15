@@ -1,3 +1,4 @@
+import { initializeLocale } from "~shared/locale/preference";
 import { getPanelMessage } from "../record/management-messages";
 
 // WXT's generated Chrome browserAction declarations omit Firefox's promise APIs.
@@ -65,6 +66,7 @@ export function registerPanelAction(): void {
           return;
         }
         await action.setBadgeText({ tabId, text: "!" });
+        await initializeLocale().then((dispose) => dispose());
         await action.setTitle({ tabId, title: getPanelMessage(`panel_failure_${reason}`) });
         if (typeof action.openPopup !== "function" || !current()) return;
         const popup = `${failureDocument}?${new URLSearchParams({

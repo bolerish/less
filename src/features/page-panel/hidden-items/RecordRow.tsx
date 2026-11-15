@@ -8,7 +8,7 @@ import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
 import { XIcon } from "@phosphor-icons/react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import { usePanelMessage } from "~shared/locale/use-panel-message";
 import type { ManagedRecord } from "~features/record/management";
 
 export function RecordRow({
@@ -28,7 +28,8 @@ export function RecordRow({
   portalContainer?: HTMLElement;
   onRestore: () => void;
 }) {
-  const label = getRecordLabel(record);
+  const message = usePanelMessage();
+  const label = getRecordLabel(record, message);
   const locateButton = useRef<HTMLButtonElement>(null);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const tooltipId = useId();
@@ -123,7 +124,10 @@ export function RecordRow({
   );
 }
 
-function getRecordLabel(record: ManagedRecord): string {
+function getRecordLabel(
+  record: ManagedRecord,
+  message: ReturnType<typeof usePanelMessage>,
+): string {
   const tag = record.target.tagName.toLowerCase();
   let kind = record.target.contentKind;
   if (!kind) {

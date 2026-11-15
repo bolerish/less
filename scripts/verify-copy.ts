@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { translations, type Locale } from "../src/entries/welcome/locale.ts";
+import { translations } from "../src/entries/welcome/locale.ts";
+
+import type { Locale } from "../src/shared/locale/locales.ts";
 
 const locales: Locale[] = ["en", "ko", "ja", "es", "zh_CN"];
 let reference: Record<string, { message: string }> | undefined;

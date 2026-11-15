@@ -5,10 +5,10 @@ import type { HiddenElementRecord } from "~features/record/schema";
 import { portRequest } from "~features/record/content-port";
 import { finishHiddenElementAnimation } from "~features/element-hiding/element-hide";
 import { positionPreview } from "~features/element-hiding/preview-position";
-import { getPanelMessage as message } from "~features/record/management-messages";
+import type { PanelMessage } from "~features/record/management-messages";
 import { getPaintedRect } from "~shared/lib/painted-rect";
 
-export type PreviewState = { id: string | null; message: string };
+export type PreviewState = { id: string | null; message: PanelMessage | "" };
 export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
 
 export function createHiddenItemPreview() {
@@ -78,7 +78,7 @@ export function createHiddenItemPreview() {
       clear(true);
       const pending = revision;
       const { origin, pathname: path, search } = location;
-      publish({ id: null, message: message("panel_find") });
+      publish({ id: null, message: "panel_find" });
       try {
         // Use the same page/scope and matching boundary as the hiding engine.
         const response = await portRequest<{ records?: HiddenElementRecord[] }>({
@@ -92,7 +92,7 @@ export function createHiddenItemPreview() {
         if (!record) {
           publish({
             id: null,
-            message: message("panel_other_page"),
+            message: "panel_other_page",
           });
           return;
         }
@@ -104,7 +104,7 @@ export function createHiddenItemPreview() {
         ) {
           publish({
             id: null,
-            message: message("panel_unavailable"),
+            message: "panel_unavailable",
           });
           return;
         }
@@ -149,7 +149,7 @@ export function createHiddenItemPreview() {
           clear();
           publish({
             id: null,
-            message: message("panel_hidden_parent"),
+            message: "panel_hidden_parent",
           });
           return;
         }
@@ -168,13 +168,13 @@ export function createHiddenItemPreview() {
           clear();
           publish({
             id: null,
-            message: message("panel_covered"),
+            message: "panel_covered",
           });
           return;
         }
         publish({
           id,
-          message: message("panel_preview_description"),
+          message: "panel_preview_description",
         });
         let frame = 0;
         const reposition = (): void => {
@@ -199,7 +199,7 @@ export function createHiddenItemPreview() {
         clear();
         publish({
           id: null,
-          message: message("panel_preview_error"),
+          message: "panel_preview_error",
         });
       }
     },

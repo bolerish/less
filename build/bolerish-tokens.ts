@@ -19,6 +19,9 @@ const usedTokens = {
     "bgRaised",
     "bgInverse",
     "bgSubtle",
+    "bgSelected",
+    "interactionHover",
+    "interactionPressed",
     "bgActionPrimary",
     "fgPrimary",
     "fgSecondary",
@@ -31,6 +34,7 @@ const usedTokens = {
     "strokeFocus",
   ],
   spacingVars: ["space0_5", "space1", "space2", "space3", "space4", "space5", "space6", "space8"],
+  motionVars: ["durationFast", "easingStandard"],
   radiusVars: ["sm", "md", "lg", "xl", "full"],
   shadowVars: ["subtle", "floating", "overlay"],
   typo: [
@@ -50,7 +54,7 @@ const usedTokens = {
 } satisfies {
   [K in keyof Pick<
     typeof import("@bolerish/tokens/semantic.stylex"),
-    "colorVars" | "spacingVars" | "radiusVars" | "shadowVars" | "typo"
+    "colorVars" | "spacingVars" | "radiusVars" | "shadowVars" | "motionVars" | "typo"
   >]: readonly (keyof (typeof import("@bolerish/tokens/semantic.stylex"))[K])[];
 };
 

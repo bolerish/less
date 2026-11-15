@@ -154,6 +154,8 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   browser.runtime.onMessage.addListener(onMessage);
   ctx.onInvalidated(() => browser.runtime.onMessage.removeListener(onMessage));
 
+  ctx.addEventListener(window, "pagehide", () => panel.close(false));
+
   ctx.addEventListener(window, "pageshow", (event) => {
     if (!event.persisted) return;
     if (hidingEnabled) {

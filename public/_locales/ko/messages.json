@@ -19,5 +19,32 @@
   },
   "panel_count_help": {
     "message": "이 사이트 전체에 현재 저장된 숨김 규칙 수입니다. 복원하면 개수가 줄어듭니다."
+  },
+  "panel_kind_video": {
+    "message": "영상"
+  },
+  "panel_kind_image": {
+    "message": "이미지"
+  },
+  "panel_kind_external": {
+    "message": "외부 콘텐츠"
+  },
+  "panel_kind_region": {
+    "message": "영역"
+  },
+  "panel_kind_content": {
+    "message": "콘텐츠"
+  },
+  "panel_preview_back": {
+    "message": "숨긴 항목으로 돌아가기"
+  },
+  "panel_preview_description": {
+    "message": "이 항목을 잠시 표시합니다. 숨김 규칙은 유지됩니다."
+  },
+  "panel_restore_label": {
+    "message": "항목 $1 복원 및 숨김 규칙 제거: $2"
+  },
+  "panel_restore_tooltip": {
+    "message": "이 항목을 복원하고 숨김 규칙 제거"
   }
 }

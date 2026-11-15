@@ -1,6 +1,11 @@
 import { z } from "zod/v4-mini";
 
-export const MatchStrategySchema = z.enum(["CSS_SELECTOR", "UNIQUE_ATTRIBUTE", "STRUCTURE", "ANCHOR"]);
+export const MatchStrategySchema = z.enum([
+  "CSS_SELECTOR",
+  "UNIQUE_ATTRIBUTE",
+  "STRUCTURE",
+  "ANCHOR",
+]);
 
 export type MatchStrategy = z.infer<typeof MatchStrategySchema>;
 
@@ -90,6 +95,7 @@ export const HiddenElementRecordSchema = z.object({
   target: z.object({
     tagName: z.string(),
     displayText: z.nullable(z.string()),
+    contentKind: z.optional(z.enum(["video", "image", "external", "region", "content"])),
   }),
 
   metadata: z.object({

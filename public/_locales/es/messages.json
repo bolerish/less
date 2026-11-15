@@ -19,5 +19,32 @@
   },
   "panel_count_help": {
     "message": "Reglas guardadas en este sitio. Al restaurar un elemento, el total disminuye."
+  },
+  "panel_kind_video": {
+    "message": "Vídeo"
+  },
+  "panel_kind_image": {
+    "message": "Imagen"
+  },
+  "panel_kind_external": {
+    "message": "Contenido externo"
+  },
+  "panel_kind_region": {
+    "message": "Área"
+  },
+  "panel_kind_content": {
+    "message": "Contenido"
+  },
+  "panel_preview_back": {
+    "message": "Volver a los elementos ocultos"
+  },
+  "panel_preview_description": {
+    "message": "Este elemento se muestra temporalmente. Su regla de ocultación sigue guardada."
+  },
+  "panel_restore_label": {
+    "message": "Restaurar elemento $1 y eliminar su regla de ocultación: $2"
+  },
+  "panel_restore_tooltip": {
+    "message": "Restaurar este elemento y eliminar su regla de ocultación"
   }
 }

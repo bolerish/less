@@ -15,6 +15,9 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   let root: Root | null = null;
   let previousFocus: HTMLElement | null = null;
   let resumeAfterSelection = false;
+  let transition: Animation | null = null;
+  let closing = false;
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let unsubscribePreview: (() => void) | undefined;
   const preference = matchMedia("(prefers-color-scheme: dark)");
   const syncTheme = (): void => {
@@ -25,8 +28,10 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     dialog.style.colorScheme = dialog.dataset.theme;
   };
 
-  function close(restoreFocus = true): void {
-    preview.clear(restoreFocus);
+  function unmount(restoreFocus: boolean): void {
+    transition?.cancel();
+    transition = null;
+    closing = false;
     unsubscribePreview?.();
     unsubscribePreview = undefined;
     resumeAfterSelection = false;
@@ -41,8 +46,60 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     if (restoreFocus && previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
   }
 
+  function animate(opening: boolean): void {
+    if (!dialog) return;
+    const element = dialog;
+    const style = getComputedStyle(element);
+    const start = { opacity: style.opacity, transform: style.transform };
+    const duration = parseFloat(style.getPropertyValue("--veil-motion-duration-fast"));
+    transition?.cancel();
+    transition = null;
+    if (reducedMotion.matches) {
+      if (!opening) unmount(true);
+      return;
+    }
+    const animation = element.animate(
+      [
+        opening && !closing ? { opacity: 0, transform: "translateX(100%)" } : start,
+        { opacity: opening ? 1 : 0, transform: opening ? "translateX(0)" : "translateX(100%)" },
+      ],
+      {
+        duration,
+        easing: style.getPropertyValue("--veil-motion-easing-standard").trim(),
+        fill: "both",
+      },
+    );
+    transition = animation;
+    void animation.finished
+      .then(() => {
+        if (transition !== animation || dialog !== element) return;
+        transition = null;
+        if (opening) animation.cancel();
+        else unmount(true);
+      })
+      .catch(() => {});
+  }
+
+  function close(restoreFocus = true): void {
+    preview.clear(restoreFocus);
+    resumeAfterSelection = false;
+    if (!restoreFocus || !dialog?.isConnected) {
+      unmount(restoreFocus);
+      return;
+    }
+    if (closing) return;
+    closing = true;
+    animate(false);
+  }
+
   function open(): void {
-    if (dialog?.open) return;
+    if (dialog?.open) {
+      if (closing) {
+        animate(true);
+        closing = false;
+      }
+      return;
+    }
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     host = document.createElement("div");
     host.setAttribute(PANEL_HOST_ATTRIBUTE, "true");
@@ -122,12 +179,13 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       />,
     );
     dialog.showModal();
+    animate(true);
     observer.observe(document, { childList: true, subtree: true });
   }
 
   const observer = new MutationObserver(() => {
     // A page replacing its root must not leave a detached React tree or modal behind.
-    if (host && !host.isConnected) close();
+    if (host && !host.isConnected) close(false);
   });
 
   return {
@@ -135,7 +193,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       return dialog?.open ?? false;
     },
     toggle() {
-      if (dialog?.open) close();
+      if (dialog?.open && !closing) close();
       else open();
     },
     close,

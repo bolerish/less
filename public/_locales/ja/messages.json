@@ -19,5 +19,32 @@
   },
   "panel_count_help": {
     "message": "このサイト全体で現在保存されている非表示ルールの数です。復元すると数が減ります。"
+  },
+  "panel_kind_video": {
+    "message": "動画"
+  },
+  "panel_kind_image": {
+    "message": "画像"
+  },
+  "panel_kind_external": {
+    "message": "外部コンテンツ"
+  },
+  "panel_kind_region": {
+    "message": "領域"
+  },
+  "panel_kind_content": {
+    "message": "コンテンツ"
+  },
+  "panel_preview_back": {
+    "message": "非表示の項目に戻る"
+  },
+  "panel_preview_description": {
+    "message": "この項目を一時的に表示しています。非表示ルールは保存されたままです。"
+  },
+  "panel_restore_label": {
+    "message": "項目 $1 を復元して非表示ルールを削除: $2"
+  },
+  "panel_restore_tooltip": {
+    "message": "この項目を復元して非表示ルールを削除"
   }
 }

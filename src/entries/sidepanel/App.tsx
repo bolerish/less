@@ -3,6 +3,7 @@ import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
 import type { HiddenItemPreview, PreviewState } from "../content/hidden-item-preview";
 import { Card, CardContent } from "@bolerish/ui/card";
 import { Button } from "@bolerish/ui/button";
+import { Badge } from "@bolerish/ui/badge";
 import {
   Timeline,
   TimelineContent,
@@ -11,12 +12,7 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@bolerish/ui/timeline";
-import {
-  ArrowCounterClockwiseIcon,
-  CaretLeftIcon,
-  CursorClickIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import logo from "~assets/logo.svg";
 import {
@@ -196,8 +192,13 @@ function HiddenItems({
     const shadow = heading.current?.getRootNode();
     if (!(shadow instanceof ShadowRoot)) return;
     const active = shadow.activeElement;
-    if (active instanceof HTMLElement && active.classList.contains("locate-button"))
-      active.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (!(active instanceof HTMLElement) || !active.classList.contains("locate-button")) return;
+    const list = active.closest<HTMLElement>(".records");
+    if (!list) return;
+    const row = active.getBoundingClientRect();
+    const viewport = list.getBoundingClientRect();
+    if (row.bottom > viewport.bottom) list.scrollTop += row.bottom - viewport.bottom;
+    else if (row.top < viewport.top) list.scrollTop -= viewport.top - row.top;
   }, [previewState.id]);
 
   const load = useCallback(async (): Promise<void> => {
@@ -314,7 +315,7 @@ function HiddenItems({
         if (event.key === "Escape" && (confirmReset || preview?.hasNotice)) {
           event.preventDefault();
           event.stopPropagation();
-          if (preview?.hasNotice) preview.clear();
+          if (preview?.hasNotice) preview.clear(true);
           else {
             setConfirmReset(false);
             heading.current?.focus();
@@ -383,15 +384,15 @@ function HiddenItems({
         <div className="preview-notice" role="status">
           <p>{previewState.message}</p>
           {previewState.id ? (
-            <Button variant="ghost" size="sm" onClick={() => preview?.clear()}>
-              End preview
+            <Button variant="ghost" size="sm" onClick={() => preview?.clear(true)}>
+              {browser.i18n.getMessage("panel_preview_back") || "Back to hidden items"}
             </Button>
           ) : null}
         </div>
       ) : null}
       <div className="list-toolbar">
         <h2>Hidden items</h2>
-        <Button variant="ghost" size="sm" disabled={busy} onClick={() => void load()}>
+        <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
           Refresh
         </Button>
       </div>
@@ -450,9 +451,17 @@ function HiddenItems({
                         }
                       >
                         <span className="record-label">{label}</span>
+                        <Badge className="record-tag" variant="outline" aria-hidden="true">
+                          {record.target.tagName.toLowerCase()}
+                        </Badge>
                       </Button>
                       <RestoreButton
-                        label={`Restore item ${index + 1}: ${label}`}
+                        label={
+                          browser.i18n.getMessage("panel_restore_label", [
+                            String(index + 1),
+                            label,
+                          ]) || `Restore item ${index + 1} and remove its hiding rule: ${label}`
+                        }
                         disabled={busy}
                         portalContainer={portalContainer}
                         onRestore={() =>
@@ -497,7 +506,7 @@ function HiddenItems({
               </div>
             ) : (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 disabled={busy}
                 onClick={() => setConfirmReset(true)}
@@ -533,6 +542,7 @@ function RestoreButton({
             variant="ghost"
             size="icon"
             disabled={disabled}
+            className="restore-button"
             aria-label={label}
             aria-describedby={open ? tooltipId : undefined}
             onClick={onRestore}
@@ -548,14 +558,15 @@ function RestoreButton({
               }
             }}
           >
-            <ArrowCounterClockwiseIcon aria-hidden="true" />
+            <XIcon aria-hidden="true" />
           </Button>
         }
       />
       <TooltipPrimitive.Portal container={portalContainer}>
         <TooltipPrimitive.Positioner side="left" sideOffset={6}>
           <TooltipPrimitive.Popup className="restore-tooltip" role="tooltip" id={tooltipId}>
-            Restore this item
+            {browser.i18n.getMessage("panel_restore_tooltip") ||
+              "Restore this item and remove its hiding rule"}
           </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>
       </TooltipPrimitive.Portal>
@@ -564,11 +575,28 @@ function RestoreButton({
 }
 
 function getRecordLabel(record: ManagedRecord): string {
-  const text = record.target.displayText?.replace(/\s+/g, " ").trim();
   const tag = record.target.tagName.toLowerCase();
-  if (!text) return tag;
+  let kind = record.target.contentKind;
+  if (!kind) {
+    if (tag === "video") kind = "video";
+    else if (tag === "img") kind = "image";
+    else if (["iframe", "object", "embed"].includes(tag)) kind = "external";
+    else if (["div", "section", "aside", "header", "footer", "nav", "main"].includes(tag))
+      kind = "region";
+    else kind = "content";
+  }
+  const names = {
+    video: "Video",
+    image: "Image",
+    external: "External content",
+    region: "Region",
+    content: "Content",
+  };
+  const name = browser.i18n.getMessage(`panel_kind_${kind}`) || names[kind];
+  const text = record.target.displayText?.replace(/\s+/g, " ").trim();
+  if (!text || text.toLocaleLowerCase() === name.toLocaleLowerCase()) return name;
   const characters = Array.from(text);
-  return `${tag} · ${characters.slice(0, 8).join("").trimEnd()}${characters.length > 8 ? "…" : ""}`;
+  return `${name} · ${characters.slice(0, 24).join("").trimEnd()}${characters.length > 24 ? "…" : ""}`;
 }
 
 function getHiddenCountLabel(count: number): string {

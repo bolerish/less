@@ -111,7 +111,7 @@ try {
     "content receiver",
   );
   await action(page);
-  await page.locator("[data-veil-panel]").waitFor({ state: "attached" });
+  await page.locator("[data-less-panel]").waitFor({ state: "attached" });
   assert.equal(page.url(), `${origin}/normal`);
   console.log("PASS normal toolbar opens the in-page panel");
   const protectedPage = await context.newPage();
@@ -159,7 +159,7 @@ try {
   await page.bringToFront();
   await page.keyboard.press("Escape");
   await action(page);
-  await page.locator("[data-veil-panel]").waitFor({ state: "attached" });
+  await page.locator("[data-less-panel]").waitFor({ state: "attached" });
   console.log("PASS popup close then normal action still opens panel");
   await action(preinstall);
   const missing = await popup();
@@ -185,7 +185,7 @@ try {
     "receiver after reload",
   );
   await action(preinstall);
-  await preinstall.locator("[data-veil-panel]").waitFor({ state: "attached" });
+  await preinstall.locator("[data-less-panel]").waitFor({ state: "attached" });
   console.log(
     "PASS actual pre-install missing receiver, reload guidance and successful retry after page reload",
   );
@@ -219,7 +219,7 @@ try {
     "receiver after extension update reload",
   );
   await action(preinstall);
-  await preinstall.locator("[data-veil-panel]").waitFor({ state: "attached" });
+  await preinstall.locator("[data-less-panel]").waitFor({ state: "attached" });
   console.log(
     "PASS actual extension unload/reload invalidates receiver; failure popup recovers after page reload",
   );

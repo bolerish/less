@@ -1,46 +1,11 @@
-@import "@bolerish/ui";
+@import "@bolerish/ui/global.css";
 
-:root {
-  color-scheme: light;
-  --background: var(--veil-app-background);
-  --foreground: var(--veil-color-fg-primary);
-  --card: var(--veil-color-bg-surface);
-  --card-foreground: var(--veil-color-fg-primary);
-  --popover: var(--veil-color-bg-raised);
-  --popover-foreground: var(--veil-color-fg-primary);
-  --primary: var(--veil-color-bg-action-primary);
-  --primary-foreground: var(--veil-color-fg-on-action-primary);
-  --secondary: var(--veil-color-bg-subtle);
-  --secondary-foreground: var(--veil-color-fg-primary);
-  --muted: var(--veil-color-bg-subtle);
-  --muted-foreground: var(--veil-color-fg-secondary);
-  --accent: var(--veil-color-bg-subtle);
-  --accent-foreground: var(--veil-color-fg-primary);
-  --destructive: var(--veil-color-fg-feedback-error);
-  --destructive-foreground: var(--veil-color-fg-inverse);
-  --border: var(--veil-color-stroke-default);
-  --input: var(--veil-color-stroke-control);
-  --ring: var(--veil-color-stroke-focus);
-}
-
-:root.dark {
-  color-scheme: dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light):not(.dark) {
-    color-scheme: dark;
-  }
-}
-
-/* Document defaults previously supplied by the utility stylesheet. */
 html {
-  font-family: var(--veil-font-family-body);
-  line-height: var(--veil-line-height-normal);
+  min-height: 100%;
 }
 body {
-  font-size: var(--veil-font-size-xs);
   margin: 0;
-  background-color: var(--background);
-  color: var(--foreground);
+  font: inherit;
+  background: inherit;
+  color: inherit;
 }

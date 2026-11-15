@@ -7,11 +7,12 @@ export interface MetaEntry {
   value: unknown;
 }
 
-class VeilDB extends Dexie {
+class LessDB extends Dexie {
   records!: Table<HiddenElementRecord>;
   meta!: Table<MetaEntry>;
 
   constructor() {
+    // Keep the existing database name so installed hide records remain available.
     super("veil-db");
     this.version(1).stores({
       records: [
@@ -27,4 +28,4 @@ class VeilDB extends Dexie {
   }
 }
 
-export const db = new VeilDB();
+export const db = new LessDB();

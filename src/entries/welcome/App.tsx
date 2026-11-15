@@ -1,3 +1,5 @@
+import * as stylex from "@stylexjs/stylex";
+import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Heading } from "@bolerish/ui/heading";
 import { Separator } from "@bolerish/ui/separator";
 import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
@@ -27,38 +29,57 @@ function App() {
   }, [locale, t.documentTitle]);
 
   return (
-    <main className="welcome">
-      <div className="welcome-content">
+    <main className={["welcome", stylex.props(styles.root).className].join(" ")}>
+      <div className={["welcome-content", stylex.props(styles.content).className].join(" ")}>
         {/* Header */}
-        <div className="welcome-header">
-          <div className="welcome-brand">
+        <div className={["welcome-header", stylex.props(styles.header).className].join(" ")}>
+          <div className={["welcome-brand", stylex.props(styles.brand).className].join(" ")}>
             <img src={wxtLogo} alt="" width={32} />
-            <Heading level={1} size="page" className="welcome-title">
+            <Heading
+              level={1}
+              size="page"
+              className={["welcome-title", stylex.props(styles.title).className].join(" ")}
+            >
               {t.title}
             </Heading>
           </div>
           <LanguageSelect ariaLabel={t.languageLabel} value={locale} onValueChange={setLocale} />
         </div>
 
-        <Separator className="welcome-divider" />
+        <Separator className="welcome-divider" xstyle={styles.divider} />
 
         <Timeline>
           {t.steps.map((step, i) => {
             const shortcut = STEP_SHORTCUTS[i];
             return (
               <TimelineItem key={step.title}>
-                <TimelineIndicator className="welcome-step-indicator">{i + 1}</TimelineIndicator>
-                <TimelineContent className="welcome-step-content">
+                <TimelineIndicator className="welcome-step-indicator" xstyle={styles.indicator}>
+                  {i + 1}
+                </TimelineIndicator>
+                <TimelineContent className="welcome-step-content" xstyle={styles.step}>
                   <TimelineTitle>{step.title}</TimelineTitle>
                   <TimelineDescription>{step.description}</TimelineDescription>
                   {shortcut && step.kbdLabel && (
-                    <div className="welcome-shortcut">
+                    <div
+                      className={["welcome-shortcut", stylex.props(styles.shortcut).className].join(
+                        " ",
+                      )}
+                    >
                       <KbdGroup>
                         {shortcut.map((key) => (
-                          <Kbd key={key}>{key}</Kbd>
+                          <Kbd key={key} className={stylex.props(styles.kbd).className}>
+                            {key}
+                          </Kbd>
                         ))}
                       </KbdGroup>
-                      <span className="welcome-shortcut-label">{step.kbdLabel}</span>
+                      <span
+                        className={[
+                          "welcome-shortcut-label",
+                          stylex.props(styles.shortcutLabel).className,
+                        ].join(" ")}
+                      >
+                        {step.kbdLabel}
+                      </span>
                     </div>
                   )}
                 </TimelineContent>
@@ -72,3 +93,43 @@ function App() {
 }
 
 export default App;
+
+const styles = stylex.create({
+  root: {
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: `calc(${spacingVars.space8} * 2) ${spacingVars.space8}`,
+    background: "var(--less-app-background)",
+  },
+  content: { width: "100%", maxWidth: 672 },
+  header: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacingVars.space4,
+    marginBottom: spacingVars.space8,
+  },
+  brand: { display: "flex", minWidth: 0, alignItems: "center", gap: spacingVars.space3 },
+  title: { fontFamily: "inherit", letterSpacing: "-0.025em", lineHeight: 1.4 },
+  divider: { marginBottom: spacingVars.space8 },
+  shortcut: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: spacingVars.space2,
+    marginTop: spacingVars.space2,
+  },
+  shortcutLabel: { fontSize: typo.fontSizeXs, color: colorVars.fgSecondary },
+  indicator: { border: 0 },
+  step: { paddingBlock: 0 },
+  kbd: {
+    border: 0,
+    padding: 0,
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    fontSize: typo.fontSizeXs,
+    lineHeight: typo.lineHeightNormal,
+  },
+});

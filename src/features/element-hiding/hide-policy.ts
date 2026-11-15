@@ -10,6 +10,6 @@ export const isHideExcludedElement = (element: Element): boolean => {
     tag === "html" ||
     tag === "body" ||
     tag === "head" ||
-    element.closest("[data-veil-panel]") !== null
+    element.closest("[data-less-panel]") !== null
   );
 };

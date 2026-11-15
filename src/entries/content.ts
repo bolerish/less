@@ -1,15 +1,17 @@
+import "@bolerish/ui/global.css";
+import { loadContentStyles } from "~shared/styles/content-styles";
 import { restoreAllHiddenElements } from "~features/element-hiding";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
-import { createPagePanel } from "./content/page-panel";
-import { createHiddenItemPreview } from "./content/hidden-item-preview";
+import { createPagePanel } from "~features/page-panel/mount";
+import { createHiddenItemPreview } from "~features/element-hiding/preview";
 import {
   applyStoredHiding,
   invalidateRecordCache,
   setupNavigationListener,
   stopReapplyWatcher,
   watchAndReapplyHiding,
-} from "./content/hiding-watcher";
+} from "~features/element-hiding/watcher";
 import {
   getUndoCount,
   restoreLastHidden,
@@ -18,7 +20,7 @@ import {
   startSelectionMode,
   stopSelectionMode,
   subscribeSelection,
-} from "./content/selection-mode";
+} from "~features/selection/session";
 
 const HIDING_KEY_PREFIX = "veil:hiding-enabled:";
 let hidingEnabled = false;
@@ -27,12 +29,15 @@ const preview = createHiddenItemPreview();
 
 export default defineContentScript({
   matches: ["*://*/*"],
+  cssInjectionMode: "ui",
   main(ctx) {
     void bootstrap(ctx);
   },
 });
 
 async function bootstrap(ctx: ContentScriptContext): Promise<void> {
+  await loadContentStyles();
+  if (ctx.isInvalid) return;
   const origin = window.location.origin;
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 

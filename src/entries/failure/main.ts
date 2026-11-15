@@ -1,9 +1,8 @@
 import logo from "~assets/logo.png";
-import { getPanelMessage } from "../../features/record/management-messages";
-import "~shared/styles/bolerish-tokens.css";
-import "~shared/styles/app-background.css";
+import { getPanelMessage } from "~features/record/management-messages";
 import "~shared/styles/preferred-theme";
-import "./style.css";
+import * as stylex from "@stylexjs/stylex";
+import { typo } from "@bolerish/tokens/semantic.stylex";
 
 const params = new URLSearchParams(location.search);
 const reason = params.get("reason");
@@ -28,3 +27,25 @@ if (params.has("request")) {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") window.close();
 });
+
+const styles = stylex.create({
+  root: { width: 320 },
+  body: {
+    boxSizing: "border-box",
+    padding: 20,
+    fontSize: typo.fontSizeSm,
+    lineHeight: typo.lineHeightNormal,
+  },
+  header: { display: "flex", alignItems: "center", gap: 10 },
+  title: { margin: 0, fontSize: typo.fontSizeMd, fontWeight: typo.fontWeightSemibold },
+  message: { margin: "16px 0 0", overflowWrap: "anywhere" },
+});
+for (const [selector, style] of [
+  ["html", styles.root],
+  ["body", styles.body],
+  ["header", styles.header],
+  ["h1", styles.title],
+  ["#message", styles.message],
+] as const) {
+  document.querySelector(selector)?.classList.add(...stylex.props(style).className!.split(" "));
+}

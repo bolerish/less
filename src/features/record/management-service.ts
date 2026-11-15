@@ -57,7 +57,7 @@ export async function handleManagement(request: ManagementRequest): Promise<Mana
       request.type === "LIST_HIDDEN_ITEMS" ? 0 : await syncSiteTabs(request.origin);
     return { ok: true, records, unsyncedTabs };
   } catch (error) {
-    console.error("[Veil] hidden item management failed", error);
+    console.error("[Less] hidden item management failed", error);
     return {
       ok: false,
       error:

@@ -1,4 +1,4 @@
-export const SHIELD_ATTR = "data-veil-iframe-shield";
+export const SHIELD_ATTR = "data-less-iframe-shield";
 
 const iframeShields = new Map<HTMLIFrameElement, HTMLDivElement>();
 const iframeOriginalPointerEvents = new Map<HTMLIFrameElement, string>();

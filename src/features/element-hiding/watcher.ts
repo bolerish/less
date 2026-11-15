@@ -1,12 +1,12 @@
 import { applyRecordsHiding } from "~features/element-hiding";
 import { deriveCurrentPageContext } from "~features/record/derivation/page-context-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
-import { portRequest } from "./port";
+import { portRequest } from "~features/record/content-port";
 import {
   backfillCSSSelector,
   isLegacyCSSSelector,
   verifyAndCleanCSSSelectors,
-} from "./preload-css-sync";
+} from "~features/element-hiding/preload-css";
 
 const recordCache = new Map<string, HiddenElementRecord[]>();
 
@@ -63,7 +63,7 @@ export async function applyStoredHiding(reportError = false): Promise<void> {
     }
   } catch (error) {
     if (reportError) throw error;
-    console.warn("[Veil] could not apply saved hiding", error);
+    console.warn("[Less] could not apply saved hiding", error);
   }
 }
 

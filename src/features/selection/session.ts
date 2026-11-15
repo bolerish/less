@@ -1,4 +1,4 @@
-import { getPanelMessage as message } from "../../features/record/management-messages";
+import { getPanelMessage as message } from "~features/record/management-messages";
 import {
   applyHiddenElement,
   isHiddenElement,
@@ -6,17 +6,16 @@ import {
 } from "~features/element-hiding";
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
 import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
-import { invalidateRecordCache } from "./hiding-watcher";
-import { PANEL_HOST_ATTRIBUTE } from "./page-panel";
+import { invalidateRecordCache } from "~features/element-hiding/watcher";
 import {
   shieldIframes,
   syncShieldPositions,
   unshieldAllIframes,
   SHIELD_ATTR,
-} from "./iframe-shield";
-import { portRequest } from "./port";
-import { removePreloadCSSForElement } from "./preload-css-sync";
-import { CORNER_ATTR, flashViewportGlow } from "./selection-feedback";
+} from "~features/selection/iframe-shield";
+import { portRequest } from "~features/record/content-port";
+import { removePreloadCSSForElement } from "~features/element-hiding/preload-css";
+import { CORNER_ATTR, flashViewportGlow } from "~features/selection/feedback";
 import {
   HIGHLIGHT_ATTR,
   STATUS_BAR_ATTR,
@@ -25,7 +24,9 @@ import {
   updateHighlight,
   updateStatusBarContent,
   updateStatusBarError,
-} from "./selection-toolbar";
+} from "~features/selection/toolbar";
+
+const PANEL_HOST_ATTRIBUTE = "data-less-panel";
 
 export let selectionActive = false;
 const selectionListeners = new Set<(active: boolean) => void>();

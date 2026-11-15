@@ -2,9 +2,9 @@ import { isHiddenElement, isHideExcludedElement } from "~features/element-hiding
 import { HIDDEN_INLINE_STYLE_ATTRIBUTE } from "~features/element-hiding/hide-policy";
 import { resolveMatchedElement } from "~features/element-hiding/match/record-match-resolver";
 import type { HiddenElementRecord } from "~features/record/schema";
-import { portRequest } from "./port";
+import { portRequest } from "~features/record/content-port";
 import { finishHiddenElementAnimation } from "~features/element-hiding/element-hide";
-import { positionPreview } from "./preview-position";
+import { positionPreview } from "~features/element-hiding/preview-position";
 import { getPanelMessage as message } from "~features/record/management-messages";
 
 export type PreviewState = { id: string | null; message: string };
@@ -137,7 +137,7 @@ export function createHiddenItemPreview() {
         element.style.setProperty("transition", "none", "important");
         element.style.setProperty("visibility", "visible", "important");
         const outline = panel
-          ? getComputedStyle(panel).getPropertyValue("--veil-panel-focus").trim()
+          ? getComputedStyle(panel).getPropertyValue("--less-panel-focus").trim()
           : "Highlight";
         element.style.setProperty("outline", `3px solid ${outline}`, "important");
         element.style.setProperty("outline-offset", "3px", "important");

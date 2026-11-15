@@ -2,6 +2,9 @@
 // Build first. Chrome's Extensions.triggerAction dispatches the real toolbar action.
 // node scripts/verify-sidepanel.ts --chromium /path/to/Chrome
 import assert from "node:assert/strict";
+import { transformFileAsync } from "@babel/core";
+import stylexPlugin from "@stylexjs/babel-plugin";
+import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -24,6 +27,29 @@ import {
   UPDATES_SEEN_VERSION_KEY,
 } from "../src/features/updates/notice.ts";
 import type { HiddenElementRecord } from "../src/features/record/schema.ts";
+
+// Resolve the installed public token references without recreating application aliases.
+const semantic = await transformFileAsync(
+  fileURLToPath(import.meta.resolve("@bolerish/tokens/semantic.stylex")),
+  {
+    babelrc: false,
+    configFile: false,
+    parserOpts: { plugins: ["typescript"] },
+    plugins: [
+      [
+        stylexPlugin,
+        { dev: false, unstable_moduleResolution: { type: "commonJS", rootDir: process.cwd() } },
+      ],
+    ],
+  },
+);
+const semanticRefs = Object.fromEntries(
+  ["strokeDefault", "bgActionPrimary", "fgPrimary"].map((name) => {
+    const match = semantic?.code?.match(new RegExp(name + ': "([^"]+)"'));
+    assert(match, `installed semantic token ${name}`);
+    return [name, match[1]];
+  }),
+);
 
 const { values } = parseArgs({
   options: {
@@ -220,8 +246,16 @@ try {
     "install finished",
   );
   const errors: string[] = [];
-  activeContext.on("page", (p) => p.on("pageerror", (e) => errors.push(e.message)));
+  activeContext.on("page", (p) =>
+    p.on("pageerror", (e) => {
+      errors.push(e.message);
+      console.error("PAGEERROR", e.message);
+    }),
+  );
   const site = await activeContext.newPage();
+  site.on("console", (msg) => {
+    if (msg.type() === "error") console.error("PAGE", msg.text());
+  });
   await site.goto(`${origin}/fixture`);
   await waitFor(
     async () =>
@@ -263,7 +297,7 @@ try {
     if (settle && page === site)
       await waitFor(
         async () =>
-          (await site.locator("[data-veil-panel]").count()) === 0 ||
+          (await site.locator("[data-less-panel]").count()) === 0 ||
           (await panel((d) => d.getAnimations().length === 0)),
         "panel transition settled",
       );
@@ -358,7 +392,7 @@ try {
     options?: Parameters<ReturnType<Page["locator"]>["click"]>[0],
   ) {
     await waitFor(
-      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
       "panel closed before shortcut",
     );
     await site.keyboard.press("Control+Shift+E");
@@ -376,10 +410,10 @@ try {
     "panel entrance animation observed through CDP",
   );
   await waitFor(() => panel((d) => d.getAnimations().length === 0), "panel entrance finishes");
-  await waitFor(() => site.locator("[data-veil-panel]").count(), "toolbar opens panel");
+  await waitFor(() => site.locator("[data-less-panel]").count(), "toolbar opens panel");
   await waitFor(() => textIncludes(messages.panel_empty_title), "empty state");
   assert.equal(
-    await site.locator("[data-veil-panel]").evaluate((e) => e.shadowRoot),
+    await site.locator("[data-less-panel]").evaluate((e) => e.shadowRoot),
     null,
     "closed shadow",
   );
@@ -448,7 +482,7 @@ try {
     );
     await action();
     await waitFor(
-      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
       "close read panel",
     );
     await action();
@@ -515,7 +549,7 @@ try {
     "panel exit animation observed through CDP",
   );
   await waitFor(
-    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
     "exit unmounts after animation",
   );
   assert.equal(await site.evaluate(() => document.activeElement!.id), "before", "focus restored");
@@ -523,12 +557,12 @@ try {
   await action(site, false);
   await action(site, false);
   await waitFor(() => panel((d) => d.getAnimations().length === 0), "rapid toggles settled");
-  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "rapid toggles keep one panel");
+  assert.equal(await site.locator("[data-less-panel]").count(), 1, "rapid toggles keep one panel");
   await site.emulateMedia({ reducedMotion: "reduce" });
   const beforeReducedPanel = panelAnimations.length;
   await action(site, false);
   await waitFor(
-    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
     "reduced motion closes the panel immediately",
   );
   await action();
@@ -540,7 +574,7 @@ try {
   );
   await site.emulateMedia({ reducedMotion: "no-preference" });
   await click(".select-button");
-  assert.equal(await site.locator("[data-veil-panel]").count(), 0, "selection folds panel");
+  assert.equal(await site.locator("[data-less-panel]").count(), 0, "selection folds panel");
   await site.locator("#one").click();
   await site.keyboard.press("Escape");
   await hidden("#one");
@@ -706,7 +740,7 @@ try {
 
   await site.keyboard.press("Escape");
   await hidden("#two");
-  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "Esc ends preview first");
+  assert.equal(await site.locator("[data-less-panel]").count(), 1, "Esc ends preview first");
   await click(".record:nth-child(1) .locate-button");
   await hidden("#three", false);
   assert(
@@ -725,7 +759,7 @@ try {
   await click(".select-button");
   await hidden("#two");
   await site.keyboard.press("Escape");
-  assert.equal(await site.locator("[data-veil-panel]").count(), 1);
+  assert.equal(await site.locator("[data-less-panel]").count(), 1);
   await click(".record:nth-child(1) .restore-button");
   await hidden("#two", false);
   await hidden("#two", false, sibling);
@@ -751,7 +785,7 @@ try {
     "focus tooltip stays in shadow",
   );
   await site.keyboard.press("Escape");
-  assert.equal(await site.locator("[data-veil-panel]").count(), 1, "tooltip Escape takes priority");
+  assert.equal(await site.locator("[data-less-panel]").count(), 1, "tooltip Escape takes priority");
   await panel((d) => d.querySelector<HTMLElement>(".updates-button")!.focus());
   await site.waitForTimeout(400);
   assert.equal(
@@ -852,7 +886,7 @@ try {
           "long domain and large count fit without shrinking text",
         );
       }
-      const components = await panel((d) => {
+      const components = await panel((d, tokens) => {
         const canvas = document.createElement("canvas");
         canvas.width = canvas.height = 1;
         const context = canvas.getContext("2d")!;
@@ -865,7 +899,7 @@ try {
         };
         const resolveColor = (token: string) => {
           const probe = document.createElement("span");
-          probe.style.color = `var(${token})`;
+          probe.style.color = token;
           d.append(probe);
           const color = getComputedStyle(probe).color;
           probe.remove();
@@ -889,16 +923,16 @@ try {
         const shadow = d.getRootNode() as ShadowRoot;
         return {
           unresolvedImports: shadow.querySelector("style")!.textContent.includes("@import"),
-          neutral: resolveColor("--veil-color-stroke-default"),
-          blue: resolveColor("--veil-panel-focus"),
-          primary: resolveColor("--veil-color-bg-action-primary"),
-          foreground: resolveColor("--veil-color-fg-primary"),
+          neutral: resolveColor(tokens.strokeDefault),
+          blue: resolveColor("var(--less-panel-focus)"),
+          primary: resolveColor(tokens.bgActionPrimary),
+          foreground: resolveColor(tokens.fgPrimary),
           reset: inspect(".reset-button"),
           select: inspect(".select-button"),
           badge: inspect(".record-tag"),
           card: inspect(".site-card"),
         };
-      });
+      }, semanticRefs);
       assert.equal(
         components.unresolvedImports,
         false,
@@ -932,7 +966,7 @@ try {
         components.neutral,
         "blue focus differs from neutral borders",
       );
-      console.log("PASS official component CSS", { width, colorScheme, ...components });
+      console.log("PASS official component CSS", { width, colorScheme });
       for (let i = 0; i < 14; i++) {
         await site.keyboard.press("Tab");
         assert.equal(
@@ -1046,11 +1080,11 @@ try {
     () => textIncludes(messages.panel_other_page),
     "different-path preview unavailable",
   );
-  await site.evaluate(() => document.querySelector<HTMLElement>("[data-veil-panel]")!.remove());
+  await site.evaluate(() => document.querySelector<HTMLElement>("[data-less-panel]")!.remove());
   await waitFor(
     () =>
       site
-        .locator("[data-veil-panel]")
+        .locator("[data-less-panel]")
         .count()
         .then((n) => n === 0),
     "host removal cleanup",
@@ -1148,7 +1182,7 @@ try {
   );
   await action();
   await waitFor(
-    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
     "panel closed before selection",
   );
   for (const selector of ["#same-a", "#same-b", "#nested-target", "#far-target", "#fixed-target"])
@@ -1253,7 +1287,7 @@ try {
     await site.locator("#nested-target").evaluate((e) => getComputedStyle(e).outlineColor),
     await panel((d) => {
       const probe = document.createElement("span");
-      probe.style.color = "var(--veil-panel-focus)";
+      probe.style.color = "var(--less-panel-focus)";
       d.append(probe);
       const color = getComputedStyle(probe).color;
       probe.remove();
@@ -1692,7 +1726,7 @@ try {
     );
     await action();
     await waitFor(
-      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
       "close before locale switch",
     );
     await session.send("Runtime.evaluate", {
@@ -1829,7 +1863,7 @@ try {
   }
   await action();
   await waitFor(
-    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
     "close localized panel",
   );
   await session.send("Runtime.callFunctionOn", {
@@ -1843,7 +1877,7 @@ try {
   );
   await action();
   await waitFor(
-    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
     "close for retry fixture",
   );
   const delayedRetry = await session.send("Runtime.evaluate", {
@@ -1927,7 +1961,7 @@ try {
   for (let cycle = 1; cycle <= 2; cycle++) {
     await action();
     await waitFor(
-      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
       "panel unmounted for listener check",
     );
     assert.equal((await queryCounts()).listeners, 0, "unmount removes panel listener");

@@ -6,7 +6,7 @@ import {
 } from "~features/record/css-cache";
 import { resolveCSSSelector } from "~features/record/derivation/record-match-signal-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
-import { portPost } from "./port";
+import { portPost } from "~features/record/content-port";
 
 // Old-style selectors used .className; new style uses [class*="token"].
 // Detects legacy selectors so they can be transparently re-derived on next match.
@@ -72,8 +72,8 @@ export async function backfillCSSSelector(
   let changed = false;
   for (const [key, newSelectors] of byKey) {
     const existing = currentAll[key] ?? [];
-    const existingSelectors = existing.map(parseEntrySelector);
-    const toAdd = newSelectors.filter((s) => !existingSelectors.includes(s));
+    const existingSelectors = new Set(existing.map(parseEntrySelector));
+    const toAdd = newSelectors.filter((s) => !existingSelectors.has(s));
     if (toAdd.length > 0) {
       currentAll[key] = [...existing, ...toAdd.map((s) => `${s}@@@1`)];
       changed = true;

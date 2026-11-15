@@ -1,14 +1,14 @@
-import { themeClassNames } from "@bolerish/ui/theme";
-import packageCSS from "@bolerish/ui/global.css?inline";
-import tokens from "~shared/styles/bolerish-tokens.css?inline";
 import { createRoot, type Root } from "react-dom/client";
-import App from "../sidepanel/App";
+import Panel from "./Panel";
 import { getPanelMessage } from "~features/record/management-messages";
-import panelCSS from "../sidepanel/style.css?inline";
-import { setSelectionHostStyles } from "./selection-surface";
-import type { HiddenItemPreview } from "./hidden-item-preview";
+import * as stylex from "@stylexjs/stylex";
+import { colorVars, radiusVars, shadowVars, motionVars } from "@bolerish/tokens/semantic.stylex";
+import { getSurfaceProps } from "~shared/styles/surface";
+import { appendContentStyles } from "~shared/styles/content-styles";
+import { setContentHostStyles } from "~shared/lib/content-host";
+import type { HiddenItemPreview } from "~features/element-hiding/preview";
 
-export const PANEL_HOST_ATTRIBUTE = "data-veil-panel";
+export const PANEL_HOST_ATTRIBUTE = "data-less-panel";
 
 export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview) {
   let host: HTMLDivElement | null = null;
@@ -23,9 +23,11 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   const preference = matchMedia("(prefers-color-scheme: dark)");
   const syncTheme = (): void => {
     if (!dialog) return;
-    dialog.className = `veil-theme ${themeClassNames[preference.matches ? "dark" : "light"]}`;
+    dialog.className = [
+      "less-theme",
+      getSurfaceProps(preference.matches, styles.dialog).className,
+    ].join(" ");
     dialog.dataset.theme = preference.matches ? "dark" : "light";
-    dialog.dataset.bolerishTheme = dialog.dataset.theme;
     dialog.style.colorScheme = dialog.dataset.theme;
   };
 
@@ -52,7 +54,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const element = dialog;
     const style = getComputedStyle(element);
     const start = { opacity: style.opacity, transform: style.transform };
-    const time = style.getPropertyValue("--veil-motion-duration-fast").trim();
+    const time = style.getPropertyValue("--less-motion-duration").trim();
     const duration = parseFloat(time) * (time.endsWith("ms") ? 1 : 1000);
     transition?.cancel();
     transition = null;
@@ -67,7 +69,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       ],
       {
         duration,
-        easing: style.getPropertyValue("--veil-motion-easing-standard").trim(),
+        easing: style.getPropertyValue("--less-motion-easing").trim(),
         fill: "both",
       },
     );
@@ -105,7 +107,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     host = document.createElement("div");
     host.setAttribute(PANEL_HOST_ATTRIBUTE, "true");
-    setSelectionHostStyles(host, {
+    setContentHostStyles(host, {
       all: "initial",
       position: "fixed",
       top: "0",
@@ -117,14 +119,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       zIndex: "2147483647",
     });
     const shadow = host.attachShadow({ mode: "closed" });
-    const style = document.createElement("style");
-    // Load the actual component CSS in this tree; document styles cannot cross a shadow boundary.
-    // Package token defaults target :root; inside a shadow tree their root is our theme surface.
-    // Pin rem geometry to the extension's 16px unit rather than the website's root font size.
-    const isolatedCSS = packageCSS
-      .replaceAll(":root", ".veil-theme")
-      .replace(/(-?[\d.]+)rem\b/g, (_, value: string) => `${Number(value) * 16}px`);
-    style.textContent = `${isolatedCSS}\n${tokens}\n${panelCSS}`;
+    appendContentStyles(shadow);
     dialog = document.createElement("dialog");
     dialog.lang = browser.i18n.getUILanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));
@@ -160,20 +155,21 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       close();
     });
     const container = document.createElement("div");
+    container.className = stylex.props(styles.mount).className ?? "";
     dialog.append(container);
-    shadow.append(style, dialog);
+    shadow.append(dialog);
     document.documentElement.append(host);
     syncTheme();
     preference.addEventListener("change", syncTheme);
     root = createRoot(container);
     root.render(
-      <App
+      <Panel
         origin={location.origin}
         preview={preview}
         portalContainer={dialog}
         onClose={() => close()}
         onSelect={() => {
-          // Unmount before selection starts so no Veil UI can become a hiding target.
+          // Unmount before selection starts so no Less UI can become a hiding target.
           close(false);
           onSelect();
           resumeAfterSelection = true;
@@ -207,3 +203,43 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     },
   };
 }
+
+const styles = stylex.create({
+  dialog: {
+    padding: 0,
+    "--less-panel-focus": colorVars.fgFeedbackInfo,
+    "--less-motion-duration": motionVars.durationFast,
+    "--less-motion-easing": motionVars.easingStandard,
+    boxSizing: "border-box",
+    display: { default: "block", ":not([open])": "none" },
+    position: "fixed",
+    inset: { default: "0 0 0 auto", ":is([data-preview-layout='compact'] )": "auto 8px 8px auto" },
+    margin: 0,
+    width: {
+      default: "min(380px, 100vw)",
+      ":is([data-preview-layout='compact'] )": "min(380px, calc(100vw - 16px))",
+    },
+    height: { default: "100dvh", ":is([data-preview-layout='compact'] )": "min(45dvh, 340px)" },
+    maxWidth: "none",
+    maxHeight: "none",
+    overflow: "hidden",
+    overscrollBehavior: "contain",
+    pointerEvents: "auto",
+    borderBlockWidth: { default: 0, ":is([data-preview-layout='compact'] )": 1 },
+    borderInlineEndWidth: { default: 0, ":is([data-preview-layout='compact'] )": 1 },
+    borderInlineStartWidth: 1,
+    boxShadow: shadowVars.overlay,
+    "::backdrop": { backgroundColor: "rgb(0 0 0 / .12)" },
+    borderStyle: "solid",
+    borderColor: colorVars.strokeDefault,
+    borderRadius: { default: 0, ":is([data-preview-layout='compact'] )": radiusVars.md },
+    insetBlock: {
+      default: "0",
+      ":is([data-preview-layout='compact'] )": "auto 8px",
+      ":is([data-preview-edge='top'] )": "8px auto",
+    },
+  },
+  mount: {
+    height: "100%",
+  },
+});

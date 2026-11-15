@@ -1,15 +1,13 @@
 import babel from "@rolldown/plugin-babel";
 import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "wxt";
-import { bolerishTokens } from "./build/bolerish-tokens";
+import stylex from "@stylexjs/unplugin";
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   srcDir: "src",
   outDir: "dist",
   entrypointsDir: "entries",
-  // Failure is a one-shot action popup; keep the retired management documents excluded.
-  filterEntrypoints: ["background", "content", "preload", "welcome", "failure"],
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
   autoIcons: {
     baseIconPath: "assets/logo.png",
@@ -42,9 +40,25 @@ export default defineConfig({
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   }),
   vite: () => ({
+    // All extension documents share the extracted StyleX asset. Content scripts
+    // are built separately by WXT and load their own CSS into closed shadow roots.
+    build: { cssCodeSplit: false },
     optimizeDeps: {
       entries: ["src/entries/welcome/index.html", "src/entries/content.ts"],
+      exclude: ["@bolerish/tokens"],
     },
-    plugins: [bolerishTokens(), babel({ presets: [reactCompilerPreset()] })],
+    plugins: [
+      stylex.vite({
+        // Published DS layers use a different priority grouping; app overrides stay unlayered.
+        useCSSLayers: false,
+        // Match the published DS merge keys in development as well as production.
+        dev: false,
+        runtimeInjection: false,
+        externalPackages: ["@bolerish/tokens"],
+        unstable_moduleResolution: { type: "commonJS", rootDir: process.cwd() },
+      }),
+
+      babel({ presets: [reactCompilerPreset()] }),
+    ],
   }),
 });

@@ -1019,12 +1019,12 @@ try {
         "package CSS imports are bundled in shadow",
       );
       for (const control of [components.reset]) {
-        assert.equal(control.border, "1px", "official ghost button keeps its border geometry");
+        assert.equal(control.border, "1px", "official outline button keeps its border geometry");
         assert.equal(control.borderStyle, "solid");
-        assert.equal(
-          control.borderColor[3],
-          0,
-          `official ghost button has no visible border: ${JSON.stringify(control)}`,
+        assert.deepEqual(
+          control.borderColor,
+          components.neutral,
+          `official outline button resolves its semantic border: ${JSON.stringify(control)}`,
         );
         assert.deepEqual(
           control.color,

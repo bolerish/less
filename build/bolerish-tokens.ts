@@ -60,18 +60,16 @@ const usedTokens = {
 
 export function bolerishTokens() {
   const css = compileTokens();
-  const references = compileTokens(true);
   return {
     name: "veil-bolerish-tokens",
     enforce: "pre",
     load(id: string) {
-      if (id.split("?")[0].endsWith("/panel-tokens.css")) return references;
       if (id.split("?")[0].endsWith("/bolerish-tokens.css")) return css;
     },
   } satisfies NonNullable<WxtViteConfig["plugins"]>[number];
 }
 
-function compileTokens(referencesOnly = false): string {
+function compileTokens(): string {
   const exports = new Map<string, Map<string, string>>();
   const defaults = new Map<string, string>();
   const themes = new Map<string, Map<string, string>>();
@@ -152,8 +150,8 @@ function compileTokens(referencesOnly = false): string {
           .replace(/([a-z])([A-Z0-9])/g, "$1-$2")
           .replaceAll("_", "-")
           .toLowerCase();
-        let value = referencesOnly ? reference : resolve(reference);
-        if (!referencesOnly && group === "radiusVars") {
+        let value = resolve(reference);
+        if (group === "radiusVars") {
           value = value.replace(/([\d.]+)rem\b/g, "calc($1 * var(--bolerish-unit, 1rem))");
         }
         declarations.set(`--veil-${prefix}${suffix}`, value);

@@ -3,7 +3,6 @@ import packageCSS from "@bolerish/ui/global.css?inline";
 import { createRoot, type Root } from "react-dom/client";
 import App from "../sidepanel/App";
 import { getPanelMessage } from "~features/record/management-messages";
-import aliases from "../sidepanel/panel-tokens.css?inline";
 import panelCSS from "../sidepanel/style.css?inline";
 import { setSelectionHostStyles } from "./selection-surface";
 import type { HiddenItemPreview } from "./hidden-item-preview";
@@ -124,7 +123,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const isolatedCSS = packageCSS
       .replaceAll(":root", ".veil-theme")
       .replace(/(-?[\d.]+)rem\b/g, (_, value: string) => `${Number(value) * 16}px`);
-    style.textContent = `${isolatedCSS}\n${aliases}\n${panelCSS}`;
+    style.textContent = `${isolatedCSS}\n${panelCSS}`;
     dialog = document.createElement("dialog");
     dialog.lang = browser.i18n.getUILanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));

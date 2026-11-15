@@ -3,12 +3,9 @@ import * as stylex from "@stylexjs/stylex";
 import { typo } from "@bolerish/tokens/semantic.stylex";
 import { getSurfaceProps } from "~shared/styles/surface";
 import { appendContentStyles } from "~shared/styles/content-styles";
+import { isThemeDark, subscribeTheme } from "~shared/theme/_model/theme";
 
-export function createSelectionSurface(
-  attribute: string,
-  isDark: boolean,
-  xstyle?: stylex.StyleXStyles,
-) {
+export function createSelectionSurface(attribute: string, xstyle?: stylex.StyleXStyles) {
   const host = document.createElement("div");
   host.setAttribute(attribute, "true");
   setContentHostStyles(host, {
@@ -22,13 +19,18 @@ export function createSelectionSurface(
   const root = host.attachShadow({ mode: "closed" });
   appendContentStyles(root);
   const surface = document.createElement("div");
-  surface.className = [
-    "less-theme",
-    getSurfaceProps(isDark, [styles.surface, xstyle]).className,
-  ].join(" ");
-  surface.dataset.theme = isDark ? "dark" : "light";
+  function syncTheme() {
+    const dark = isThemeDark();
+    surface.className = [
+      "less-theme",
+      getSurfaceProps(dark, [styles.surface, xstyle]).className,
+    ].join(" ");
+    surface.dataset.theme = dark ? "dark" : "light";
+  }
+  syncTheme();
+  const disposeTheme = subscribeTheme(syncTheme);
   root.append(surface);
-  return { host, surface };
+  return { host, surface, disposeTheme };
 }
 
 const styles = stylex.create({

@@ -33,3 +33,19 @@ responsive panel geometry and locales. The Firefox option checks the built MV2
 background API in a fixture; it does not run Firefox. PNGs are written to `/tmp`
 by default (`--screenshot /path/to/capture.png` changes their prefix). Chrome,
 profile and local fixture server are cleaned up afterward.
+
+## Verify settings and themes
+
+The default theme now follows the web page, with the system setting as a fallback
+when the page theme cannot be detected. Explicit page, system, light and dark
+choices are global and synchronize across open tabs and extension documents.
+
+```bash
+pnpm build
+pnpm build:firefox
+pnpm verify:settings --chromium "/path/to/Google Chrome" --firefox-build dist/firefox-mv2
+```
+
+This check covers saved choices, page changes, isolated toolbar/feedback surfaces,
+five languages, keyboard focus, contrast, 320/375px and 200% browser zoom.
+Firefox coverage is an API fixture; it does not establish Firefox runtime behavior.

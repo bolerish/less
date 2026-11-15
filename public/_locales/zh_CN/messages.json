@@ -241,5 +241,32 @@
   },
   "panel_language_error": {
     "message": "无法保存语言。请重试。"
+  },
+  "panel_general": {
+    "message": "通用"
+  },
+  "panel_appearance": {
+    "message": "外观"
+  },
+  "panel_theme": {
+    "message": "主题"
+  },
+  "panel_theme_page": {
+    "message": "跟随网页（默认）"
+  },
+  "panel_theme_system": {
+    "message": "系统设置"
+  },
+  "panel_theme_light": {
+    "message": "浅色"
+  },
+  "panel_theme_dark": {
+    "message": "深色"
+  },
+  "panel_theme_help": {
+    "message": "选择 Less 在所有网站上使用的主题。无法识别网页主题时，将跟随系统设置。"
+  },
+  "panel_theme_error": {
+    "message": "无法保存主题，请重试。"
   }
 }

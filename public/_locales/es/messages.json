@@ -241,5 +241,32 @@
   },
   "panel_language_error": {
     "message": "No se pudo guardar el idioma. Inténtalo de nuevo."
+  },
+  "panel_general": {
+    "message": "General"
+  },
+  "panel_appearance": {
+    "message": "Apariencia"
+  },
+  "panel_theme": {
+    "message": "Tema"
+  },
+  "panel_theme_page": {
+    "message": "Según la página (predeterminado)"
+  },
+  "panel_theme_system": {
+    "message": "Configuración del sistema"
+  },
+  "panel_theme_light": {
+    "message": "Claro"
+  },
+  "panel_theme_dark": {
+    "message": "Oscuro"
+  },
+  "panel_theme_help": {
+    "message": "Elige el tema de Less para todos los sitios. Si no se puede detectar el tema de la página, se usa la configuración del sistema."
+  },
+  "panel_theme_error": {
+    "message": "No se pudo guardar el tema. Inténtalo de nuevo."
   }
 }

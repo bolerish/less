@@ -1,4 +1,5 @@
 import { initializeLocale } from "~shared/locale/preference";
+import { initializeTheme } from "~shared/theme/_model/theme";
 import "@bolerish/ui/global.css";
 import { loadContentStyles } from "~shared/styles/content-styles";
 import { restoreAllHiddenElements } from "~features/element-hiding";
@@ -39,6 +40,8 @@ export default defineContentScript({
 async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   const disposeLocale = await initializeLocale();
   ctx.onInvalidated(disposeLocale);
+  const disposeTheme = await initializeTheme(true);
+  ctx.onInvalidated(disposeTheme);
   await loadContentStyles();
   if (ctx.isInvalid) return;
   const origin = window.location.origin;

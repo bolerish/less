@@ -11,13 +11,14 @@ import {
 import { getPanelMessage as message } from "~features/record/management-messages";
 import { createSelectionSurface } from "~features/selection/surface";
 import { setContentHostStyles } from "~shared/lib/content-host";
-import { isPageDark } from "~features/selection/theme";
 import { getPaintedRect } from "~shared/lib/painted-rect";
 
 export const HIGHLIGHT_ATTR = "data-less-highlight";
 export const STATUS_BAR_ATTR = "data-less-ui";
 
 let unsubscribeLocale: (() => void) | undefined;
+let disposeHighlightTheme: (() => void) | undefined;
+let disposeToolbarTheme: (() => void) | undefined;
 let statusCount = 0;
 let statusHasUndo = false;
 let statusError: PanelMessage | null = null;
@@ -53,6 +54,10 @@ export function mountSelectionUI(onClose: () => void, onUndo: () => void): void 
 }
 
 export function unmountSelectionUI(): void {
+  disposeHighlightTheme?.();
+  disposeToolbarTheme?.();
+  disposeHighlightTheme = undefined;
+  disposeToolbarTheme = undefined;
   unsubscribeLocale?.();
   unsubscribeLocale = undefined;
   statusCount = 0;
@@ -115,7 +120,8 @@ export function updateStatusBarError(key: PanelMessage): void {
 }
 
 function buildHighlightOverlay(): HTMLDivElement {
-  const { host } = createSelectionSurface(HIGHLIGHT_ATTR, isPageDark(), styles.highlight);
+  const { host, disposeTheme } = createSelectionSurface(HIGHLIGHT_ATTR, styles.highlight);
+  disposeHighlightTheme = disposeTheme;
   host.setAttribute("aria-hidden", "true");
   setContentHostStyles(host, { top: "0", left: "0", display: "none" });
   return host;
@@ -130,11 +136,12 @@ function buildStatusBar(
   restoreEl: HTMLButtonElement;
   closeBtn: HTMLButtonElement;
 } {
-  const { host: wrapper, surface } = createSelectionSurface(
-    STATUS_BAR_ATTR,
-    isPageDark(),
-    styles.toolbar,
-  );
+  const {
+    host: wrapper,
+    surface,
+    disposeTheme,
+  } = createSelectionSurface(STATUS_BAR_ATTR, styles.toolbar);
+  disposeToolbarTheme = disposeTheme;
   setContentHostStyles(wrapper, {
     bottom: "24px",
     left: "50%",

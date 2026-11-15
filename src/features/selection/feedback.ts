@@ -2,12 +2,11 @@ import * as stylex from "@stylexjs/stylex";
 import { colorVars } from "@bolerish/tokens/semantic.stylex";
 import { createSelectionSurface } from "~features/selection/surface";
 import { setContentHostStyles } from "~shared/lib/content-host";
-import { isPageDark } from "~features/selection/theme";
 
 export const CORNER_ATTR = "data-less-corner";
 
 export function flashViewportGlow(): void {
-  const { host, surface } = createSelectionSurface(CORNER_ATTR, isPageDark(), styles.glow);
+  const { host, surface, disposeTheme } = createSelectionSurface(CORNER_ATTR, styles.glow);
   host.setAttribute("aria-hidden", "true");
   setContentHostStyles(host, { inset: "0" });
   document.documentElement.appendChild(host);
@@ -21,7 +20,13 @@ export function flashViewportGlow(): void {
 
   setTimeout(() => {
     surface.dataset.phase = "fading";
-    surface.addEventListener("transitionend", () => host.remove(), { once: true });
+    const remove = () => {
+      disposeTheme();
+      host.remove();
+    };
+    surface.addEventListener("transitionend", remove, { once: true });
+    // Transition events can be skipped when the document is hidden.
+    setTimeout(remove, 600);
   }, 400);
 }
 

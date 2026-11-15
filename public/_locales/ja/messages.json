@@ -241,5 +241,32 @@
   },
   "panel_language_error": {
     "message": "言語を保存できませんでした。もう一度お試しください。"
+  },
+  "panel_general": {
+    "message": "一般"
+  },
+  "panel_appearance": {
+    "message": "外観"
+  },
+  "panel_theme": {
+    "message": "テーマ"
+  },
+  "panel_theme_page": {
+    "message": "ウェブページに合わせる（既定）"
+  },
+  "panel_theme_system": {
+    "message": "システム設定"
+  },
+  "panel_theme_light": {
+    "message": "ライト"
+  },
+  "panel_theme_dark": {
+    "message": "ダーク"
+  },
+  "panel_theme_help": {
+    "message": "すべてのサイトで使うLessのテーマを選べます。ページのテーマを判別できない場合は、システム設定に従います。"
+  },
+  "panel_theme_error": {
+    "message": "テーマを保存できませんでした。もう一度お試しください。"
   }
 }

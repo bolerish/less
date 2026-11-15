@@ -239,6 +239,8 @@ try {
   const worker =
     activeContext.serviceWorkers()[0] ?? (await activeContext.waitForEvent("serviceworker"));
   await worker.evaluate(() => chrome.runtime.getManifest());
+  // This suite exercises OS-theme transitions; page-following defaults have their own settings check.
+  await worker.evaluate(() => chrome.storage.local.set({ "less:theme": "system" }));
   const englishCatalog: Record<string, { message: string }> = JSON.parse(
     await readFile(join(values.build, "_locales/en/messages.json"), "utf8"),
   );
@@ -2463,20 +2465,22 @@ try {
   await welcomePage.getByRole("combobox").waitFor();
   await site.bringToFront();
   await click(".settings-button");
+  await click('[data-settings-page="language"]');
   assert.equal(
-    await panel((d) => d.querySelector("select")!.value),
+    await panel((d) =>
+      d.querySelector('[role="radio"][aria-checked="true"]')!.getAttribute("data-preference-value"),
+    ),
     "auto",
     "browser language is the default",
   );
-  await panel((d) => d.querySelector("select")!.focus());
-  // Native option menus are owned by macOS in headless Chrome; dispatch its standard change event.
-  await panel((d) => {
-    const select = d.querySelector("select")!;
-    select.value = "es";
-    select.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await click('[role="radio"][data-preference-value="es"]');
   await waitFor(
-    () => panel((d) => d.querySelector("select")!.value === "es" && d.lang === "es"),
+    () =>
+      panel(
+        (d) =>
+          d.querySelector('[data-preference-value="es"]')?.getAttribute("aria-checked") ===
+            "true" && d.lang === "es",
+      ),
     "language change updates mounted settings",
   );
   assert.equal(
@@ -2492,7 +2496,12 @@ try {
   await welcomePage.getByRole("combobox", { name: "Idioma" }).click();
   await welcomePage.getByRole("option", { name: "日本語" }).click();
   await waitFor(
-    () => panel((d) => d.querySelector("select")!.value === "ja" && d.lang === "ja"),
+    () =>
+      panel(
+        (d) =>
+          d.querySelector('[data-preference-value="ja"]')?.getAttribute("aria-checked") ===
+            "true" && d.lang === "ja",
+      ),
     "welcome selection synchronizes mounted panel",
   );
   const siblingSession = await activeContext.newCDPSession(sibling);
@@ -2525,7 +2534,11 @@ try {
   await siblingSession.detach();
   await site.bringToFront();
   await site.keyboard.press("Escape");
-  await waitFor(() => panel((d) => !d.querySelector("select")), "return to hidden items");
+  await site.keyboard.press("Escape");
+  await waitFor(
+    () => panel((d) => d.querySelector(".settings-button")!.getClientRects().length > 0),
+    "return to hidden items",
+  );
   await worker.evaluate(() => chrome.storage.local.set({ "less:locale": "auto" }));
   await welcomePage.close();
   console.log(
@@ -2743,26 +2756,34 @@ try {
       );
       await site.keyboard.press("Enter");
       await waitFor(
-        () => panel((d) => !!d.querySelector("select")),
-        "keyboard opens language settings",
+        () => panel((d) => !!d.querySelector('[data-settings-page="language"]')),
+        "keyboard opens settings sections",
       );
       assert.equal(
         await panel((d) => d.querySelector("h1")!.textContent),
         catalog.panel_settings.message,
       );
+      await click('[data-settings-page="language"]');
       await site.keyboard.press("Tab");
       await site.keyboard.press("Tab");
       await site.keyboard.press("Tab");
       assert.equal(
         await panel(
-          (d) => (d.getRootNode() as ShadowRoot).activeElement === d.querySelector("select"),
+          (d) => (d.getRootNode() as ShadowRoot).activeElement?.getAttribute("role") === "radio",
         ),
         true,
         "language control is keyboard reachable",
       );
-      assert.equal(await panel((d) => d.querySelector("select")!.value), locale);
       assert.equal(
-        await panel((d) => d.querySelectorAll("option").length),
+        await panel((d) =>
+          d
+            .querySelector('[role="radio"][aria-checked="true"]')!
+            .getAttribute("data-preference-value"),
+        ),
+        locale,
+      );
+      assert.equal(
+        await panel((d) => d.querySelectorAll('[role="radio"]').length),
         6,
         "only auto and five supported locales",
       );
@@ -2773,7 +2794,7 @@ try {
           "settings theme transition settled",
         );
         const layout = await panel((d) => {
-          const select = d.querySelector("select")!;
+          const select = d.querySelector('[role="radiogroup"]')!;
           const rect = select.getBoundingClientRect();
           return {
             left: rect.left,
@@ -2794,6 +2815,7 @@ try {
           path: values.screenshot.replace(/\.png$/, `-settings-${locale}-${width}-${theme}.png`),
         });
       }
+      await site.keyboard.press("Escape");
       await site.keyboard.press("Escape");
       await waitFor(
         () =>
@@ -3146,8 +3168,9 @@ try {
   );
   await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-zoom-200.png") });
   await click(".settings-button");
+  await click('[data-settings-page="language"]');
   const settingsZoom = await panel((d) => {
-    const select = d.querySelector("select")!;
+    const select = d.querySelector('[role="radiogroup"]')!;
     return {
       right: select.getBoundingClientRect().right,
       viewport: innerWidth,
@@ -3159,6 +3182,7 @@ try {
     settingsZoom.right <= settingsZoom.viewport && settingsZoom.scroll <= settingsZoom.width,
     "settings fit at 200% browser zoom",
   );
+  await site.keyboard.press("Escape");
   await site.keyboard.press("Escape");
   await worker.evaluate((tabId) => chrome.tabs.setZoom(tabId, 1), zoomTab);
   await site.setViewportSize({ width: 375, height: 720 });

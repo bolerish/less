@@ -241,5 +241,32 @@
   },
   "panel_language_error": {
     "message": "Could not save the language. Try again."
+  },
+  "panel_general": {
+    "message": "General"
+  },
+  "panel_appearance": {
+    "message": "Appearance"
+  },
+  "panel_theme": {
+    "message": "Theme"
+  },
+  "panel_theme_page": {
+    "message": "Match web page (default)"
+  },
+  "panel_theme_system": {
+    "message": "System setting"
+  },
+  "panel_theme_light": {
+    "message": "Light"
+  },
+  "panel_theme_dark": {
+    "message": "Dark"
+  },
+  "panel_theme_help": {
+    "message": "Choose how Less looks on all sites. When the page theme is unavailable, Less follows your system setting."
+  },
+  "panel_theme_error": {
+    "message": "Couldn’t save the theme. Try again."
   }
 }

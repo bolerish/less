@@ -1,5 +1,5 @@
 import { PanelFooter } from "./_ui/PanelFooter";
-import { Settings } from "./settings/_ui/Settings";
+import { Settings, type SettingsPage } from "./settings/_ui/Settings";
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
@@ -30,7 +30,7 @@ export default function Panel({
 }) {
   const message = usePanelMessage();
   const language = useLanguage();
-  const [view, setView] = useState<"hidden" | "updates" | "settings">("hidden");
+  const [view, setView] = useState<"hidden" | "updates" | SettingsPage>("hidden");
   const hasUnreadUpdates = useUpdateNotice(view === "updates");
   const updatesButton = useRef<HTMLButtonElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
@@ -51,7 +51,15 @@ export default function Panel({
   }, []);
 
   useEffect(() => {
-    if (view !== "hidden") viewHeading.current?.focus();
+    if (
+      view === "settings" &&
+      (previousView.current === "language" || previousView.current === "theme")
+    )
+      closeButton.current
+        ?.closest("dialog")
+        ?.querySelector<HTMLElement>(`[data-settings-page="${previousView.current}"]`)
+        ?.focus({ preventScroll: true });
+    else if (view !== "hidden") viewHeading.current?.focus();
     else if (previousView.current === "updates")
       updatesButton.current?.focus({ preventScroll: true });
     else if (previousView.current === "settings")
@@ -59,6 +67,10 @@ export default function Panel({
     previousView.current = view;
     viewHeading.current?.closest("dialog")?.scrollTo(0, 0);
   }, [view]);
+
+  function back() {
+    setView(view === "language" || view === "theme" ? "settings" : "hidden");
+  }
 
   return (
     <main
@@ -68,7 +80,7 @@ export default function Panel({
         if (event.key === "Escape" && view !== "hidden") {
           event.preventDefault();
           event.stopPropagation();
-          setView("hidden");
+          back();
         }
       }}
     >
@@ -90,7 +102,7 @@ export default function Panel({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setView("hidden")}
+              onClick={back}
               className={["less-control", stylex.props(styles.controlFocus).className].join(" ")}
             >
               <CaretLeftIcon {...stylex.props(styles.icon)} aria-hidden="true" />
@@ -103,7 +115,7 @@ export default function Panel({
               tabIndex={-1}
               className={["updates-heading", stylex.props(styles.viewHeading).className].join(" ")}
             >
-              {message(view === "settings" ? "panel_settings" : "panel_updates")}
+              {message(view === "updates" ? "panel_updates" : `panel_${view}`)}
             </Heading>
           </>
         )}
@@ -143,7 +155,9 @@ export default function Panel({
         </TooltipProvider>
       </div>
       {view === "updates" ? <Updates /> : null}
-      {view === "settings" ? <Settings /> : null}
+      {view === "settings" || view === "language" || view === "theme" ? (
+        <Settings page={view} onNavigate={setView} />
+      ) : null}
     </main>
   );
 }

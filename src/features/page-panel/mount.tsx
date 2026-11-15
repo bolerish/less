@@ -8,6 +8,7 @@ import { getSurfaceProps } from "~shared/styles/surface";
 import { appendContentStyles } from "~shared/styles/content-styles";
 import { setContentHostStyles } from "~shared/lib/content-host";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
+import { isThemeDark, subscribeTheme } from "~shared/theme/_model/theme";
 
 export const PANEL_HOST_ATTRIBUTE = "data-less-panel";
 
@@ -21,14 +22,12 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   let closing = false;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let unsubscribePreview: (() => void) | undefined;
-  const preference = matchMedia("(prefers-color-scheme: dark)");
+  let unsubscribeTheme: (() => void) | undefined;
   const syncTheme = (): void => {
     if (!dialog) return;
-    dialog.className = [
-      "less-theme",
-      getSurfaceProps(preference.matches, styles.dialog).className,
-    ].join(" ");
-    dialog.dataset.theme = preference.matches ? "dark" : "light";
+    const dark = isThemeDark();
+    dialog.className = ["less-theme", getSurfaceProps(dark, styles.dialog).className].join(" ");
+    dialog.dataset.theme = dark ? "dark" : "light";
     dialog.style.colorScheme = dialog.dataset.theme;
   };
 
@@ -40,7 +39,8 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     unsubscribePreview = undefined;
     resumeAfterSelection = false;
     observer.disconnect();
-    preference.removeEventListener("change", syncTheme);
+    unsubscribeTheme?.();
+    unsubscribeTheme = undefined;
     dialog?.close();
     root?.unmount();
     root = null;
@@ -162,7 +162,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     shadow.append(dialog);
     document.documentElement.append(host);
     syncTheme();
-    preference.addEventListener("change", syncTheme);
+    unsubscribeTheme = subscribeTheme(syncTheme);
     root = createRoot(container);
     root.render(
       <Panel

@@ -18,6 +18,7 @@
     "fmt:check": "oxfmt --check",
     "compile": "tsc --noEmit",
     "postinstall": "wxt prepare",
+    "verify:settings": "node scripts/verify-settings.ts",
     "verify:panel": "node scripts/verify-sidepanel.ts",
     "verify:dev": "node scripts/verify-dev.ts",
     "verify:failure": "node scripts/verify-failure-popup.ts"

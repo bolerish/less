@@ -1,58 +1,8 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --radius-xs: var(--veil-radius-sm);
-  --radius-sm: var(--veil-radius-sm);
-  --radius-md: var(--veil-radius-md);
-  --radius-lg: var(--veil-radius-lg);
-  --radius-xl: var(--veil-radius-xl);
-  --radius-full: var(--veil-radius-full);
-  --font-heading: var(--veil-font-family-heading);
-  --font-sans: var(--veil-font-family-body);
-  --text-xs: var(--veil-font-size-xs);
-  --text-sm: var(--veil-font-size-sm);
-  --text-base: var(--veil-font-size-md);
-  --text-lg: var(--veil-font-size-lg);
-  --text-xl: var(--veil-font-size-xl);
-  --font-weight-normal: var(--veil-font-weight-regular);
-  --font-weight-medium: var(--veil-font-weight-medium);
-  --font-weight-semibold: var(--veil-font-weight-semibold);
-  --leading-tight: var(--veil-line-height-tight);
-  --leading-normal: var(--veil-line-height-normal);
-  --leading-relaxed: var(--veil-line-height-normal);
-  --shadow-xs: var(--veil-shadow-subtle);
-  --shadow-sm: var(--veil-shadow-subtle);
-  --shadow-md: var(--veil-shadow-floating);
-  --shadow-lg: var(--veil-shadow-overlay);
-  --spacing: var(--veil-spacing-space-1);
-}
+@import "@bolerish/ui";
 
 :root {
   color-scheme: light;
-  --background: var(--veil-color-bg-canvas);
+  --background: var(--veil-app-background);
   --foreground: var(--veil-color-fg-primary);
   --card: var(--veil-color-bg-surface);
   --card-foreground: var(--veil-color-fg-primary);
@@ -83,14 +33,14 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
+/* Document defaults previously supplied by the utility stylesheet. */
+html {
+  font-family: var(--veil-font-family-body);
+  line-height: var(--veil-line-height-normal);
+}
+body {
+  font-size: var(--veil-font-size-xs);
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
 }

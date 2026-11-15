@@ -1,5 +1,4 @@
 import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
 import { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "wxt";
 import { bolerishTokens } from "./build/bolerish-tokens";
@@ -43,6 +42,6 @@ export default defineConfig({
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   }),
   vite: () => ({
-    plugins: [bolerishTokens(), tailwindcss(), babel({ presets: [reactCompilerPreset()] })],
+    plugins: [bolerishTokens(), babel({ presets: [reactCompilerPreset()] })],
   }),
 });

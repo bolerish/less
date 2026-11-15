@@ -1,6 +1,16 @@
+import { Heading } from "@bolerish/ui/heading";
+import { Separator } from "@bolerish/ui/separator";
+import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
+import {
+  Timeline,
+  TimelineContent,
+  TimelineDescription,
+  TimelineIndicator,
+  TimelineItem,
+  TimelineTitle,
+} from "@bolerish/ui/timeline";
 import { useEffect, useState } from "react";
 import wxtLogo from "~assets/logo.svg";
-import { Kbd, KbdGroup } from "~shared/components/ui/kbd";
 import { LanguageSelect } from "./LanguageSelect";
 import { type Locale, LOCALE_TO_LANG, detectLocale, translations } from "./locale";
 
@@ -16,49 +26,47 @@ function App() {
   }, [locale]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center px-8 py-16">
-      <div className="max-w-2xl w-full">
+    <main className="welcome">
+      <div className="welcome-content">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
+        <div className="welcome-header">
+          <div className="welcome-brand">
             <img src={wxtLogo} alt="Veil logo" width={32} />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">{t.title}</h1>
+            <Heading level={1} size="page" className="welcome-title">
+              {t.title}
+            </Heading>
           </div>
           <LanguageSelect value={locale} onValueChange={setLocale} />
         </div>
 
-        <hr className="border-border mb-8" />
+        <Separator className="welcome-divider" />
 
-        <div className="flex flex-col gap-6">
+        <Timeline>
           {t.steps.map((step, i) => {
             const shortcut = STEP_SHORTCUTS[i];
             return (
-              <div key={i} className="flex gap-4">
-                <div className="shrink-0 w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-semibold">
-                  {i + 1}
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-semibold text-foreground mb-1">{step.title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
+              <TimelineItem key={step.title}>
+                <TimelineIndicator className="welcome-step-indicator">{i + 1}</TimelineIndicator>
+                <TimelineContent className="welcome-step-content">
+                  <TimelineTitle>{step.title}</TimelineTitle>
+                  <TimelineDescription>{step.description}</TimelineDescription>
                   {shortcut && step.kbdLabel && (
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="welcome-shortcut">
                       <KbdGroup>
                         {shortcut.map((key) => (
                           <Kbd key={key}>{key}</Kbd>
                         ))}
                       </KbdGroup>
-                      <span className="text-xs text-muted-foreground">{step.kbdLabel}</span>
+                      <span className="welcome-shortcut-label">{step.kbdLabel}</span>
                     </div>
                   )}
-                </div>
-              </div>
+                </TimelineContent>
+              </TimelineItem>
             );
           })}
-        </div>
+        </Timeline>
       </div>
-    </div>
+    </main>
   );
 }
 

@@ -1,0 +1,105 @@
+.welcome {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--veil-spacing-space-8) * 2) var(--veil-spacing-space-8);
+  background: var(--background);
+}
+.welcome-content {
+  width: 100%;
+  max-width: 672px;
+}
+.welcome-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--veil-spacing-space-4);
+  margin-bottom: var(--veil-spacing-space-8);
+}
+.welcome-brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--veil-spacing-space-3);
+}
+.welcome-brand img {
+  flex-shrink: 0;
+}
+.welcome-title {
+  font-family: inherit;
+  letter-spacing: -0.025em;
+  line-height: 1.4;
+}
+.welcome-divider {
+  margin-bottom: var(--veil-spacing-space-8);
+}
+.welcome-shortcut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--veil-spacing-space-2);
+  margin-top: var(--veil-spacing-space-2);
+}
+.welcome-shortcut-label {
+  font-size: var(--veil-font-size-xs);
+  color: var(--muted-foreground);
+}
+.welcome-step-indicator {
+  border: 0;
+}
+.welcome-step-content {
+  padding-block: 0;
+}
+.welcome-shortcut kbd {
+  border: 0;
+  padding: 0;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: var(--veil-font-size-xs);
+  line-height: var(--veil-line-height-normal);
+}
+.language-select {
+  width: fit-content;
+  height: 28px;
+  padding: 6px var(--veil-spacing-space-2);
+  gap: calc(var(--veil-spacing-space-1) * 1.5);
+  border: 1px solid var(--input);
+  border-radius: var(--veil-radius-md);
+  background: color-mix(in oklab, var(--input) 20%, transparent);
+  font-size: var(--veil-font-size-xs);
+  line-height: var(--veil-line-height-normal);
+}
+.dark .language-select {
+  background: color-mix(in oklab, var(--input) 30%, transparent);
+}
+.language-select svg {
+  width: 14px;
+  height: 14px;
+}
+.language-options {
+  min-width: 128px;
+  border: 0;
+  border-radius: var(--veil-radius-lg);
+  padding: 0;
+  background: var(--popover);
+  box-shadow: var(--veil-shadow-floating);
+}
+.language-option {
+  min-height: 28px;
+  padding: var(--veil-spacing-space-1) var(--veil-spacing-space-2);
+  padding-inline-end: var(--veil-spacing-space-8);
+  border-radius: var(--veil-radius-md);
+  font-size: var(--veil-font-size-xs);
+  line-height: var(--veil-line-height-normal);
+}
+.language-option > span:first-child {
+  inset-inline-start: auto;
+  inset-inline-end: var(--veil-spacing-space-2);
+}
+.language-option svg {
+  width: 14px;
+  height: 14px;
+}

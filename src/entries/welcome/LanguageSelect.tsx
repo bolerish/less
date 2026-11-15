@@ -1,10 +1,11 @@
 import {
   Select,
-  SelectContent,
+  SelectPopup,
+  SelectList,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~shared/components/ui/select";
+} from "@bolerish/ui/select";
 import { type Locale, LOCALES } from "./locale";
 
 type Props = {
@@ -14,17 +15,26 @@ type Props = {
 
 export function LanguageSelect({ value, onValueChange }: Props) {
   return (
-    <Select value={value} onValueChange={(v: string) => onValueChange(v as Locale)}>
-      <SelectTrigger>
+    <Select
+      value={value}
+      items={LOCALES}
+      onValueChange={(next) => {
+        const locale = LOCALES.find((locale) => locale.value === next);
+        if (locale) onValueChange(locale.value);
+      }}
+    >
+      <SelectTrigger className="language-select">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
-        {LOCALES.map((l) => (
-          <SelectItem key={l.value} value={l.value}>
-            {l.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
+      <SelectPopup className="language-options" alignItemWithTrigger>
+        <SelectList>
+          {LOCALES.map((l) => (
+            <SelectItem className="language-option" key={l.value} value={l.value}>
+              {l.label}
+            </SelectItem>
+          ))}
+        </SelectList>
+      </SelectPopup>
     </Select>
   );
 }

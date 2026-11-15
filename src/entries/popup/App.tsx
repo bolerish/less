@@ -2,10 +2,10 @@ import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/reac
 import { useState } from "react";
 import wxtLogo from "~assets/logo.svg";
 
-import { Button } from "~shared/components/ui/button";
-import { Kbd, KbdGroup } from "~shared/components/ui/kbd";
-import { Switch } from "~shared/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~shared/components/ui/tooltip";
+import { Button } from "@bolerish/ui/button";
+import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
+import { Switch } from "@bolerish/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@bolerish/ui/tooltip";
 import { useCurrentTab } from "./hooks/useCurrentTab";
 import { useSiteHidingPreference } from "./hooks/useSiteHidingPreference";
 import { useUndoCount } from "./hooks/useUndoCount";
@@ -14,8 +14,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "~shared/components/ui/accordion";
-import { ButtonGroup } from "~shared/components/ui/button-group";
+} from "@bolerish/ui/accordion";
 
 function App() {
   const currentTab = useCurrentTab();
@@ -46,11 +45,11 @@ function App() {
   };
 
   return (
-    <div className="w-72 flex flex-col bg-background text-foreground">
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <div className="flex gap-1.5 items-center">
+    <div className="popup">
+      <div className="popup-header">
+        <div className="popup-brand">
           <img src={wxtLogo} alt="Veil logo" width={22} />
-          <span className="text-sm font-semibold tracking-tight">Veil</span>
+          <span className="popup-title">Veil</span>
         </div>
         <Switch
           aria-label="Hide saved items on this site"
@@ -61,45 +60,54 @@ function App() {
         />
       </div>
 
-      <div className="flex items-center justify-between px-4 pb-2">
-        <span className="flex items-center gap-1.5  font-medium  cursor-pointer select-none list-none  text-foreground">
-          Hidden
-        </span>
-        <ButtonGroup>
+      <div className="popup-actions">
+        <span className="popup-hidden-label">Hidden</span>
+        <div role="group" className="popup-button-group">
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                disabled={!enabled || !loaded || !origin}
-                aria-label="Select items to hide"
-                onClick={handleSelectToHide}
-                variant="outline"
-              >
-                <CursorClickIcon />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Select</TooltipContent>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon"
+                  className="popup-icon-button"
+                  disabled={!enabled || !loaded || !origin}
+                  aria-label="Select items to hide"
+                  onClick={handleSelectToHide}
+                  variant="outline"
+                >
+                  <CursorClickIcon />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" className="popup-tooltip">
+              Select
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon-sm"
-                disabled={undoCount === 0}
-                onClick={restore}
-                aria-label="Undo"
-                variant="outline"
-              >
-                <ArrowCounterClockwiseIcon />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Undo</TooltipContent>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon"
+                  className="popup-icon-button"
+                  disabled={undoCount === 0}
+                  onClick={restore}
+                  aria-label="Undo"
+                  variant="outline"
+                >
+                  <ArrowCounterClockwiseIcon />
+                </Button>
+              }
+            />
+            <TooltipContent side="top" className="popup-tooltip">
+              Undo
+            </TooltipContent>
           </Tooltip>
-        </ButtonGroup>
+        </div>
       </div>
 
-      <div className="px-4 pb-3">
+      <div className="popup-manage">
         <Button
-          className="w-full"
+          size="sm"
+          className="popup-manage-button"
           variant="outline"
           disabled={!currentTab}
           onClick={handleOpenPanel}
@@ -107,37 +115,35 @@ function App() {
           Manage hidden items
         </Button>
         {panelError ? (
-          <p role="alert" className="text-xs mt-2">
+          <p role="alert" className="popup-error">
             {panelError}
           </p>
         ) : null}
       </div>
 
-      <Accordion type="single" collapsible defaultValue="shortcuts">
+      <Accordion className="popup-shortcuts" defaultValue={["shortcuts"]}>
         <AccordionItem value="shortcuts">
-          <AccordionTrigger className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-medium  cursor-pointer select-none list-none text-muted-foreground">
-            Shortcuts
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-1.5 px-1  h-fit">
-            <div className="flex items-center gap-2 text-muted-foreground">
+          <AccordionTrigger className="popup-shortcuts-trigger">Shortcuts</AccordionTrigger>
+          <AccordionContent className="popup-shortcuts-content">
+            <div className="popup-shortcut">
               <KbdGroup>
                 <Kbd>⇧</Kbd>
                 <Kbd>Ctrl</Kbd>
                 <Kbd>E</Kbd>
               </KbdGroup>
-              <span className="text-xs">Select</span>
+              <span className="popup-shortcut-label">Select</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="popup-shortcut">
               <KbdGroup>
                 <Kbd>⇧</Kbd>
                 <Kbd>Ctrl</Kbd>
                 <Kbd>Z</Kbd>
               </KbdGroup>
-              <span className="text-xs">Restore</span>
+              <span className="popup-shortcut-label">Restore</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="popup-shortcut">
               <Kbd>Esc</Kbd>
-              <span className="text-xs">Exit</span>
+              <span className="popup-shortcut-label">Exit</span>
             </div>
           </AccordionContent>
         </AccordionItem>

@@ -22,18 +22,18 @@ pnpm fmt              # Format with oxfmt
 pnpm fmt:check        # Check formatting without writing
 ```
 
-There are no automated tests in this project.
+`scripts/verify-sidepanel.ts` verifies the built extension in headless Chrome. Run `pnpm verify:panel --chromium "/path/to/Google Chrome"` after building; see README.md for the optional Firefox API fixture and screenshots.
 
 ## Path Aliases
 
 Defined in `wxt.config.ts` and resolved by WXT's Vite config:
 
-| Alias | Maps to |
-|-------|---------|
-| `~assets` | `./src/assets` |
-| `~entries` | `./src/entries` |
+| Alias       | Maps to          |
+| ----------- | ---------------- |
+| `~assets`   | `./src/assets`   |
+| `~entries`  | `./src/entries`  |
 | `~features` | `./src/features` |
-| `~shared` | `./src/shared` |
+| `~shared`   | `./src/shared`   |
 
 ## Architecture
 
@@ -47,12 +47,14 @@ Defined in `wxt.config.ts` and resolved by WXT's Vite config:
 ### Feature modules (`src/features/`)
 
 **`record/`** — Core data layer.
+
 - `schema.ts`: Zod schemas for `HiddenElementRecord`. A record stores match inputs (unique attribute, DOM tree fingerprint, anchor nodes), page context (origin/path/search), scope (`"page"` vs `"site-layout"`), and an optional CSS selector cache.
 - `repository.ts`: Dexie queries. Handles stale record cleanup (records failing to match 10+ times, or unmatched for 7 days, or matched records older than 30 days).
 - `css-cache.ts`: Manages `bare:css:<key>` entries in `browser.storage.local` — fast CSS selector lists used for flash-free preloading.
 - `derivation/`: Pure functions that extract match signals from a DOM element at hide time.
 
 **`element-hiding/`** — Applies/restores `display:none` on elements.
+
 - `hide-policy.ts`: Defines which elements are excluded from hiding and the HTML attributes used to mark hidden elements (`data-bare-hidden`, `data-bare-original-style`).
 - `element-hide.ts`: `applyHiddenElement` (with optional fade-out animation), `restoreHiddenElement`, `restoreAllHiddenElements`.
 - `match/`: Re-matches stored records against the live DOM on page load using three strategies in priority order: `UNIQUE_ATTRIBUTE` → `ANCHOR` → `STRUCTURE`.
@@ -73,15 +75,16 @@ Defined in `wxt.config.ts` and resolved by WXT's Vite config:
 ### Matching strategies
 
 Records store three independent match strategies tried in the order specified by `record.matchPlan`:
+
 - `UNIQUE_ATTRIBUTE`: matches by a stable unique HTML attribute (e.g. `id`, `data-*`).
 - `ANCHOR`: matches by finding a nearby anchor element with stable text/attributes, then navigating to the target via a stored relation (`parent`, `child`, `previousSibling`, etc.).
 - `STRUCTURE`: matches by DOM tree fingerprint (tag, class tokens, sibling context, relative index).
 
 ### Storage layout
 
-| Key pattern | Type | Purpose |
-|-------------|------|---------|
-| IndexedDB `bare-db` | `HiddenElementRecord[]` | All hide records |
-| `bare:hiding-enabled:<encoded-origin>` | `boolean` | Per-site hiding on/off |
-| `bare:css:page:<origin>:<path>:<search>` | `string[]` | CSS selectors for a specific page |
-| `bare:css:site:<origin>` | `string[]` | CSS selectors for site-layout scope |
+| Key pattern                              | Type                    | Purpose                             |
+| ---------------------------------------- | ----------------------- | ----------------------------------- |
+| IndexedDB `bare-db`                      | `HiddenElementRecord[]` | All hide records                    |
+| `bare:hiding-enabled:<encoded-origin>`   | `boolean`               | Per-site hiding on/off              |
+| `bare:css:page:<origin>:<path>:<search>` | `string[]`              | CSS selectors for a specific page   |
+| `bare:css:site:<origin>`                 | `string[]`              | CSS selectors for site-layout scope |

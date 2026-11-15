@@ -1,4 +1,5 @@
-import { Settings } from "./settings/Settings";
+import { PanelFooter } from "./_ui/PanelFooter";
+import { Settings } from "./settings/_ui/Settings";
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
@@ -11,7 +12,7 @@ import logo from "~assets/logo.png";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { useUpdateNotice } from "~features/updates/use-update-notice";
-import { HiddenItems } from "./hidden-items/HiddenItems";
+import { HiddenItems } from "./hidden-items/_ui/HiddenItems";
 import { Updates } from "./updates/Updates";
 
 export default function Panel({
@@ -120,6 +121,12 @@ export default function Panel({
       <div hidden={view !== "hidden"} {...stylex.props(styles.content)}>
         <TooltipProvider>
           <HiddenItems
+            origin={origin}
+            onSelect={onSelect}
+            preview={preview}
+            portalContainer={portalContainer}
+          />
+          <PanelFooter
             settingsButton={settingsButton}
             onSettings={() => {
               preview?.clear();
@@ -131,9 +138,6 @@ export default function Panel({
               preview?.clear();
               setView("updates");
             }}
-            origin={origin}
-            onSelect={onSelect}
-            preview={preview}
             portalContainer={portalContainer}
           />
         </TooltipProvider>

@@ -1,3 +1,5 @@
+import { getRecordLabel } from "../_lib/record-label";
+import { usePreviewFocus } from "./usePreviewFocus";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Badge } from "@bolerish/ui/badge";
@@ -6,7 +8,7 @@ import { Item } from "@bolerish/ui/item";
 import { Tooltip, TooltipTrigger } from "@bolerish/ui/tooltip";
 import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
 import { XIcon } from "@phosphor-icons/react";
-import { useId, useLayoutEffect, useRef, useState } from "react";
+import { useId, useState } from "react";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 import type { ManagedRecord } from "~features/record/management";
@@ -30,22 +32,9 @@ export function RecordRow({
 }) {
   const message = usePanelMessage();
   const label = getRecordLabel(record, message);
-  const locateButton = useRef<HTMLButtonElement>(null);
+  const locateButton = usePreviewFocus(selected);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const tooltipId = useId();
-
-  useLayoutEffect(() => {
-    const button = locateButton.current;
-    if (!selected || !button) return;
-    const shadow = button.getRootNode();
-    if (!(shadow instanceof ShadowRoot) || shadow.activeElement !== button) return;
-    const list = button.closest<HTMLElement>(".records");
-    if (!list) return;
-    const row = button.getBoundingClientRect();
-    const viewport = list.getBoundingClientRect();
-    if (row.bottom > viewport.bottom) list.scrollTop += row.bottom - viewport.bottom;
-    else if (row.top < viewport.top) list.scrollTop -= viewport.top - row.top;
-  }, [selected]);
 
   return (
     <li className={["record", stylex.props(styles.record).className].join(" ")}>
@@ -122,27 +111,6 @@ export function RecordRow({
       </Item>
     </li>
   );
-}
-
-function getRecordLabel(
-  record: ManagedRecord,
-  message: ReturnType<typeof usePanelMessage>,
-): string {
-  const tag = record.target.tagName.toLowerCase();
-  let kind = record.target.contentKind;
-  if (!kind) {
-    if (tag === "video") kind = "video";
-    else if (tag === "img") kind = "image";
-    else if (["iframe", "object", "embed"].includes(tag)) kind = "external";
-    else if (["div", "section", "aside", "header", "footer", "nav", "main"].includes(tag))
-      kind = "region";
-    else kind = "content";
-  }
-  const name = message(`panel_kind_${kind}`);
-  const text = record.target.displayText?.replace(/\s+/g, " ").trim();
-  if (!text || text.toLocaleLowerCase() === name.toLocaleLowerCase()) return name;
-  const characters = Array.from(text);
-  return `${name} · ${characters.slice(0, 24).join("").trimEnd()}${characters.length > 24 ? "…" : ""}`;
 }
 
 const styles = stylex.create({

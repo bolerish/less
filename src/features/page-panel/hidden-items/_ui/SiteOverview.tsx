@@ -1,3 +1,5 @@
+import { useSiteHiding } from "../_model/useSiteHiding";
+import { getHiddenCount } from "../_lib/hidden-count";
 import type { PanelMessage } from "~features/record/management-messages";
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
@@ -9,11 +11,6 @@ import { Switch } from "@bolerish/ui/switch";
 import { CursorClickIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
-import {
-  getSiteHidingEnabled,
-  setSiteHidingEnabled,
-  subscribeSiteHidingEnabled,
-} from "~features/hiding-preference";
 
 export function SiteOverview({
   origin,
@@ -34,7 +31,7 @@ export function SiteOverview({
   const language = useLanguage();
   const [selecting, setSelecting] = useState(false);
   const [selectionError, setSelectionError] = useState(false);
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const { enabled, setEnabled } = useSiteHiding(origin);
   const mounted = useRef(false);
   useEffect(() => {
     mounted.current = true;
@@ -42,20 +39,6 @@ export function SiteOverview({
       mounted.current = false;
     };
   }, []);
-  useEffect(() => {
-    let active = true;
-    const refresh = () => {
-      void getSiteHidingEnabled(origin).then((value) => {
-        if (active) setEnabled(value);
-      });
-    };
-    refresh();
-    const unsubscribe = subscribeSiteHidingEnabled(origin, refresh);
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [origin]);
 
   async function startSelection(): Promise<void> {
     setSelecting(true);
@@ -133,7 +116,7 @@ export function SiteOverview({
           checked={enabled ?? true}
           disabled={enabled === null || busy}
           onCheckedChange={(value) => {
-            void setSiteHidingEnabled(origin, value).catch(() => onError("panel_preference_error"));
+            void setEnabled(value).catch(() => onError("panel_preference_error"));
           }}
           className={["less-control", stylex.props(styles.controlFocus).className].join(" ")}
         />
@@ -157,20 +140,6 @@ export function SiteOverview({
       ) : null}
     </div>
   );
-}
-
-function getHiddenCount(
-  count: number,
-  language: string,
-  message: ReturnType<typeof usePanelMessage>,
-): { value: string; noun: string } {
-  const formatted = new Intl.NumberFormat(language).format(count);
-  const singular = new Intl.PluralRules(language).select(count) === "one";
-  const suffix = singular ? "one" : "other";
-  return {
-    value: message(`panel_hidden_count_${suffix}`, [formatted]),
-    noun: message(`panel_hidden_noun_${suffix}`),
-  };
 }
 
 const styles = stylex.create({

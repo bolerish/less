@@ -5,10 +5,8 @@ import {
   type ManagementRequest,
 } from "~features/record/management";
 import type { PanelMessage } from "~features/record/management-messages";
-import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 export function useHiddenItems(origin: string) {
-  const message = usePanelMessage();
   const [records, setRecords] = useState<ManagedRecord[] | null>(null);
   const [refreshing, setRefreshing] = useState(true);
   const pendingLoads = useRef(0);
@@ -55,9 +53,6 @@ export function useHiddenItems(origin: string) {
       )
         void loadFromEffect();
     };
-    const onFocus = (): void => {
-      void loadFromEffect();
-    };
     browser.runtime.onMessage.addListener(onMessage);
     const onStorage: Parameters<typeof browser.storage.onChanged.addListener>[0] = (
       changes,
@@ -66,13 +61,11 @@ export function useHiddenItems(origin: string) {
       if (area === "local" && "veil:css:all" in changes) void loadFromEffect();
     };
     browser.storage.onChanged.addListener(onStorage);
-    window.addEventListener("focus", onFocus);
     void loadFromEffect();
     return () => {
       mounted.current = false;
       browser.runtime.onMessage.removeListener(onMessage);
       browser.storage.onChanged.removeListener(onStorage);
-      window.removeEventListener("focus", onFocus);
     };
   }, [origin]);
 
@@ -100,12 +93,13 @@ export function useHiddenItems(origin: string) {
   return {
     records,
     refreshing,
-    error: error ? message(error) : "",
+    error,
     setError,
-    status: status ? message(status) : "",
+    status,
     busy,
     unsynced,
     refresh,
+    reload: load,
     mutate,
   };
 }

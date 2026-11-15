@@ -34,6 +34,56 @@ background API in a fixture; it does not run Firefox. PNGs are written to `/tmp`
 by default (`--screenshot /path/to/capture.png` changes their prefix). Chrome,
 profile and local fixture server are cleaned up afterward.
 
+## Verify previously corrected behavior
+
+Select checks from the changed user flow before editing. Keep the current
+assignment's approved requirements, including follow-up requests, visible until
+submission. A passing build does not establish the behavior below.
+
+| User requirement                                                                                 | Existing verification                                                 | Remaining judgment                                                                            |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Shift previews the parent; click hides that exact target once                                    | `pnpm verify:panel`                                                   | Exercise any reported site-specific DOM case separately                                       |
+| Hidden-item hover changes only the row background; keyboard focus remains visible                | `pnpm verify:panel`                                                   | Inspect the generated hover/selected screenshots                                              |
+| Version/update entry, settings/language selection, panel layout and persistence remain available | `pnpm verify:panel`, `pnpm verify:locale`, `pnpm verify:updates`      | Compare the approved layout with the rendered result                                          |
+| Hiding is applied before reveal and remains correct on navigation/cache changes                  | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |
+| Five languages retain keys/placeholders and supported product claims                             | `pnpm verify:copy`, `pnpm verify:locale`                              | Review natural wording in each changed language; key parity does not prove fluency            |
+| Toolbar launch and failure lifecycle remain correct                                              | `pnpm verify:toolbar`, `pnpm verify:failure`                          | Fixture API checks do not establish Firefox runtime behavior                                  |
+| Official components, StyleX and feature-local responsibilities are preserved                     | Inspect changed imports, styles and ownership against `bolerish-code` | Tokens alone do not establish component reuse; folder names alone do not establish separation |
+
+Run source-only checks without building:
+
+```bash
+pnpm verify:copy
+pnpm verify:locale
+pnpm verify:updates
+```
+
+If pnpm stops before running a check because dependency build approval is
+unresolved, report that command failure separately. The source-only checks can
+also run directly with `node scripts/verify-copy.ts`,
+`node scripts/verify-locale.ts` and `node scripts/verify-updates.ts`; do not
+change dependency approvals just to make a verification command pass.
+
+Browser checks require a fresh build and the Chrome executable:
+
+```bash
+pnpm build
+pnpm verify:panel --chromium "/path/to/Google Chrome"
+pnpm verify:preload --chromium "/path/to/Google Chrome"
+pnpm verify:failure --chromium "/path/to/Google Chrome"
+```
+
+`pnpm verify:toolbar` requires both Chrome and Firefox builds. The selection
+mutation script edits source files temporarily; do not run it in a shared or
+already modified checkout. None of these commands starts a scheduled agent or
+permits automatic merging.
+
+Before submitting, connect each approved requirement to an executed check and
+its result, or state that it remains unverified. Recheck previously corrected
+behavior affected by a rewrite. Do not treat a delegated agent's completion
+message as verification of the final combined result. Distinguish intentional
+new requirements from recurrence of an earlier defect.
+
 ## Verify settings and themes
 
 The default theme now follows the web page, with the system setting as a fallback

@@ -6,6 +6,7 @@ import {
 } from "./hide-policy";
 
 const pendingAnimations = new WeakMap<HTMLElement, () => void>();
+const ADDED_INERT_ATTRIBUTE = "data-veil-inert-added";
 
 export function finishHiddenElementAnimation(element: HTMLElement): void {
   pendingAnimations.get(element)?.();
@@ -19,6 +20,13 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
     element.setAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE, inlineStyle);
   }
   element.setAttribute(HIDDEN_ELEMENT_ATTRIBUTE, "true");
+  // Keep fading and visually previewed hidden controls out of focus and accessibility navigation.
+  if (!element.hasAttribute("inert")) {
+    element.setAttribute(ADDED_INERT_ATTRIBUTE, "true");
+    element.inert = true;
+  }
+  const focused = document.activeElement;
+  if (focused instanceof HTMLElement && element.contains(focused)) focused.blur();
 
   if (animated) {
     element.style.setProperty("will-change", "opacity", "important");
@@ -75,6 +83,10 @@ export function restoreHiddenElement(element: HTMLElement): void {
     if (element.getAttribute("style") === "") element.removeAttribute("style");
   }
   element.removeAttribute(HIDDEN_ELEMENT_ATTRIBUTE);
+  if (element.hasAttribute(ADDED_INERT_ATTRIBUTE)) {
+    element.removeAttribute("inert");
+    element.removeAttribute(ADDED_INERT_ATTRIBUTE);
+  }
 }
 
 export function restoreAllHiddenElements(documentRef: Document): void {

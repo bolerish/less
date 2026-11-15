@@ -177,7 +177,10 @@
     "message": "v$1 · 未読の更新履歴"
   },
   "panel_selection_prompt": {
-    "message": "項目を選択 · ↑ 親 · ↓ 子"
+    "message": "クリックで隠す · Shift+クリックで親選択"
+  },
+  "panel_selection_keys": {
+    "message": "Shift+クリック: 親を選択 · ↑/↓: 親/子 · Enter: 隠す"
   },
   "panel_selection_count_one": {
     "message": "$1件を非表示"

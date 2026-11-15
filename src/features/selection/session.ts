@@ -61,6 +61,8 @@ export function startSelectionMode(): void {
   shieldIframes();
 
   document.addEventListener("pointermove", handlePointerMove, true);
+  document.addEventListener("pointerdown", handlePointerDown, true);
+  document.addEventListener("mousedown", handlePointerDown, true);
   document.addEventListener("click", handleClick, true);
   document.addEventListener("keydown", handleKeyDown, true);
   window.addEventListener("scroll", handleViewportChange, true);
@@ -75,6 +77,8 @@ export function stopSelectionMode(): void {
   ancestorTrail.length = 0;
 
   document.removeEventListener("pointermove", handlePointerMove, true);
+  document.removeEventListener("pointerdown", handlePointerDown, true);
+  document.removeEventListener("mousedown", handlePointerDown, true);
   document.removeEventListener("click", handleClick, true);
   document.removeEventListener("keydown", handleKeyDown, true);
   window.removeEventListener("scroll", handleViewportChange, true);
@@ -119,23 +123,40 @@ export async function restoreLastHidden(): Promise<void> {
 }
 
 function handlePointerMove(event: PointerEvent): void {
-  ancestorTrail.length = 0;
   const target = resolveTarget(event.clientX, event.clientY);
+  if (ancestorTrail.length > 0 && target && hoveredEl?.contains(target)) return;
+  ancestorTrail.length = 0;
   hoveredEl = target;
   updateHighlight(target);
 }
 
-function handleClick(event: MouseEvent): void {
-  if (
-    (event.target as HTMLElement).closest(`[${STATUS_BAR_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`) !== null
-  )
-    return;
+function isSelectionUI(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest(`[${STATUS_BAR_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`) !== null
+  );
+}
 
+function handlePointerDown(event: MouseEvent): void {
+  if (isSelectionUI(event.target)) return;
   event.preventDefault();
-  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+function handleClick(event: MouseEvent): void {
+  if (isSelectionUI(event.target)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
 
   const target = hoveredEl ?? resolveTarget(event.clientX, event.clientY);
   if (target === null) return;
+
+  if (event.shiftKey) {
+    hoveredEl = target;
+    selectParent();
+    updateHighlight(hoveredEl);
+    return;
+  }
 
   hoveredEl = null;
   ancestorTrail.length = 0;
@@ -150,18 +171,10 @@ function handleKeyDown(event: KeyboardEvent): void {
     return;
   }
   if (hoveredEl === null || !hoveredEl.isConnected) return;
-  if (
-    event.target instanceof Element &&
-    event.target.closest(`[${STATUS_BAR_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`)
-  )
-    return;
+  if (isSelectionUI(event.target)) return;
   if (event.key === "ArrowUp") {
     event.preventDefault();
-    const parent = resolveSelectionParent(hoveredEl, isOverlayOrHidden);
-    if (parent !== null) {
-      ancestorTrail.push(hoveredEl);
-      hoveredEl = parent;
-    }
+    selectParent();
   } else if (event.key === "ArrowDown") {
     event.preventDefault();
     hoveredEl = ancestorTrail.pop() ?? hoveredEl;
@@ -174,6 +187,15 @@ function handleKeyDown(event: KeyboardEvent): void {
   } else return;
   event.stopPropagation();
   updateHighlight(hoveredEl);
+}
+
+function selectParent(): void {
+  if (!hoveredEl) return;
+  const parent = resolveSelectionParent(hoveredEl, isOverlayOrHidden);
+  if (parent !== null) {
+    ancestorTrail.push(hoveredEl);
+    hoveredEl = parent;
+  }
 }
 
 function handleViewportChange(): void {

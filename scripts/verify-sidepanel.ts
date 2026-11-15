@@ -82,20 +82,30 @@ body{margin:20px;font:16px/1.5 sans-serif}#outer{border:2px solid;padding:14px}#
 <p id="same-a">Same label</p><p id="same-b">Same label</p>
 <div style="height:1800px"></div><p id="far-target">Far target</p><div style="height:1200px"></div>
 <p id="fixed-target">Covered target</p></body></html>`;
+const accessibilityFixture = `<!doctype html><html lang="en"><head><style>
+body{margin:20px;font:16px sans-serif}#a11y-target{padding:24px;border:1px solid;opacity:.65;transition:opacity 2s linear}
+</style></head><body><h1>Accessibility fixture</h1><section id="a11y-target" aria-label="Hidden controls"><button id="a11y-button">Hidden action</button></section><button id="after-hidden">After hidden</button></body></html>`;
 const mediaFixture = `<!doctype html><html><head><style>body{margin:20px;font:16px/1.5 sans-serif}.media{border:2px solid;padding:20px;margin:20px 0}p{padding:12px}</style></head><body>
 <h1>Media and long list</h1><div class="media" id="frame-wrapper"><iframe title="Weather widget" src="https://external.example/frame" width="220" height="100"></iframe></div>
 <div class="media" id="image-wrapper"><img alt="Mountain lake" width="160" height="100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='100'%3E%3Crect width='160' height='100' fill='gray'/%3E%3C/svg%3E"></div>
 <video id="video-target" aria-label="Nature clip" width="220" height="100"></video>
 ${Array.from({ length: 14 }, (_, i) => `<p id="item-${i}">Saved content ${i} with a title long enough to wrap on a narrow screen</p>`).join("")}
 <div style="height:600px"></div></body></html>`;
+let siteOwnsInert = false;
+let siteAria: string | null = null;
 const server = createServer((_req, res) => {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
   res.end(
-    (_req.url ?? "").startsWith("/media")
-      ? mediaFixture
-      : (_req.url ?? "").startsWith("/regressions")
-        ? regressionFixture
-        : fixture,
+    (_req.url ?? "").startsWith("/accessibility")
+      ? accessibilityFixture.replace(
+          'id="a11y-target"',
+          `id="a11y-target"${siteOwnsInert ? ' inert="site-owned"' : ""}${siteAria === null ? "" : ` aria-hidden="${siteAria}"`}`,
+        )
+      : (_req.url ?? "").startsWith("/media")
+        ? mediaFixture
+        : (_req.url ?? "").startsWith("/regressions")
+          ? regressionFixture
+          : fixture,
   );
 });
 let context: BrowserContext | undefined;
@@ -615,10 +625,15 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#one");
   await waitFor(
-    () => panel((d) => d.querySelectorAll(".record").length === 1),
+    () => panel((d) => d.querySelectorAll(".record").length > 0),
     "selection returns to panel",
   );
-  assert.equal(await count(), 1);
+  assert.equal(await count(), 1, "one click persists exactly one record");
+  assert.equal(
+    await panel((d) => d.querySelectorAll(".record").length),
+    1,
+    "one click renders exactly one row",
+  );
   assert.equal(
     await panel((d) => d.querySelector<HTMLElement>(".locate-button")!.textContent.length <= 60),
     true,
@@ -675,6 +690,11 @@ try {
   const cssBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
   const visibleScroll = await site.evaluate(() => scrollY);
   await click(".record:nth-child(3) .locate-button");
+  assert.notEqual(
+    await site.locator("#one").evaluate((e) => getComputedStyle(e).display),
+    "none",
+    "preview overrides preload CSS and displays the actual target",
+  );
   await hidden("#one", false);
   assert.equal(await count(), 3, "preview retains DB");
   assert.deepEqual(
@@ -1157,9 +1177,226 @@ try {
   await waitFor(() => textIncludes(messages.panel_empty_title), "reset persists reload");
   await site.keyboard.press("Escape");
 
+  // Check the real focus/AX boundary during fading, preload hiding and temporary preview.
+  await site.goto(`${origin}/accessibility`);
+  await site.waitForTimeout(300);
+  for (const aria of [null, "false", "true"]) {
+    await site.locator("#a11y-target").evaluate((e, value) => {
+      if (value === null) e.removeAttribute("aria-hidden");
+      else e.setAttribute("aria-hidden", value);
+    }, aria);
+    const originalStyle = await site.locator("#a11y-target").getAttribute("style");
+    await site.locator("#a11y-button").focus();
+    await site.keyboard.press("Control+Shift+E");
+    await site.locator("#a11y-button").click({ modifiers: ["Shift"] });
+    assert.deepEqual(
+      await site.locator("[data-less-highlight]").boundingBox(),
+      await site.locator("#a11y-target").boundingBox(),
+      "Shift selects controls' parent before hiding",
+    );
+    await site.keyboard.press("Enter");
+    assert.equal(await site.locator("#a11y-target").getAttribute("aria-hidden"), aria);
+    assert.equal(
+      await site.locator("#a11y-button").evaluate((e) => {
+        e.focus();
+        return document.activeElement === e;
+      }),
+      false,
+      "fading hidden controls cannot receive focus",
+    );
+    const fadingTree = await session.send("Accessibility.getFullAXTree");
+    assert(
+      !fadingTree.nodes.some((n) => !n.ignored && n.name?.value === "Hidden action"),
+      "fading hidden controls are absent from the AX tree",
+    );
+    await hidden("#a11y-target");
+    assert.equal(
+      await site.locator("#a11y-target").evaluate(
+        (e) =>
+          new Promise<number>((resolve) => {
+            let changes = 0;
+            const observer = new MutationObserver((records) => {
+              changes += records.length;
+            });
+            observer.observe(e, { attributes: true, childList: true, subtree: true });
+            setTimeout(() => {
+              observer.disconnect();
+              resolve(changes);
+            }, 250);
+          }),
+      ),
+      0,
+      "settled hiding does not create an observer mutation loop",
+    );
+    await waitFor(async () => (await count()) === 1, "one accessibility rule");
+    await site.keyboard.press("Escape");
+    siteOwnsInert = aria === "true";
+    siteAria = aria;
+    await site.reload();
+    await hidden("#a11y-target");
+    assert.equal(
+      await site.locator("#a11y-target").getAttribute("aria-hidden"),
+      aria,
+      "preload and saved hiding preserve the site's original ARIA",
+    );
+    assert(
+      !(await session.send("Accessibility.getFullAXTree")).nodes.some(
+        (n) => !n.ignored && n.name?.value === "Hidden action",
+      ),
+      "preload-hidden controls are absent from AX",
+    );
+    await action();
+    await click(".locate-button");
+    assert.notEqual(
+      await site.locator("#a11y-target").evaluate((e) => getComputedStyle(e).display),
+      "none",
+      "preview overrides the preload display rule",
+    );
+    await hidden("#a11y-target", false);
+    assert.equal(await site.locator("#a11y-target").getAttribute("data-veil-hidden"), "true");
+    assert.equal(
+      await site.locator("#a11y-target").evaluate((e) => e instanceof HTMLElement && e.inert),
+      true,
+      "visual preview retains inert even independently of modal focus containment",
+    );
+    assert.equal(await site.locator("#a11y-target").getAttribute("aria-hidden"), aria);
+    assert.equal(
+      await site.locator("#a11y-button").evaluate((e) => {
+        e.focus();
+        return document.activeElement === e;
+      }),
+      false,
+      "visual preview does not activate hidden controls",
+    );
+    assert(
+      !(await session.send("Accessibility.getFullAXTree")).nodes.some(
+        (n) => !n.ignored && n.name?.value === "Hidden action",
+      ),
+      "preview stays outside AX while hidden",
+    );
+    await site.keyboard.press("Escape");
+    await hidden("#a11y-target");
+    await click(".restore-button");
+    await hidden("#a11y-target", false);
+    assert.equal(await site.locator("#a11y-target").getAttribute("aria-hidden"), aria);
+    assert.equal(await site.locator("#a11y-target").getAttribute("style"), originalStyle);
+    assert.equal(
+      await site.locator("#a11y-target").getAttribute("inert"),
+      siteOwnsInert ? "site-owned" : null,
+    );
+    await site.keyboard.press("Escape");
+    await waitFor(
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
+      "panel closes before checking restored focus",
+    );
+    await site.locator("#a11y-button").focus();
+    assert.equal(
+      await site.locator("#a11y-button").evaluate((e) => document.activeElement === e),
+      !siteOwnsInert,
+      "restored controls preserve the site's original inert and ARIA",
+    );
+    await waitFor(async () => (await count()) === 0, "accessibility rule restored");
+  }
+  siteOwnsInert = false;
+  siteAria = null;
+  console.log(
+    "PASS fade/preload/preview AX and focus, original absent/false/true ARIA and exact style restore",
+  );
+
   // These cases exercise the built content script, real selection, DB and preload CSS.
   await site.goto(`${origin}/regressions`);
   await site.waitForTimeout(300);
+  const beforeShiftURL = site.url();
+  const beforeShiftPages = activeContext.pages().length;
+  await site.evaluate(() => {
+    const link = document.querySelector("#formatted-link")!;
+    for (const type of ["pointerdown", "mousedown", "click"]) {
+      link.addEventListener(type, () => link.setAttribute(`data-site-${type}`, "ran"), true);
+    }
+  });
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#formatted-link span").click({ modifiers: ["Shift"] });
+  await site.waitForTimeout(150);
+  assert.equal(site.url(), beforeShiftURL, "Shift+click prevents site navigation");
+  assert.equal(activeContext.pages().length, beforeShiftPages, "Shift+click opens no tab/window");
+  assert.deepEqual(
+    await site
+      .locator("#formatted-link")
+      .evaluate((e) =>
+        ["pointerdown", "mousedown", "click"].map((type) => e.getAttribute(`data-site-${type}`)),
+      ),
+    [null, null, null],
+    "selection intercepts site capture handlers before activation",
+  );
+  assert.equal(await count(), 0, "Shift+click never hides or stores a rule");
+  await site.keyboard.press("Escape");
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#single").click({ modifiers: ["Shift"] });
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "Shift+click selects exactly one parent",
+  );
+  const childBox = await site.locator("#single").boundingBox();
+  assert(childBox);
+  await site.mouse.move(childBox.x + 30, childBox.y + 10);
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "moving inside the parent retains the selection",
+  );
+  await site.locator("#single").click({ modifiers: ["Shift"] });
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "repeated Shift+click expands one ancestor",
+  );
+  for (let i = 0; i < 4; i++) await site.locator("#single").click({ modifiers: ["Shift"] });
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "Shift+click excludes body/html",
+  );
+  assert.equal(await count(), 0, "repeated selection still creates no records");
+  await site.mouse.wheel(0, 50);
+  await site.waitForTimeout(150);
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "scroll keeps the chosen parent's outline aligned",
+  );
+  await site.keyboard.press("ArrowDown");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "ArrowDown also reverses Shift+click",
+  );
+  await site.locator("#single").click();
+  await hidden("#middle");
+  await waitFor(async () => (await count()) === 1, "ordinary click hides the chosen parent once");
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#middle", false);
+  await waitFor(async () => (await count()) === 0, "selected parent restores");
+  await site.keyboard.press("Escape");
+  await site.evaluate(() => window.scrollTo(0, 0));
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#single").click({ modifiers: ["Shift"] });
+  await site.locator("h1").hover();
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("h1").boundingBox(),
+    "leaving the selected parent resumes targeting",
+  );
+  await site.locator("#single").hover();
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#single").boundingBox(),
+    "returning starts a fresh child selection",
+  );
+  await site.keyboard.press("Escape");
+  console.log(
+    "PASS Shift parent selection, repeated expansion, pointer retention, root guard, scroll, no site activation, ordinary click and undo",
+  );
   await site.addStyleTag({
     content:
       "html{font-size:28px}*{font-family:serif!important}button{padding:60px!important;background:red!important;border:9px solid red!important}[data-less-ui],[data-less-highlight]{position:absolute!important;opacity:0!important;z-index:-1!important;pointer-events:auto!important}",
@@ -1957,6 +2194,22 @@ try {
         chrome.i18n.getUILanguage = () => ${JSON.stringify(locale.replace("_", "-"))};
       })()`,
     });
+    await site.keyboard.press("Control+Shift+E");
+    for (const width of [320, 375]) {
+      await site.setViewportSize({ width, height: 720 });
+      const instruction = await selectionSurface("data-less-ui", (e) => {
+        const info = e.querySelector("span")!;
+        const r = info.getBoundingClientRect();
+        return { text: info.textContent, title: info.title, left: r.left, right: r.right };
+      });
+      assert.equal(instruction.text, catalog.panel_selection_prompt.message);
+      assert.equal(instruction.title, catalog.panel_selection_keys.message);
+      assert(
+        instruction.left >= 0 && instruction.right <= width,
+        `${locale}/${width}: parent instruction stays readable without clipping`,
+      );
+    }
+    await site.keyboard.press("Escape");
     await action();
     await waitFor(
       () => panel((d) => d.querySelectorAll(".record").length >= 17),

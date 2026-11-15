@@ -124,6 +124,7 @@ function buildStatusBar(
 
   const infoEl = document.createElement("span");
   infoEl.textContent = message("panel_selection_prompt");
+  infoEl.title = message("panel_selection_keys");
   mainPill.appendChild(infoEl);
 
   mainPill.appendChild(createSeparator());

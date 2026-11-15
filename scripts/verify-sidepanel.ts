@@ -1314,6 +1314,26 @@ try {
     await site.setViewportSize({ width, height: 720 });
     for (const colorScheme of ["light", "dark"] as const) {
       await site.emulateMedia({ colorScheme, reducedMotion: "reduce" });
+      const hoveredRow = await panel((d) => {
+        d.querySelector<HTMLElement>(".panel-header button:last-child")!.focus();
+        const button = d.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
+        button.scrollIntoView({ block: "nearest" });
+        const r = button.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      });
+      await site.mouse.move(hoveredRow.x, hoveredRow.y);
+      await waitFor(
+        () =>
+          panel(
+            (d) =>
+              getComputedStyle(d.querySelector('.locate-button[aria-label*="Nested"]')!, "::after")
+                .backgroundColor === "rgba(0, 0, 0, 0)",
+          ),
+        "text button has no nested hover layer",
+      );
+      await site.screenshot({
+        path: values.screenshot.replace(/\.png$/, `-row-hover-${width}-${colorScheme}.png`),
+      });
       await click('.locate-button[aria-label*="Nested"]');
       await hidden("#nested-target", false);
       assert.equal(
@@ -1341,6 +1361,47 @@ try {
         "narrow preview keeps list without clipping",
       );
       assert.notEqual(state.selected, "rgba(0, 0, 0, 0)", "semantic selection background resolves");
+      await site.mouse.move(0, 0);
+      await site.screenshot({
+        path: values.screenshot.replace(/\.png$/, `-row-selected-${width}-${colorScheme}.png`),
+      });
+      const selectedPoint = await panel((d) => {
+        const button = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
+        const rect = button.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      });
+      await site.mouse.move(selectedPoint.x, selectedPoint.y);
+      const paint = await panel((d) => {
+        const button = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
+        const row = button.closest<HTMLElement>(".record-row")!;
+        const item = row.closest<HTMLElement>(".record")!;
+        const a = row.getBoundingClientRect(),
+          b = item.getBoundingClientRect();
+        return {
+          background: getComputedStyle(row).backgroundColor,
+          inner: getComputedStyle(button).backgroundColor,
+          overlay: getComputedStyle(button, "::after").backgroundColor,
+          radius: getComputedStyle(row).borderRadius,
+          fullWidth: a.left === b.left && a.right === b.right,
+        };
+      });
+      assert.equal(
+        paint.background,
+        state.selected,
+        "selection keeps one background while hovered",
+      );
+      assert.equal(paint.inner, "rgba(0, 0, 0, 0)");
+      assert.equal(paint.overlay, "rgba(0, 0, 0, 0)");
+      assert(
+        paint.fullWidth && paint.radius !== "0px",
+        "hover and selected paint share full row bounds and radius",
+      );
+      await site.screenshot({
+        path: values.screenshot.replace(
+          /\.png$/,
+          `-row-selected-hover-${width}-${colorScheme}.png`,
+        ),
+      });
       await site.keyboard.press("Tab");
       await site.keyboard.press("Shift+Tab");
       const focus = await panel((d) => {

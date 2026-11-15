@@ -248,6 +248,9 @@ time {
 .record-row:focus-within {
   background: var(--veil-color-interaction-hover);
 }
+.record-row:has(.locate-button:active) {
+  background: var(--veil-color-interaction-pressed);
+}
 .record-row:has(.locate-button[aria-pressed="true"]) {
   background: var(--veil-color-bg-selected);
   box-shadow: inset 2px 0 var(--veil-panel-focus);
@@ -256,8 +259,11 @@ time {
   outline: 2px solid var(--veil-panel-focus);
   outline-offset: -2px;
 }
-.record-row .locate-button:active {
-  background: var(--veil-color-interaction-pressed);
+.record-row .locate-button,
+.record-row .locate-button:hover,
+.record-row .locate-button:active,
+.record-row .locate-button::after {
+  background: transparent;
 }
 .restore-tooltip {
   pointer-events: none;

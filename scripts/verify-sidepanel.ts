@@ -71,6 +71,7 @@ body{margin:20px;font:16px/1.5 sans-serif}#outer{border:2px solid;padding:14px}#
 #far-target{height:100px;background:#ddd}#fixed-target{position:fixed;right:20px;top:100px;width:200px;height:70px;background:#ddd}
 </style></head><body><h1>Selection and preview cases</h1>
 <div id="outer"><div id="middle"><p id="single">Chosen child</p></div></div>
+<div id="shift-other-parent" style="border:1px solid;padding:10px"><p id="shift-other-child">Another selection base</p></div>
 <div id="collapsed-region" role="region" aria-label="날씨" style="width:420px;max-width:100%;margin-top:16px;padding:0;border:0;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.04)"><div id="weather-content">Weather contents</div></div>
 <div style="height:20px;margin-top:16px"></div><div id="empty-region" style="width:420px;margin-top:16px"></div>
 <div style="height:20px;margin-top:16px"></div><div id="inset-region" style="width:420px;margin-top:16px;box-shadow:inset 0 0 0 1px black"></div>
@@ -1438,7 +1439,70 @@ try {
     "selection intercepts site capture handlers before activation",
   );
   assert.equal(await count(), 0, "Shift+click cannot hide a body/html parent");
-  await site.locator("#single").click({ modifiers: ["Shift"] });
+  await site.locator("#single").hover();
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#single").boundingBox(),
+    "hover highlights the unmodified base target",
+  );
+  await site.keyboard.down("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "Shift keydown highlights the direct parent before any click",
+  );
+  await site.keyboard.down("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "repeated Shift keydown never promotes to a grandparent",
+  );
+  await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-shift-before-click.png") });
+  await site.keyboard.press("ArrowUp");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "ArrowUp explicitly expands the base while Shift is held",
+  );
+  await site.keyboard.press("ArrowDown");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "ArrowDown reverses explicit expansion while Shift is held",
+  );
+  await site.keyboard.up("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#single").boundingBox(),
+    "Shift keyup restores the original base target",
+  );
+  await site.keyboard.down("Shift");
+  await site.locator("#formatted-link span").hover();
+  assert.equal(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    null,
+    "Shift hover rejects the body/html parent of a normalized link target",
+  );
+  await site.locator("#shift-other-child").hover();
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#shift-other-parent").boundingBox(),
+    "moving to a different base with Shift selects exactly its direct parent",
+  );
+  await site.locator("#single").hover();
+  const highlightedParent = await site.locator("[data-less-highlight]").boundingBox();
+  assert.deepEqual(
+    highlightedParent,
+    await site.locator("#middle").boundingBox(),
+    "moving with Shift uses the new base target's direct parent",
+  );
+  const childCenter = await site.locator("#single").boundingBox();
+  assert(childCenter);
+  await site.mouse.click(
+    childCenter.x + childCenter.width / 2,
+    childCenter.y + childCenter.height / 2,
+  );
+  await site.keyboard.up("Shift");
   assert.equal(
     await site.locator("#middle").getAttribute("data-veil-hidden"),
     "true",
@@ -1456,7 +1520,7 @@ try {
   assert.equal(
     await site.evaluate((selector) => document.querySelector(selector)?.id, parentSelector),
     "middle",
-    "the stored rule resolves only to the direct parent",
+    "the stored rule resolves to the exact parent highlighted before clicking",
   );
   await site.keyboard.press("Escape");
   await site.reload();
@@ -1494,16 +1558,59 @@ try {
     await site.locator("#outer").boundingBox(),
     "scroll keeps the selected parent's outline aligned",
   );
-  await site.locator("#single").click({ modifiers: ["Shift"] });
+  await site.keyboard.down("Shift");
   assert.equal(
-    await site.locator("#middle").getAttribute("data-veil-hidden"),
-    "true",
-    "Shift uses the clicked target even with a keyboard-selected ancestor",
+    await site.locator("[data-less-highlight]").boundingBox(),
+    null,
+    "keyboard-selected ancestor cannot promote into body/html",
   );
+  await site.keyboard.up("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "Shift release preserves keyboard selection",
+  );
+  await site.keyboard.press("ArrowDown");
+  await site.keyboard.down("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#outer").boundingBox(),
+    "Shift previews the direct parent of the keyboard-selected base",
+  );
+  // Keep the pointer stationary so click must use the preview, not resolve the hit again.
+  await site.mouse.down();
+  await site.mouse.up();
+  await site.keyboard.up("Shift");
+  assert.equal(
+    await site.locator("#outer").getAttribute("data-veil-hidden"),
+    "true",
+    "stationary click hides exactly the highlighted keyboard-plus-Shift target",
+  );
+  await hidden("#outer");
+  assert.equal(await count(), 1, "highlighted target is saved once");
+  const keyboardParentSelector = (await storedRecords())[0].cssSelector;
+  assert(keyboardParentSelector);
+  assert.equal(
+    await site.evaluate((selector) => document.querySelector(selector)?.id, keyboardParentSelector),
+    "outer",
+    "click and DB identity agree even when the pointer hit differs from the preview",
+  );
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#outer", false);
+  await waitFor(async () => (await count()) === 0, "keyboard-plus-Shift target undo");
+  await site.locator("#single").hover();
+  await site.keyboard.down("Shift");
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#middle").boundingBox(),
+    "Shift preview follows the keyboard base target",
+  );
+  await site.keyboard.press("Enter");
+  await site.keyboard.up("Shift");
   assert.equal(
     await site.locator("#outer").getAttribute("data-veil-hidden"),
     null,
-    "keyboard plus Shift never promotes the stored target",
+    "Shift plus Enter saves the highlighted parent without another promotion",
   );
   await hidden("#middle");
   assert.equal(await count(), 1);

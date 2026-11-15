@@ -177,10 +177,10 @@
     "message": "v$1 · 읽지 않은 업데이트 내역"
   },
   "panel_selection_prompt": {
-    "message": "클릭: 숨기기 · Shift+클릭: 부모 숨기기"
+    "message": "클릭: 숨기기 · Shift 누르기: 부모 선택"
   },
   "panel_selection_keys": {
-    "message": "Shift+클릭: 부모 숨기기 · ↑/↓: 부모/자식 · Enter: 숨기기"
+    "message": "Shift 누르기: 부모 선택 · ↑/↓: 부모/자식 · Enter: 숨기기"
   },
   "panel_selection_count_one": {
     "message": "$1개 숨김"

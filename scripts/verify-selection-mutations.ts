@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 // Fixed semantic mutations, not a random or exhaustive operator campaign.
-const seed = "less-selection-v2";
+const seed = "less-selection-v3";
 const session = "src/features/selection/session.ts";
 const hiding = "src/features/element-hiding/element-hide.ts";
 const resolver = "src/features/selection/targeting/target-resolver.ts";
@@ -28,8 +28,18 @@ const mutants = [
     edits: [
       [
         session,
-        "const target = event.shiftKey\n",
-        "const target = event.shiftKey && event.altKey\n",
+        "if (shiftPressed && baseEl) hoveredEl = resolveSelectionParent(baseEl, isOverlayOrHidden);",
+        "if (shiftPressed && baseEl) hoveredEl = baseEl;",
+      ],
+    ],
+  },
+  {
+    id: "click-recomputes-target",
+    edits: [
+      [
+        session,
+        "  const target = hoveredEl;\n  if (target === null || !target.isConnected) return;",
+        "  const hit = resolveTarget(event.clientX, event.clientY);\n  const target = event.shiftKey ? hit && resolveSelectionParent(hit, isOverlayOrHidden) : hoveredEl;\n  if (target === null || !target.isConnected) return;",
       ],
     ],
   },
@@ -38,7 +48,7 @@ const mutants = [
     edits: [
       [
         session,
-        "if (ancestorTrail.length > 0 && target && hoveredEl?.contains(target)) return;",
+        "if (!shiftPressed && ancestorTrail.length > 0 && target && baseEl?.contains(target)) return;",
         "// Mutant: discard the chosen parent on pointer movement.",
       ],
     ],
@@ -104,12 +114,8 @@ const mutants = [
 ];
 function classifyTest(status: number | null, timedOut: boolean, output: string) {
   if (status === 0) return "survived";
-  if (
-    status === null ||
-    timedOut ||
-    /TimeoutError|timed out|at (?:async )?waitFor \(/i.test(output)
-  )
-    return "inconclusive";
+  if (timedOut || /TimeoutError|timed out/i.test(output)) return "timed-out";
+  if (status === null || /at (?:async )?waitFor \(/i.test(output)) return "inconclusive";
   return output.includes("AssertionError") ? "detected" : "inconclusive";
 }
 assert.equal(classifyTest(0, false, ""), "survived");
@@ -118,8 +124,8 @@ assert.equal(
   classifyTest(1, false, "AssertionError\n    at waitFor (test.ts:1:1)"),
   "inconclusive",
 );
-assert.equal(classifyTest(1, false, "TimeoutError"), "inconclusive");
-assert.equal(classifyTest(null, true, "AssertionError"), "inconclusive");
+assert.equal(classifyTest(1, false, "TimeoutError"), "timed-out");
+assert.equal(classifyTest(null, true, "AssertionError"), "timed-out");
 assert.equal(classifyTest(1, false, "SyntaxError"), "inconclusive");
 const { values } = parseArgs({
   options: { chromium: { type: "string" }, ids: { type: "string" } },
@@ -186,7 +192,7 @@ try {
       if (compile.result.status !== 0) {
         results.push({
           id: mutant.id,
-          outcome: compile.timedOut ? "inconclusive" : "invalid-compile",
+          outcome: compile.timedOut ? "timed-out" : "invalid-compile",
           milliseconds: compile.milliseconds,
         });
         console.log(JSON.stringify(results.at(-1)));
@@ -196,7 +202,7 @@ try {
       if (build.result.status !== 0) {
         results.push({
           id: mutant.id,
-          outcome: build.timedOut ? "inconclusive" : "invalid-build",
+          outcome: build.timedOut ? "timed-out" : "invalid-build",
           milliseconds: build.milliseconds,
         });
       } else {

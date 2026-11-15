@@ -1,12 +1,6 @@
-import {
-  CSS_ALL_KEY,
-  pageCSSCacheKey,
-  parseEntrySelector,
-  siteCSSCacheKey,
-} from "~features/record/css-cache";
 import { resolveCSSSelector } from "~features/record/derivation/record-match-signal-derivation";
 import type { HiddenElementRecord } from "~features/record/schema";
-import { portPost } from "~features/record/content-port";
+import { portRequest } from "~features/record/content-port";
 
 // Old-style selectors used .className; new style uses [class*="token"].
 // Detects legacy selectors so they can be transparently re-derived on next match.
@@ -42,93 +36,29 @@ export function removePreloadCSSBySelector(selector: string): void {
   }
 }
 
-export async function backfillCSSSelector(
-  items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
-): Promise<void> {
-  const byKey = new Map<string, string[]>();
-  const resolved = new Map<string, string>(); // record id → cssSelector
-
-  for (const { record, el } of items) {
-    const cssSelector = resolveCSSSelector(el, document);
-    if (!cssSelector) continue;
-    resolved.set(record.id, cssSelector);
-    const { origin, path, search } = record.pageContext;
-    const key =
-      record.scope === "site-layout"
-        ? siteCSSCacheKey(origin)
-        : pageCSSCacheKey(origin, path, search);
-    const list = byKey.get(key);
-    if (list) {
-      if (!list.includes(cssSelector)) list.push(cssSelector);
-    } else {
-      byKey.set(key, [cssSelector]);
-    }
-  }
-
-  const currentAll =
-    ((await browser.storage.local.get(CSS_ALL_KEY))[CSS_ALL_KEY] as
-      | Record<string, string[]>
-      | undefined) ?? {};
-  let changed = false;
-  for (const [key, newSelectors] of byKey) {
-    const existing = currentAll[key] ?? [];
-    const existingSelectors = new Set(existing.map(parseEntrySelector));
-    const toAdd = newSelectors.filter((s) => !existingSelectors.has(s));
-    if (toAdd.length > 0) {
-      currentAll[key] = [...existing, ...toAdd.map((s) => `${s}@@@1`)];
-      changed = true;
-    }
-  }
-  if (changed) {
-    await browser.storage.local.set({ [CSS_ALL_KEY]: currentAll });
-  }
-
-  for (const [id, cssSelector] of resolved) {
-    portPost({ type: "UPDATE_RECORD_CSS_SELECTOR", id, cssSelector });
-  }
-}
-
-export async function verifyAndCleanCSSSelectors(
-  items: Array<{ record: HiddenElementRecord; el: HTMLElement }>,
-): Promise<void> {
-  const staleByKey = new Map<string, Set<string>>();
-
-  for (const { record, el } of items) {
-    if (!record.cssSelector) continue;
-    let stale = false;
+export async function reconcileCSSSelector(
+  record: HiddenElementRecord,
+  el: HTMLElement,
+): Promise<string | null> {
+  const old = record.cssSelector ?? null;
+  if (old && !isLegacyCSSSelector(old)) {
     try {
-      const matched = document.querySelectorAll(record.cssSelector);
-      if (matched.length !== 1 || matched[0] !== el) stale = true;
+      const matches = document.querySelectorAll(old);
+      if (matches.length === 1 && matches[0] === el) return old;
     } catch {
-      stale = true;
+      /* Invalid selectors are replaced below. */
     }
-    if (!stale) continue;
-
-    removePreloadCSSBySelector(record.cssSelector);
-
-    const { origin, path, search } = record.pageContext;
-    const key =
-      record.scope === "site-layout"
-        ? siteCSSCacheKey(origin)
-        : pageCSSCacheKey(origin, path, search);
-    if (!staleByKey.has(key)) staleByKey.set(key, new Set());
-    staleByKey.get(key)!.add(record.cssSelector);
   }
-
-  if (staleByKey.size === 0) return;
-
-  const currentAll =
-    ((await browser.storage.local.get(CSS_ALL_KEY))[CSS_ALL_KEY] as
-      | Record<string, string[]>
-      | undefined) ?? {};
-  let changed = false;
-  for (const [key, stale] of staleByKey) {
-    if (!currentAll[key]) continue;
-    const before = currentAll[key].length;
-    currentAll[key] = currentAll[key].filter((e) => !stale.has(parseEntrySelector(e)));
-    if (currentAll[key].length !== before) changed = true;
-  }
-  if (changed) {
-    await browser.storage.local.set({ [CSS_ALL_KEY]: currentAll });
-  }
+  if (old) removePreloadCSSBySelector(old);
+  const cssSelector = resolveCSSSelector(el, document) ?? null;
+  if (old === null && cssSelector === null && !record.matchPlan.includes("CSS_SELECTOR"))
+    return null;
+  const response = await portRequest<{ ok: boolean }>({
+    type: "UPDATE_RECORD_CSS_SELECTOR",
+    id: record.id,
+    expectedCssSelector: old,
+    cssSelector,
+  });
+  if (!response.ok) throw new Error("Selector update rejected");
+  return cssSelector;
 }

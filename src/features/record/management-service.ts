@@ -7,6 +7,7 @@ import {
   saveAllCSSCache,
   siteCSSCacheKey,
 } from "./css-cache";
+import type { HiddenElementRecord } from "./schema";
 import type { ManagedRecord, ManagementRequest, ManagementResponse } from "./management";
 
 let mutationQueue: Promise<unknown> = Promise.resolve();
@@ -70,19 +71,11 @@ export async function removeManagedRecords(origin: string, ids: string[]): Promi
   const cache = await loadAllCSSCache();
   const records = await db.records.where("pageContext.origin").equals(origin).toArray();
   const removedIds = new Set(ids);
-  const pagePrefix = `veil:css:page:${encodeURIComponent(origin)}:`;
-  const siteKey = siteCSSCacheKey(origin);
-  const next = Object.fromEntries(
-    Object.entries(cache).filter(([key]) => !key.startsWith(pagePrefix) && key !== siteKey),
+  const next = rebuildOriginCSSCache(
+    cache,
+    origin,
+    records.filter((record) => !removedIds.has(record.id)),
   );
-  for (const record of records) {
-    if (removedIds.has(record.id)) continue;
-    const entry = buildRecordEntry(record);
-    if (!entry) continue;
-    const { path, search } = record.pageContext;
-    const key = record.scope === "site-layout" ? siteKey : pageCSSCacheKey(origin, path, search);
-    (next[key] ??= []).push(entry);
-  }
   // A failed storage write leaves the DB intact; a failed DB write restores the cache.
   await saveAllCSSCache(next);
   try {
@@ -91,6 +84,26 @@ export async function removeManagedRecords(origin: string, ids: string[]): Promi
     await saveAllCSSCache(cache);
     throw error;
   }
+}
+
+export function rebuildOriginCSSCache(
+  cache: Record<string, string[]>,
+  origin: string,
+  records: HiddenElementRecord[],
+): Record<string, string[]> {
+  const pagePrefix = `veil:css:page:${encodeURIComponent(origin)}:`;
+  const siteKey = siteCSSCacheKey(origin);
+  const next = Object.fromEntries(
+    Object.entries(cache).filter(([key]) => !key.startsWith(pagePrefix) && key !== siteKey),
+  );
+  for (const record of records) {
+    const entry = buildRecordEntry(record);
+    if (!entry) continue;
+    const { path, search } = record.pageContext;
+    const key = record.scope === "site-layout" ? siteKey : pageCSSCacheKey(origin, path, search);
+    (next[key] ??= []).push(entry);
+  }
+  return next;
 }
 
 async function getManagedRecords(origin: string): Promise<ManagedRecord[]> {

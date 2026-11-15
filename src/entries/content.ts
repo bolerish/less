@@ -26,7 +26,8 @@ import {
 
 const HIDING_KEY_PREFIX = "veil:hiding-enabled:";
 let hidingEnabled = false;
-let panel: ReturnType<typeof createPagePanel>;
+let panel: ReturnType<typeof createPagePanel> | undefined;
+let contentContext: ContentScriptContext;
 const preview = createHiddenItemPreview();
 
 export default defineContentScript({
@@ -38,34 +39,42 @@ export default defineContentScript({
 });
 
 async function bootstrap(ctx: ContentScriptContext): Promise<void> {
-  const disposeLocale = await initializeLocale();
-  ctx.onInvalidated(disposeLocale);
-  const disposeTheme = await initializeTheme(true);
-  ctx.onInvalidated(disposeTheme);
-  await loadContentStyles();
-  if (ctx.isInvalid) return;
+  contentContext = ctx;
   const origin = window.location.origin;
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
-  panel = createPagePanel(() => {
-    if (!hidingEnabled) throw new Error("Hiding is paused for this site.");
-    startSelectionMode();
-  }, preview);
-  const unsubscribe = subscribeSelection((active) => {
-    if (active && panel.isOpen) panel.close();
-    if (!active) panel.selectionEnded();
-  });
   ctx.onInvalidated(() => {
-    unsubscribe();
-    panel.close(false);
-    stopSelectionMode();
     stopReapplyWatcher();
     invalidateRecordCache();
+    stopSelectionMode();
   });
-
-  hidingEnabled = await getSiteHidingEnabled(origin);
-  if (ctx.isInvalid) return;
-  if (!hidingEnabled) document.getElementById("__veil_preload__")?.remove();
+  let preferenceRevision = 0;
+  const preferencePromise = getSiteHidingEnabled(origin).then((enabled) => {
+    if (!ctx.isInvalid && preferenceRevision === 0) hidingEnabled = enabled;
+  });
+  void (async () => {
+    const disposeLocale = await initializeLocale();
+    ctx.onInvalidated(disposeLocale);
+    const disposeTheme = await initializeTheme(true);
+    ctx.onInvalidated(disposeTheme);
+    await loadContentStyles();
+    if (ctx.isInvalid) return;
+    panel = createPagePanel(() => {
+      if (!hidingEnabled) throw new Error("Hiding is paused for this site.");
+      startSelectionMode();
+    }, preview);
+    const unsubscribe = subscribeSelection((active) => {
+      if (active && panel?.isOpen) panel?.close();
+      if (!active) panel?.selectionEnded();
+    });
+    ctx.onInvalidated(() => {
+      unsubscribe();
+      panel?.close(false);
+      stopSelectionMode();
+      stopReapplyWatcher();
+      invalidateRecordCache();
+    });
+  })();
 
   setupNavigationListener(onSpaNavigation);
   ctx.addEventListener(document, "keydown", handleGlobalKeyDown, { capture: true });
@@ -75,11 +84,13 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
     area,
   ) => {
     if (area !== "local" || !(hidingKey in changes)) return;
+    preferenceRevision++;
     preview.clear();
     hidingEnabled = changes[hidingKey].newValue !== false;
     if (hidingEnabled) {
-      void applyStoredHiding();
-      watchAndReapplyHiding();
+      void applyStoredHiding().then(() => {
+        if (hidingEnabled && !ctx.isInvalid) watchAndReapplyHiding();
+      });
     } else {
       stopSelectionMode();
       stopReapplyWatcher();
@@ -98,13 +109,21 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   ) => {
     if (sender.id !== browser.runtime.id || !isMessage(message)) return;
 
+    if (
+      (message.type === "TOGGLE_PAGE_PANEL" || message.type === "SET_SELECTION_ENABLED") &&
+      !panel
+    ) {
+      sendResponse({ ok: false });
+      return;
+    }
+
     if (message.type === "TOGGLE_PAGE_PANEL") {
       try {
         if (selectionActive) {
-          panel.close();
+          panel?.close();
           stopSelectionMode();
         }
-        panel.toggle();
+        panel?.toggle();
         sendResponse({ ok: true });
       } catch {
         sendResponse({ ok: false });
@@ -145,10 +164,12 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
         sendResponse({ ok: false });
         return;
       }
-      void refreshHiding(message.retainedIds).then(
-        () => sendResponse({ ok: true }),
-        () => sendResponse({ ok: false }),
-      );
+      void preferencePromise
+        .then(() => refreshHiding(message.retainedIds))
+        .then(
+          () => sendResponse({ ok: true }),
+          () => sendResponse({ ok: false }),
+        );
       return true;
     }
 
@@ -165,30 +186,36 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   browser.runtime.onMessage.addListener(onMessage);
   ctx.onInvalidated(() => browser.runtime.onMessage.removeListener(onMessage));
 
-  ctx.addEventListener(window, "pagehide", () => panel.close(false));
+  ctx.addEventListener(window, "pagehide", () => panel?.close(false));
 
   ctx.addEventListener(window, "pageshow", (event) => {
     if (!event.persisted) return;
     if (hidingEnabled) {
       stopReapplyWatcher();
-      void applyStoredHiding();
-      watchAndReapplyHiding();
+      void applyStoredHiding().then(() => {
+        if (hidingEnabled && !ctx.isInvalid) watchAndReapplyHiding();
+      });
     }
   });
 
+  await preferencePromise;
+  if (ctx.isInvalid) return;
+  if (!hidingEnabled) document.getElementById("__veil_preload__")?.remove();
   if (hidingEnabled) {
     await applyStoredHiding();
-    if (ctx.isInvalid) return;
+    if (ctx.isInvalid || !hidingEnabled) return;
     watchAndReapplyHiding();
   }
 }
 
 function onSpaNavigation(): void {
   preview.clear();
-  if (!hidingEnabled) return;
+  invalidateRecordCache();
+  if (!hidingEnabled || contentContext.isInvalid) return;
   stopReapplyWatcher();
-  void applyStoredHiding();
-  watchAndReapplyHiding();
+  void applyStoredHiding().then(() => {
+    if (hidingEnabled && !contentContext.isInvalid) watchAndReapplyHiding();
+  });
 }
 
 function handleGlobalKeyDown(event: KeyboardEvent): void {
@@ -218,7 +245,7 @@ async function refreshHiding(retainedIds?: string[]): Promise<void> {
   if (retainedIds) reconcileUndoStack(retainedIds);
   if (hidingEnabled) {
     await applyStoredHiding(true);
-    watchAndReapplyHiding();
+    if (hidingEnabled && !contentContext.isInvalid) watchAndReapplyHiding();
   }
 }
 

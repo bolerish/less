@@ -212,7 +212,10 @@ try {
       },
       windows: { onFocusChanged: event("focus") },
       storage: { onChanged: event("storage") },
-      webNavigation: { onHistoryStateUpdated: event("navigation") },
+      webNavigation: {
+        onCommitted: event("committed"),
+        onHistoryStateUpdated: event("navigation"),
+      },
     };
     vm.runInNewContext(
       await readFile(join(values["firefox-build"], "background.js"), "utf8"),

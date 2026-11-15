@@ -30,17 +30,31 @@ async function injectPreloadCSS(ctx: ContentScriptContext): Promise<void> {
   const siteKey = siteCSSCacheKey(origin);
 
   const url = window.location.href;
-  const deadline = performance.now() + FIRST_DISPLAY_TIMEOUT_MS;
   const holdStyle = document.createElement("style");
   // Cover descendants that explicitly set visibility, without changing page attributes.
   holdStyle.textContent = ":root, :root * { visibility: hidden !important; }";
+  let revealed = false;
   let finished = false;
+  let cancelled = false;
+  let timer: number | undefined;
   const cleanups: (() => void)[] = [];
+
+  function reveal(): void {
+    if (revealed) return;
+    revealed = true;
+    window.clearTimeout(timer);
+    holdStyle.remove();
+  }
+
+  function cancel(): void {
+    cancelled = true;
+    finish();
+  }
 
   function finish(): void {
     if (finished) return;
     finished = true;
-    holdStyle.remove();
+    reveal();
     for (const cleanup of cleanups) cleanup();
   }
 
@@ -59,10 +73,10 @@ async function injectPreloadCSS(ctx: ContentScriptContext): Promise<void> {
   }
 
   try {
-    const timer = window.setTimeout(finish, FIRST_DISPLAY_TIMEOUT_MS);
+    timer = window.setTimeout(reveal, FIRST_DISPLAY_TIMEOUT_MS);
     cleanups.push(() => window.clearTimeout(timer));
-    cleanups.push(ctx.onInvalidated(finish));
-    cleanups.push(subscribeSiteHidingEnabled(origin, finish));
+    cleanups.push(ctx.onInvalidated(cancel));
+    cleanups.push(subscribeSiteHidingEnabled(origin, cancel));
     const handleCacheChange: Parameters<typeof browser.storage.onChanged.addListener>[0] = (
       changes,
       area,
@@ -77,12 +91,25 @@ async function injectPreloadCSS(ctx: ContentScriptContext): Promise<void> {
         before.size !== after.size ||
         [...before].some((selector) => !after.has(selector))
       )
-        finish();
+        cancel();
     };
     browser.storage.onChanged.addListener(handleCacheChange);
     cleanups.push(() => browser.storage.onChanged.removeListener(handleCacheChange));
-    window.addEventListener("pagehide", finish);
-    cleanups.push(() => window.removeEventListener("pagehide", finish));
+    window.addEventListener("pagehide", cancel);
+    cleanups.push(() => window.removeEventListener("pagehide", cancel));
+    const navigation = (window as Window & { navigation?: EventTarget }).navigation;
+    navigation?.addEventListener("navigate", cancel);
+    cleanups.push(() => navigation?.removeEventListener("navigate", cancel));
+    window.addEventListener("popstate", cancel);
+    cleanups.push(() => window.removeEventListener("popstate", cancel));
+    const handleNavigation: Parameters<typeof browser.runtime.onMessage.addListener>[0] = (
+      message,
+      sender,
+    ) => {
+      if (sender.id === browser.runtime.id && message?.type === "PRELOAD_NAVIGATED") cancel();
+    };
+    browser.runtime.onMessage.addListener(handleNavigation);
+    cleanups.push(() => browser.runtime.onMessage.removeListener(handleNavigation));
     root.appendChild(holdStyle);
 
     // Either OFF or an empty/failed cache can release the page before the other read settles.
@@ -101,8 +128,8 @@ async function injectPreloadCSS(ctx: ContentScriptContext): Promise<void> {
     if (
       !css ||
       finished ||
+      cancelled ||
       ctx.isInvalid ||
-      performance.now() >= deadline ||
       window.location.href !== url ||
       document.getElementById("__veil_preload__")
     ) {

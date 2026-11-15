@@ -18,7 +18,7 @@
     "message": "숨긴 항목 불러오는 중…"
   },
   "panel_count_help": {
-    "message": "이 사이트에 저장한 숨김 규칙 수입니다. 숨김을 해제하면 줄어듭니다."
+    "message": "이 사이트에서 숨기도록 선택한 항목 수예요. 숨김을 해제하면 줄어들어요."
   },
   "panel_kind_video": {
     "message": "영상"
@@ -78,25 +78,25 @@
     "message": "저장 중…"
   },
   "panel_saved": {
-    "message": "숨김 규칙을 변경했습니다."
+    "message": "숨김 설정을 바꿨어요."
   },
   "panel_reset_done": {
-    "message": "이 사이트의 숨김 규칙을 모두 삭제했습니다."
+    "message": "이 사이트에서 숨긴 항목이 모두 다시 보여요."
   },
   "panel_empty_title": {
-    "message": "숨긴 항목이 없습니다"
+    "message": "숨긴 항목이 없어요"
   },
   "panel_empty_help": {
-    "message": "항목 숨기기로 이 사이트에서 숨길 항목을 선택하세요."
+    "message": "항목 숨기기를 누르면 이 사이트에서 숨길 항목을 고를 수 있어요."
   },
   "panel_reset": {
-    "message": "모두 다시 표시"
+    "message": "초기화"
   },
   "panel_reset_confirm": {
-    "message": "이 사이트의 숨긴 항목 $1개를 다시 표시하고 숨김 규칙을 삭제합니다."
+    "message": "이 사이트에서 숨긴 항목이 모두 다시 보여요."
   },
   "panel_reset_all": {
-    "message": "모두 다시 표시"
+    "message": "초기화"
   },
   "panel_cancel": {
     "message": "취소"
@@ -108,10 +108,10 @@
     "message": "다시 동기화"
   },
   "panel_load_error": {
-    "message": "숨긴 항목을 불러오지 못했습니다. 다시 시도하세요."
+    "message": "숨긴 항목을 불러오지 못했어요. 다시 시도해 주세요."
   },
   "panel_save_error": {
-    "message": "변경을 저장하지 못했습니다. 다시 시도해 주세요."
+    "message": "변경을 저장하지 못했어요. 다시 시도해 주세요."
   },
   "panel_selection_error": {
     "message": "선택을 시작하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
@@ -156,7 +156,7 @@
     "message": "Less — 현재 사이트"
   },
   "panel_reset_group": {
-    "message": "숨긴 항목을 모두 표시할까요?"
+    "message": "숨김 설정을 초기화할까요?"
   },
   "panel_hidden_noun_one": {
     "message": "숨긴 항목"

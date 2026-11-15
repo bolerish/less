@@ -18,7 +18,7 @@
     "message": "Loading hidden items…"
   },
   "panel_count_help": {
-    "message": "Saved hiding rules on this site. Unhiding removes a rule."
+    "message": "Number of items you've chosen to hide on this site. Unhiding an item reduces the count."
   },
   "panel_kind_video": {
     "message": "Video"
@@ -30,7 +30,7 @@
     "message": "External content"
   },
   "panel_kind_region": {
-    "message": "Region"
+    "message": "Area"
   },
   "panel_kind_content": {
     "message": "Content"
@@ -78,10 +78,10 @@
     "message": "Saving…"
   },
   "panel_saved": {
-    "message": "Hiding rules updated."
+    "message": "Hiding settings updated."
   },
   "panel_reset_done": {
-    "message": "All hiding rules for this site have been removed."
+    "message": "All hidden items on this site are shown again."
   },
   "panel_empty_title": {
     "message": "Nothing hidden here"
@@ -90,13 +90,13 @@
     "message": "Choose Hide an item to select what to hide on this site."
   },
   "panel_reset": {
-    "message": "Show all"
+    "message": "Reset"
   },
   "panel_reset_confirm": {
-    "message": "Show all $1 hidden items on this site and delete their hiding rules."
+    "message": "All items hidden on this site will be shown again."
   },
   "panel_reset_all": {
-    "message": "Show all"
+    "message": "Reset"
   },
   "panel_cancel": {
     "message": "Cancel"
@@ -156,7 +156,7 @@
     "message": "Less — current site"
   },
   "panel_reset_group": {
-    "message": "Show all hidden items?"
+    "message": "Reset hiding settings?"
   },
   "panel_hidden_noun_one": {
     "message": "Hidden item"

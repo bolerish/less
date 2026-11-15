@@ -27,7 +27,7 @@ export function ResetDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  count: number;
+  count: number | null;
   busy: boolean;
   error: string;
   heading: RefObject<HTMLHeadingElement | null>;
@@ -45,26 +45,28 @@ export function ResetDialog({
         if (!busy) onOpenChange(open);
       }}
     >
-      <AlertDialogTrigger
-        ref={resetButton}
-        render={
-          <Button
-            className={[
-              "reset-button less-control",
-              stylex.props(styles.controlFocus).className,
-            ].join(" ")}
-            xstyle={styles.resetButton}
-            variant="ghost"
-            size="sm"
-            disabled={busy || !count}
-          >
-            {message("panel_reset")}
-          </Button>
-        }
-        onClick={onBeforeOpen}
-      >
-        {message("panel_reset")}
-      </AlertDialogTrigger>
+      {count !== null && count > 0 ? (
+        <AlertDialogTrigger
+          ref={resetButton}
+          render={
+            <Button
+              className={[
+                "reset-button less-control",
+                stylex.props(styles.controlFocus).className,
+              ].join(" ")}
+              xstyle={styles.resetButton}
+              variant="outline"
+              size="sm"
+              disabled={busy}
+            >
+              {message("panel_reset")}
+            </Button>
+          }
+          onClick={onBeforeOpen}
+        >
+          {message("panel_reset")}
+        </AlertDialogTrigger>
+      ) : null}
       {/* Keep the portal in the styled native modal; Content portals to document.body. */}
       <AlertDialogPrimitive.Portal container={portalContainer}>
         <AlertDialogPrimitive.Backdrop {...stylex.props(styles.resetBackdrop)} />
@@ -87,9 +89,7 @@ export function ResetDialog({
           >
             <AlertDialogHeader>
               <AlertDialogTitle>{message("panel_reset_group")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {message("panel_reset_confirm", [String(count)])}
-              </AlertDialogDescription>
+              <AlertDialogDescription>{message("panel_reset_confirm")}</AlertDialogDescription>
             </AlertDialogHeader>
             {error ? (
               <p role="alert" {...stylex.props(styles.dialogError)}>

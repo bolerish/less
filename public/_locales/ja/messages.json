@@ -18,7 +18,7 @@
     "message": "非表示の項目を読み込み中…"
   },
   "panel_count_help": {
-    "message": "このサイトの保存済み非表示ルール数です。再表示すると減ります。"
+    "message": "このサイトで非表示にした項目の数です。項目を再表示すると数が減ります。"
   },
   "panel_kind_video": {
     "message": "動画"
@@ -30,7 +30,7 @@
     "message": "外部コンテンツ"
   },
   "panel_kind_region": {
-    "message": "領域"
+    "message": "エリア"
   },
   "panel_kind_content": {
     "message": "コンテンツ"
@@ -78,10 +78,10 @@
     "message": "保存中…"
   },
   "panel_saved": {
-    "message": "非表示ルールを更新しました。"
+    "message": "非表示の設定を更新しました。"
   },
   "panel_reset_done": {
-    "message": "このサイトの非表示ルールをすべて削除しました。"
+    "message": "このサイトで非表示にした項目をすべて再表示しました。"
   },
   "panel_empty_title": {
     "message": "隠した項目はありません"
@@ -90,13 +90,13 @@
     "message": "「項目を非表示にする」から、このサイトで隠す項目を選べます。"
   },
   "panel_reset": {
-    "message": "すべて表示"
+    "message": "リセット"
   },
   "panel_reset_confirm": {
-    "message": "このサイトで隠した$1件の項目を表示し、非表示ルールを削除します。"
+    "message": "このサイトで非表示にした項目がすべて再表示されます。"
   },
   "panel_reset_all": {
-    "message": "すべて表示"
+    "message": "リセット"
   },
   "panel_cancel": {
     "message": "キャンセル"
@@ -156,7 +156,7 @@
     "message": "Less — 現在のサイト"
   },
   "panel_reset_group": {
-    "message": "隠した項目をすべて表示しますか？"
+    "message": "非表示設定をリセットしますか？"
   },
   "panel_hidden_noun_one": {
     "message": "非表示の項目"

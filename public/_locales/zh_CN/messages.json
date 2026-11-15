@@ -18,7 +18,7 @@
     "message": "正在加载隐藏项目…"
   },
   "panel_count_help": {
-    "message": "此网站已保存的隐藏规则数。取消隐藏会移除对应规则。"
+    "message": "此网站上选择隐藏的项目数量。重新显示项目后，数量会减少。"
   },
   "panel_kind_video": {
     "message": "视频"
@@ -78,10 +78,10 @@
     "message": "保存中…"
   },
   "panel_saved": {
-    "message": "隐藏规则已更新。"
+    "message": "已更新隐藏设置。"
   },
   "panel_reset_done": {
-    "message": "已移除此网站的全部隐藏规则。"
+    "message": "此网站上隐藏的所有项目已重新显示。"
   },
   "panel_empty_title": {
     "message": "没有隐藏项"
@@ -90,13 +90,13 @@
     "message": "选择“隐藏项目”，开始选择此网站上要隐藏的内容。"
   },
   "panel_reset": {
-    "message": "全部显示"
+    "message": "重置"
   },
   "panel_reset_confirm": {
-    "message": "将显示此网站的全部 $1 个隐藏项，并删除对应的隐藏规则。"
+    "message": "此网站上隐藏的所有项目都会重新显示。"
   },
   "panel_reset_all": {
-    "message": "全部显示"
+    "message": "重置"
   },
   "panel_cancel": {
     "message": "取消"
@@ -156,7 +156,7 @@
     "message": "Less — 当前网站"
   },
   "panel_reset_group": {
-    "message": "显示所有隐藏项？"
+    "message": "要重置隐藏设置吗？"
   },
   "panel_hidden_noun_one": {
     "message": "隐藏项目"

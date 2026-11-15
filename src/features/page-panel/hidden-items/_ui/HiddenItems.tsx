@@ -88,7 +88,7 @@ export function HiddenItems({
         <ResetDialog
           open={confirmReset}
           onOpenChange={setConfirmReset}
-          count={records?.length ?? 0}
+          count={records?.length ?? null}
           busy={busy}
           error={error}
           heading={heading}

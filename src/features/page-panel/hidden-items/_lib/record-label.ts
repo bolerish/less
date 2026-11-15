@@ -1,7 +1,7 @@
 import type { ManagedRecord } from "~features/record/management";
 import type { getPanelMessage } from "~features/record/management-messages";
 
-export function getRecordLabel(record: ManagedRecord, message: typeof getPanelMessage): string {
+export function getRecordLabel(record: ManagedRecord, message: typeof getPanelMessage) {
   const tag = record.target.tagName.toLowerCase();
   let kind = record.target.contentKind;
   if (!kind) {
@@ -14,7 +14,11 @@ export function getRecordLabel(record: ManagedRecord, message: typeof getPanelMe
   }
   const name = message(`panel_kind_${kind}`);
   const text = record.target.displayText?.replace(/\s+/g, " ").trim();
-  if (!text || text.toLocaleLowerCase() === name.toLocaleLowerCase()) return name;
+  if (!text || text.toLocaleLowerCase() === name.toLocaleLowerCase())
+    return { category: name, text: "" };
   const characters = Array.from(text);
-  return `${name} · ${characters.slice(0, 24).join("").trimEnd()}${characters.length > 24 ? "…" : ""}`;
+  return {
+    category: name,
+    text: `${characters.slice(0, 24).join("").trimEnd()}${characters.length > 24 ? "…" : ""}`,
+  };
 }

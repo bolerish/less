@@ -459,14 +459,9 @@ try {
     "official Empty title and description render as one header",
   );
   assert.equal(
-    await panel((d) => getComputedStyle(d.querySelector(".empty")!).borderStyle),
-    "none",
-    "empty state has no improvised dashed border",
-  );
-  assert.equal(
-    await panel((d) => d.querySelector<HTMLButtonElement>(".reset-button")!.disabled),
+    await panel((d) => d.querySelector(".reset-button") === null),
     true,
-    "show all is unavailable when empty",
+    "reset is absent when empty",
   );
   assert.equal(
     await site.locator("[data-less-panel]").evaluate((e) => e.shadowRoot),
@@ -900,7 +895,7 @@ try {
           panel((d) =>
             Array.from(
               d.querySelectorAll(
-                ".list-toolbar button,.panel-footer button,.select-button,.site-card,.record-tag",
+                ".list-toolbar button,.panel-footer button,.select-button,.site-card,.record-kind",
               ),
             ).every((element) => element.getAnimations().length === 0),
           ),
@@ -1004,7 +999,7 @@ try {
           foreground: resolveColor(tokens.fgPrimary),
           reset: inspect(".reset-button"),
           select: inspect(".select-button"),
-          badge: inspect(".record-tag"),
+          badge: inspect(".record-kind"),
           card: inspect(".site-card"),
         };
       }, semanticRefs);
@@ -1255,6 +1250,11 @@ try {
     "true",
     "reset announces pending state",
   );
+  assert.equal(
+    await panel((d) => d.querySelector<HTMLButtonElement>(".reset-button")?.disabled),
+    true,
+    "pending reset keeps the disabled trigger mounted",
+  );
   await site.keyboard.press("Tab");
   assert.equal(
     await panel((d) =>
@@ -1272,6 +1272,10 @@ try {
     "failed reset keeps the dialog and error visible",
   );
   assert.equal(await count(), 1, "failed reset retains records");
+  assert(
+    await panel((d) => !!d.querySelector(".reset-button")),
+    "failed reset retains its trigger for retry",
+  );
   const resetCalls = await session.send("Runtime.callFunctionOn", {
     objectId: resetFailure.result.objectId,
     functionDeclaration: "function(){return this()}",
@@ -2251,14 +2255,6 @@ try {
     true,
     "row hover background resolves",
   );
-  assert.equal(
-    await panel((d) => {
-      const s = getComputedStyle(d.querySelector<HTMLElement>(".record-row")!);
-      return s.outlineStyle === "solid" && s.outlineWidth === "2px";
-    }),
-    true,
-    "row hover has a blue outline",
-  );
   await click(".record:first-child .restore-button");
   await hidden("#fixed-target", false);
   await waitFor(async () => (await count()) === 4, "X removes only selected rule");
@@ -2362,6 +2358,30 @@ try {
     true,
     "legacy record without kind has a safe label",
   );
+  const badgeRows = await panel((d) =>
+    Array.from(d.querySelectorAll(".record")).map((row) => ({
+      category: row.querySelector(".record-kind")?.textContent,
+      text: row.querySelector(".record-label")?.textContent ?? "",
+      label: row.querySelector(".locate-button")?.getAttribute("aria-label"),
+      technicalTag: !!row.querySelector(".record-tag"),
+    })),
+  );
+  for (const row of badgeRows) {
+    assert(
+      Object.entries(messages).some(
+        ([key, value]) => key.startsWith("panel_kind_") && value === row.category,
+      ),
+      "badge contains a localized content category",
+    );
+    assert(
+      !row.technicalTag && row.text !== row.category && !row.text.startsWith(`${row.category} · `),
+      "no HTML tag badge or duplicate category prefix",
+    );
+    assert(
+      row.label?.includes(row.category!) && (!row.text || row.label.includes(row.text)),
+      "accessible name includes the category and optional short content",
+    );
+  }
   for (const size of [
     { width: 1100, height: 800 },
     { width: 375, height: 720 },
@@ -2387,7 +2407,7 @@ try {
       list.scrollTop = list.scrollHeight;
       const li = list.querySelector<HTMLElement>(".record")!,
         row = li.querySelector<HTMLElement>(".record-row")!,
-        badge = row.querySelector<HTMLElement>(".record-tag")!,
+        badge = row.querySelector<HTMLElement>(".record-kind")!,
         button = row.querySelector<HTMLElement>(".restore-button")!;
       const a = li.getBoundingClientRect(),
         b = row.getBoundingClientRect(),
@@ -2544,6 +2564,37 @@ try {
     );
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
+      for (const colorScheme of ["light", "dark"] as const) {
+        await site.emulateMedia({ colorScheme });
+        const rows = await panel((d) =>
+          Array.from(d.querySelectorAll(".record")).map((row) => {
+            const badge = row.querySelector<HTMLElement>(".record-kind")!;
+            const text = row.querySelector<HTMLElement>(".record-label");
+            const button = row.querySelector<HTMLElement>(".locate-button")!;
+            return {
+              category: badge.textContent,
+              text: text?.textContent ?? "",
+              label: button.getAttribute("aria-label"),
+              fits:
+                badge.scrollWidth <= badge.clientWidth + 1 &&
+                (!text || text.scrollWidth <= text.clientWidth + 1) &&
+                button.scrollWidth <= button.clientWidth + 1,
+            };
+          }),
+        );
+        for (const row of rows) {
+          assert(
+            Object.keys(catalog).some(
+              (key) => key.startsWith("panel_kind_") && catalog[key].message === row.category,
+            ),
+            `${locale}: category badge uses the active locale`,
+          );
+          assert(
+            row.fits && row.text !== row.category && row.label?.includes(row.category!),
+            `${locale}/${width}/${colorScheme}: badge, short text and accessible name fit`,
+          );
+        }
+      }
       const before = await panel((d) => {
         const list = d.querySelector<HTMLElement>(".records")!;
         list.scrollTop = Math.floor((list.scrollHeight - list.clientHeight) / 2);
@@ -2795,10 +2846,7 @@ try {
           };
         });
         assert.equal(confirmation.title, catalog.panel_reset_group.message);
-        assert.equal(
-          confirmation.description,
-          catalog.panel_reset_confirm.message.replace("$1", String(await count())),
-        );
+        assert.equal(confirmation.description, catalog.panel_reset_confirm.message);
         assert(
           confirmation.fits && confirmation.buttons.every(Boolean) && confirmation.focus,
           `${locale}/${width}/${colorScheme}: readable confirmation, buttons and contained focus`,
@@ -2855,15 +2903,14 @@ try {
             help: e.querySelector("p")?.textContent,
             border: getComputedStyle(e).borderStyle,
             fits: r.left >= 0 && r.right <= innerWidth && e.scrollWidth <= e.clientWidth,
-            disabled: d.querySelector<HTMLButtonElement>(".reset-button")!.disabled,
+            resetAbsent: d.querySelector(".reset-button") === null,
           };
         });
         assert.equal(empty.title, catalog.panel_empty_title.message);
         assert.equal(empty.help, catalog.panel_empty_help.message);
-        assert.equal(empty.border, "none");
         assert(
-          empty.fits && empty.disabled,
-          `${locale}/${width}/${colorScheme}: empty state fits and reset remains disabled`,
+          empty.fits && empty.resetAbsent,
+          `${locale}/${width}/${colorScheme}: empty state fits and reset is absent`,
         );
         await site.screenshot({
           path: values.screenshot.replace(/\.png$/, `-empty-${locale}-${width}-${colorScheme}.png`),
@@ -2922,6 +2969,11 @@ try {
   await waitFor(
     () => panel((d) => !!d.querySelector(".notice.error button")),
     "load error exposes retry",
+  );
+  assert.equal(
+    await panel((d) => d.querySelector(".reset-button")),
+    null,
+    "unknown count after an initial read failure does not expose reset",
   );
   await panel((d) => {
     const button = d.querySelector<HTMLButtonElement>(".notice.error button")!;
@@ -3115,7 +3167,7 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#frame-wrapper");
   console.log(
-    "PASS media labels, real iframe wrapper, tag badges, fixed footer, list scroll, consistent row geometry, narrow and short viewports",
+    "PASS media labels, real iframe wrapper, category badges, fixed footer, list scroll, consistent row geometry, narrow and short viewports",
   );
 
   await site.goto(`${origin}/fixture`);

@@ -31,7 +31,8 @@ export function RecordRow({
   onRestore: () => void;
 }) {
   const message = usePanelMessage();
-  const label = getRecordLabel(record, message);
+  const { category, text } = getRecordLabel(record, message);
+  const label = text ? `${category} · ${text}` : category;
   const locateButton = usePreviewFocus(selected);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const tooltipId = useId();
@@ -54,16 +55,20 @@ export function RecordRow({
           aria-pressed={selected}
           onClick={(event) => void preview?.show(record.id, event.currentTarget.closest("dialog"))}
         >
-          <span className={["record-label", stylex.props(styles.recordLabel).className].join(" ")}>
-            {label}
-          </span>
           <Badge
-            className={["record-tag", stylex.props(styles.recordTag).className].join(" ")}
+            className={["record-kind", stylex.props(styles.recordKind).className].join(" ")}
             variant="outline"
             aria-hidden="true"
           >
-            {record.target.tagName.toLowerCase()}
+            {category}
           </Badge>
+          {text ? (
+            <span
+              className={["record-label", stylex.props(styles.recordLabel).className].join(" ")}
+            >
+              {text}
+            </span>
+          ) : null}
         </Button>
         <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
           <TooltipTrigger
@@ -172,9 +177,12 @@ const styles = stylex.create({
     minWidth: "0",
     fontWeight: typo.fontWeightMedium,
   },
-  recordTag: {
-    ":is(.record-tag)": {
+  recordKind: {
+    ":is(.record-kind)": {
       flexShrink: "0",
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      maxWidth: "50%",
       color: colorVars.fgSecondary,
       fontWeight: typo.fontWeightRegular,
     },

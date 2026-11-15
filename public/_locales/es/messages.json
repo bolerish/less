@@ -18,7 +18,7 @@
     "message": "Cargando elementos ocultos…"
   },
   "panel_count_help": {
-    "message": "Reglas guardadas en este sitio. Mostrar un elemento elimina su regla."
+    "message": "Número de elementos que has ocultado en este sitio. Al volver a mostrar uno, el número disminuye."
   },
   "panel_kind_video": {
     "message": "Vídeo"
@@ -78,10 +78,10 @@
     "message": "Guardando…"
   },
   "panel_saved": {
-    "message": "Reglas de ocultación actualizadas."
+    "message": "Se ha actualizado la configuración de ocultación."
   },
   "panel_reset_done": {
-    "message": "Se han eliminado todas las reglas de ocultación de este sitio."
+    "message": "Todos los elementos ocultos en este sitio vuelven a mostrarse."
   },
   "panel_empty_title": {
     "message": "No hay elementos ocultos"
@@ -90,13 +90,13 @@
     "message": "Selecciona Ocultar un elemento para elegir qué ocultar en este sitio."
   },
   "panel_reset": {
-    "message": "Mostrar todo"
+    "message": "Restablecer"
   },
   "panel_reset_confirm": {
-    "message": "Se mostrarán los $1 elementos ocultos de este sitio y se eliminarán sus reglas de ocultación."
+    "message": "Todos los elementos ocultos en este sitio volverán a mostrarse."
   },
   "panel_reset_all": {
-    "message": "Mostrar todo"
+    "message": "Restablecer"
   },
   "panel_cancel": {
     "message": "Cancelar"
@@ -156,7 +156,7 @@
     "message": "Less — sitio actual"
   },
   "panel_reset_group": {
-    "message": "¿Mostrar todos los elementos ocultos?"
+    "message": "¿Restablecer los ajustes de visibilidad?"
   },
   "panel_hidden_noun_one": {
     "message": "Elemento oculto"

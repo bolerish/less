@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**Bare** is a Chrome/Firefox browser extension that lets users hide distracting elements on any web page, with persistence across visits. Built with [WXT](https://wxt.dev/) (Web Extension Tooling), React 19, Tailwind CSS v4, and Dexie (IndexedDB).
+**Bare** is a Chrome/Firefox browser extension that lets users hide distracting elements on any web page, with persistence across visits. Built with [WXT](https://wxt.dev/) (Web Extension Tooling), React 19, @bolerish/ui, token-based CSS, and Dexie (IndexedDB).
 
 ## Commands
 

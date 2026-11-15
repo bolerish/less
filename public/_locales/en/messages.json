@@ -18,7 +18,7 @@
     "message": "Loading hidden items…"
   },
   "panel_count_help": {
-    "message": "Saved hiding rules across this site. Restoring an item decreases this count."
+    "message": "Saved hiding rules on this site. Unhiding removes a rule."
   },
   "panel_kind_video": {
     "message": "Video"
@@ -39,12 +39,129 @@
     "message": "Back to hidden items"
   },
   "panel_preview_description": {
-    "message": "Temporarily showing this item. Its hiding rule is still saved."
+    "message": "Showing this item temporarily. Its hiding rule stays saved."
   },
   "panel_restore_label": {
-    "message": "Restore item $1 and remove its hiding rule: $2"
+    "message": "Unhide $1: $2"
   },
   "panel_restore_tooltip": {
-    "message": "Restore this item and remove its hiding rule"
+    "message": "Unhide"
+  },
+  "panel_updates": {
+    "message": "Updates"
+  },
+  "panel_back": {
+    "message": "Back"
+  },
+  "panel_close": {
+    "message": "Close Veil"
+  },
+  "panel_preview_title": {
+    "message": "Veil · Preview"
+  },
+  "panel_hidden_items": {
+    "message": "Hidden items"
+  },
+  "panel_enable_hiding": {
+    "message": "Hide saved items on this site"
+  },
+  "panel_select": {
+    "message": "Hide an item"
+  },
+  "panel_starting": {
+    "message": "Starting…"
+  },
+  "panel_paused": {
+    "message": "Hiding is paused. Turn it on above to hide an item."
+  },
+  "panel_refresh": {
+    "message": "Refresh"
+  },
+  "panel_retry_load": {
+    "message": "Try again"
+  },
+  "panel_saving": {
+    "message": "Saving…"
+  },
+  "panel_saved": {
+    "message": "Hiding rules updated."
+  },
+  "panel_reset_done": {
+    "message": "All items on this site are unhidden."
+  },
+  "panel_empty_title": {
+    "message": "Nothing hidden here"
+  },
+  "panel_empty_help": {
+    "message": "Items you hide will appear here."
+  },
+  "panel_reset": {
+    "message": "Unhide all…"
+  },
+  "panel_reset_confirm": {
+    "message": "Unhide all $1 items on this site? Their hiding rules will be removed."
+  },
+  "panel_reset_all": {
+    "message": "Unhide all"
+  },
+  "panel_cancel": {
+    "message": "Cancel"
+  },
+  "panel_sync_notice": {
+    "message": "Some open pages ($1) have not updated. Reload them or retry."
+  },
+  "panel_retry_sync": {
+    "message": "Retry sync"
+  },
+  "panel_load_error": {
+    "message": "Could not load hidden items. Try again."
+  },
+  "panel_save_error": {
+    "message": "Could not save changes. Try again. If this continues, reload Veil."
+  },
+  "panel_selection_error": {
+    "message": "Could not start selection. Reload the page and try again."
+  },
+  "panel_preference_error": {
+    "message": "Could not change hiding. Try again."
+  },
+  "panel_updates_help": {
+    "message": "Latest changes, newest first."
+  },
+  "panel_installed_version": {
+    "message": "Installed version $1"
+  },
+  "panel_unreleased": {
+    "message": "Not yet released"
+  },
+  "panel_released": {
+    "message": "Released"
+  },
+  "panel_find": {
+    "message": "Finding item…"
+  },
+  "panel_other_page": {
+    "message": "This item is on another page. Open its saved page to preview it."
+  },
+  "panel_unavailable": {
+    "message": "Item not found on this page. Its hiding rule is unchanged."
+  },
+  "panel_hidden_parent": {
+    "message": "A hidden container covers this item. Its hiding rule is unchanged."
+  },
+  "panel_covered": {
+    "message": "The page layout covers this item. Its hiding rule is unchanged."
+  },
+  "panel_preview_error": {
+    "message": "Could not show this item. Reload the page and try again."
+  },
+  "panel_locate_label": {
+    "message": "Preview item $1: $2"
+  },
+  "panel_dialog": {
+    "message": "Veil — current site"
+  },
+  "panel_reset_group": {
+    "message": "Confirm unhide all"
   }
 }

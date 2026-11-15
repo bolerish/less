@@ -5,6 +5,7 @@ import type { HiddenElementRecord } from "~features/record/schema";
 import { portRequest } from "./port";
 import { finishHiddenElementAnimation } from "~features/element-hiding/element-hide";
 import { positionPreview } from "./preview-position";
+import { getPanelMessage as message } from "~features/record/management-messages";
 
 export type PreviewState = { id: string | null; message: string };
 export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
@@ -76,7 +77,7 @@ export function createHiddenItemPreview() {
       clear(true);
       const pending = revision;
       const { origin, pathname: path, search } = location;
-      publish({ id: null, message: "Finding this item on the page…" });
+      publish({ id: null, message: message("panel_find") });
       try {
         // Use the same page/scope and matching boundary as the hiding engine.
         const response = await portRequest<{ records?: HiddenElementRecord[] }>({
@@ -90,7 +91,7 @@ export function createHiddenItemPreview() {
         if (!record) {
           publish({
             id: null,
-            message: "This item belongs to another page. Open its saved path to locate it.",
+            message: message("panel_other_page"),
           });
           return;
         }
@@ -102,8 +103,7 @@ export function createHiddenItemPreview() {
         ) {
           publish({
             id: null,
-            message:
-              "This hidden item is not available in the current page. Its saved rule is unchanged.",
+            message: message("panel_unavailable"),
           });
           return;
         }
@@ -148,8 +148,7 @@ export function createHiddenItemPreview() {
           clear();
           publish({
             id: null,
-            message:
-              "This item is inside a hidden container and cannot be located here. Its saved rule is unchanged.",
+            message: message("panel_hidden_parent"),
           });
           return;
         }
@@ -168,16 +167,13 @@ export function createHiddenItemPreview() {
           clear();
           publish({
             id: null,
-            message:
-              "The page layout covers this item. It cannot be shown here. Its saved rule is unchanged.",
+            message: message("panel_covered"),
           });
           return;
         }
         publish({
           id,
-          message:
-            browser.i18n.getMessage("panel_preview_description") ||
-            "Temporarily showing this item. Its hiding rule is still saved.",
+          message: message("panel_preview_description"),
         });
         let frame = 0;
         const reposition = (): void => {
@@ -202,7 +198,7 @@ export function createHiddenItemPreview() {
         clear();
         publish({
           id: null,
-          message: "Could not locate this item. Reload the page and try again.",
+          message: message("panel_preview_error"),
         });
       }
     },

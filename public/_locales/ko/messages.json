@@ -18,7 +18,7 @@
     "message": "숨긴 항목 불러오는 중…"
   },
   "panel_count_help": {
-    "message": "이 사이트 전체에 현재 저장된 숨김 규칙 수입니다. 복원하면 개수가 줄어듭니다."
+    "message": "이 사이트에 저장한 숨김 규칙 수입니다. 숨김을 해제하면 줄어듭니다."
   },
   "panel_kind_video": {
     "message": "영상"
@@ -39,12 +39,129 @@
     "message": "숨긴 항목으로 돌아가기"
   },
   "panel_preview_description": {
-    "message": "이 항목을 잠시 표시합니다. 숨김 규칙은 유지됩니다."
+    "message": "잠시 표시 중입니다. 숨김 규칙은 유지됩니다."
   },
   "panel_restore_label": {
-    "message": "항목 $1 복원 및 숨김 규칙 제거: $2"
+    "message": "항목 $1 숨김 해제: $2"
   },
   "panel_restore_tooltip": {
-    "message": "이 항목을 복원하고 숨김 규칙 제거"
+    "message": "숨김 해제"
+  },
+  "panel_updates": {
+    "message": "업데이트"
+  },
+  "panel_back": {
+    "message": "뒤로"
+  },
+  "panel_close": {
+    "message": "Veil 닫기"
+  },
+  "panel_preview_title": {
+    "message": "Veil · 미리보기"
+  },
+  "panel_hidden_items": {
+    "message": "숨긴 항목"
+  },
+  "panel_enable_hiding": {
+    "message": "이 사이트에서 숨김 적용"
+  },
+  "panel_select": {
+    "message": "항목 숨기기"
+  },
+  "panel_starting": {
+    "message": "준비 중…"
+  },
+  "panel_paused": {
+    "message": "숨김이 일시 중지됐습니다. 위에서 켜면 항목을 숨길 수 있습니다."
+  },
+  "panel_refresh": {
+    "message": "새로고침"
+  },
+  "panel_retry_load": {
+    "message": "다시 시도"
+  },
+  "panel_saving": {
+    "message": "저장 중…"
+  },
+  "panel_saved": {
+    "message": "숨김 규칙을 변경했습니다."
+  },
+  "panel_reset_done": {
+    "message": "이 사이트의 숨김을 모두 해제했습니다."
+  },
+  "panel_empty_title": {
+    "message": "숨긴 항목이 없습니다"
+  },
+  "panel_empty_help": {
+    "message": "숨긴 항목이 여기에 표시됩니다."
+  },
+  "panel_reset": {
+    "message": "모두 숨김 해제…"
+  },
+  "panel_reset_confirm": {
+    "message": "이 사이트의 항목 $1개를 모두 표시할까요? 해당 숨김 규칙이 제거됩니다."
+  },
+  "panel_reset_all": {
+    "message": "모두 숨김 해제"
+  },
+  "panel_cancel": {
+    "message": "취소"
+  },
+  "panel_sync_notice": {
+    "message": "열린 페이지 $1개에 변경이 반영되지 않았습니다. 페이지를 새로고침하거나 다시 동기화하세요."
+  },
+  "panel_retry_sync": {
+    "message": "다시 동기화"
+  },
+  "panel_load_error": {
+    "message": "숨긴 항목을 불러오지 못했습니다. 다시 시도하세요."
+  },
+  "panel_save_error": {
+    "message": "변경을 저장하지 못했습니다. 다시 시도하고, 문제가 계속되면 Veil을 다시 로드하세요."
+  },
+  "panel_selection_error": {
+    "message": "선택을 시작하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
+  },
+  "panel_preference_error": {
+    "message": "숨김 설정을 변경하지 못했습니다. 다시 시도하세요."
+  },
+  "panel_updates_help": {
+    "message": "최근 변경 사항부터 표시합니다."
+  },
+  "panel_installed_version": {
+    "message": "설치된 버전 $1"
+  },
+  "panel_unreleased": {
+    "message": "출시 예정"
+  },
+  "panel_released": {
+    "message": "출시됨"
+  },
+  "panel_find": {
+    "message": "항목 찾는 중…"
+  },
+  "panel_other_page": {
+    "message": "다른 페이지에 있는 항목입니다. 저장한 페이지에서 미리 보세요."
+  },
+  "panel_unavailable": {
+    "message": "이 페이지에서 항목을 찾지 못했습니다. 숨김 규칙은 유지됩니다."
+  },
+  "panel_hidden_parent": {
+    "message": "숨겨진 상위 영역에 가려진 항목입니다. 숨김 규칙은 유지됩니다."
+  },
+  "panel_covered": {
+    "message": "페이지 레이아웃에 가려진 항목입니다. 숨김 규칙은 유지됩니다."
+  },
+  "panel_preview_error": {
+    "message": "항목을 표시하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
+  },
+  "panel_locate_label": {
+    "message": "항목 $1 미리보기: $2"
+  },
+  "panel_dialog": {
+    "message": "Veil — 현재 사이트"
+  },
+  "panel_reset_group": {
+    "message": "모두 숨김 해제 확인"
   }
 }

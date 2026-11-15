@@ -2,6 +2,7 @@ import { themeClassNames } from "@bolerish/ui/theme";
 import packageCSS from "@bolerish/ui/global.css?inline";
 import { createRoot, type Root } from "react-dom/client";
 import App from "../sidepanel/App";
+import { getPanelMessage } from "~features/record/management-messages";
 import aliases from "../sidepanel/panel-tokens.css?inline";
 import panelCSS from "../sidepanel/style.css?inline";
 import { setSelectionHostStyles } from "./selection-surface";
@@ -125,8 +126,8 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       .replace(/(-?[\d.]+)rem\b/g, (_, value: string) => `${Number(value) * 16}px`);
     style.textContent = `${isolatedCSS}\n${aliases}\n${panelCSS}`;
     dialog = document.createElement("dialog");
-    dialog.lang = "en";
-    dialog.setAttribute("aria-label", "Veil — current site");
+    dialog.lang = browser.i18n.getUILanguage();
+    dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));
     dialog.setAttribute("data-bolerish-surface", "solid");
     dialog.addEventListener("keydown", (event) => {
       if (event.key !== "Tab" || !dialog) return;

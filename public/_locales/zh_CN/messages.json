@@ -18,7 +18,7 @@
     "message": "正在加载隐藏项目…"
   },
   "panel_count_help": {
-    "message": "此网站当前保存的隐藏规则数量。恢复项目后数量会减少。"
+    "message": "此网站已保存的隐藏规则数。取消隐藏会移除对应规则。"
   },
   "panel_kind_video": {
     "message": "视频"
@@ -39,12 +39,129 @@
     "message": "返回隐藏项目"
   },
   "panel_preview_description": {
-    "message": "此项目暂时显示，隐藏规则仍然保留。"
+    "message": "正在临时显示，隐藏规则仍然保留。"
   },
   "panel_restore_label": {
-    "message": "恢复项目 $1 并移除其隐藏规则：$2"
+    "message": "取消隐藏项目 $1：$2"
   },
   "panel_restore_tooltip": {
-    "message": "恢复此项目并移除其隐藏规则"
+    "message": "取消隐藏"
+  },
+  "panel_updates": {
+    "message": "更新"
+  },
+  "panel_back": {
+    "message": "返回"
+  },
+  "panel_close": {
+    "message": "关闭 Veil"
+  },
+  "panel_preview_title": {
+    "message": "Veil · 预览"
+  },
+  "panel_hidden_items": {
+    "message": "隐藏项目"
+  },
+  "panel_enable_hiding": {
+    "message": "在此网站应用隐藏规则"
+  },
+  "panel_select": {
+    "message": "隐藏项目"
+  },
+  "panel_starting": {
+    "message": "准备中…"
+  },
+  "panel_paused": {
+    "message": "隐藏已暂停。请在上方开启后隐藏项目。"
+  },
+  "panel_refresh": {
+    "message": "刷新"
+  },
+  "panel_retry_load": {
+    "message": "重试"
+  },
+  "panel_saving": {
+    "message": "保存中…"
+  },
+  "panel_saved": {
+    "message": "隐藏规则已更新。"
+  },
+  "panel_reset_done": {
+    "message": "此网站的所有项目已恢复显示。"
+  },
+  "panel_empty_title": {
+    "message": "暂无隐藏项目"
+  },
+  "panel_empty_help": {
+    "message": "隐藏的项目会显示在这里。"
+  },
+  "panel_reset": {
+    "message": "全部取消隐藏…"
+  },
+  "panel_reset_confirm": {
+    "message": "显示此网站的全部 $1 个项目？其隐藏规则将被移除。"
+  },
+  "panel_reset_all": {
+    "message": "全部取消隐藏"
+  },
+  "panel_cancel": {
+    "message": "取消"
+  },
+  "panel_sync_notice": {
+    "message": "有 $1 个已打开的页面尚未更新。请刷新页面或重新同步。"
+  },
+  "panel_retry_sync": {
+    "message": "重新同步"
+  },
+  "panel_load_error": {
+    "message": "无法加载隐藏项目，请重试。"
+  },
+  "panel_save_error": {
+    "message": "无法保存更改。请重试；若问题持续，请重新加载 Veil。"
+  },
+  "panel_selection_error": {
+    "message": "无法开始选择。请刷新页面后重试。"
+  },
+  "panel_preference_error": {
+    "message": "无法更改隐藏设置，请重试。"
+  },
+  "panel_updates_help": {
+    "message": "按最新更改排序。"
+  },
+  "panel_installed_version": {
+    "message": "已安装版本 $1"
+  },
+  "panel_unreleased": {
+    "message": "即将发布"
+  },
+  "panel_released": {
+    "message": "已发布"
+  },
+  "panel_find": {
+    "message": "正在查找项目…"
+  },
+  "panel_other_page": {
+    "message": "此项目位于其他页面。请打开保存的页面进行预览。"
+  },
+  "panel_unavailable": {
+    "message": "在此页面找不到项目，隐藏规则保持不变。"
+  },
+  "panel_hidden_parent": {
+    "message": "此项目被隐藏的上级区域遮挡，隐藏规则保持不变。"
+  },
+  "panel_covered": {
+    "message": "此项目被页面布局遮挡，隐藏规则保持不变。"
+  },
+  "panel_preview_error": {
+    "message": "无法显示此项目。请刷新页面后重试。"
+  },
+  "panel_locate_label": {
+    "message": "预览项目 $1：$2"
+  },
+  "panel_dialog": {
+    "message": "Veil — 当前网站"
+  },
+  "panel_reset_group": {
+    "message": "确认全部取消隐藏"
   }
 }

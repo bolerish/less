@@ -15,6 +15,7 @@ import {
 import { CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import logo from "~assets/logo.svg";
+import { getPanelMessage as message } from "~features/record/management-messages";
 import {
   manageRecords,
   type ManagedRecord,
@@ -74,7 +75,7 @@ export default function App({
             <div className="brand">
               <img src={logo} alt="" width="22" height="22" />
               <span className="brand-name">Veil</span>
-              <span className="preview-label">Veil · Preview</span>
+              <span className="preview-label">{message("panel_preview_title")}</span>
             </div>
             <Button
               ref={updatesButton}
@@ -85,17 +86,17 @@ export default function App({
                 setView("updates");
               }}
             >
-              Updates
+              {message("panel_updates")}
             </Button>
           </>
         ) : (
           <>
             <Button variant="ghost" size="sm" onClick={() => setView("hidden")}>
               <CaretLeftIcon aria-hidden="true" />
-              Back
+              {message("panel_back")}
             </Button>
             <h1 ref={updatesHeading} tabIndex={-1} className="updates-heading">
-              Updates
+              {message("panel_updates")}
             </h1>
           </>
         )}
@@ -103,7 +104,7 @@ export default function App({
           ref={closeButton}
           variant="ghost"
           size="icon"
-          aria-label="Close Veil"
+          aria-label={message("panel_close")}
           onClick={onClose}
         >
           <XIcon aria-hidden="true" />
@@ -124,8 +125,8 @@ export default function App({
 
 function Updates() {
   return (
-    <section className="updates" aria-label="Product updates">
-      <p className="muted">The latest changes, newest first.</p>
+    <section className="updates" aria-label={message("panel_updates")}>
+      <p className="muted">{message("panel_updates_help")}</p>
       <Timeline>
         {productUpdates.map((update) => (
           <TimelineItem key={update.version}>
@@ -134,7 +135,9 @@ function Updates() {
               <TimelineTitle>
                 <h2 className="update-version">
                   {update.version} ·{" "}
-                  {update.status === "unreleased" ? "Not yet released" : "Released"}
+                  {update.status === "unreleased"
+                    ? message("panel_unreleased")
+                    : message("panel_released")}
                 </h2>
               </TimelineTitle>
               <TimelineTime dateTime={update.date}>
@@ -155,7 +158,7 @@ function Updates() {
         ))}
       </Timeline>
       <p className="installed-version muted">
-        Installed version {browser.runtime.getManifest().version}
+        {message("panel_installed_version", [browser.runtime.getManifest().version])}
       </p>
     </section>
   );
@@ -209,11 +212,8 @@ function HiddenItems({
         setRecords(response.records);
         setError("");
       }
-    } catch (reason) {
-      if (mounted.current && current === revision.current)
-        setError(
-          reason instanceof Error ? reason.message : "Could not load hidden items. Try again.",
-        );
+    } catch {
+      if (mounted.current && current === revision.current) setError(message("panel_load_error"));
     }
   }, [origin]);
 
@@ -278,14 +278,11 @@ function HiddenItems({
       setUnsynced(response.unsyncedTabs);
       setConfirmReset(false);
       setStatus(
-        request.type === "RESET_HIDDEN_SITE"
-          ? "Site reset. Your saved hiding rules have been removed."
-          : "Saved hiding rules updated.",
+        request.type === "RESET_HIDDEN_SITE" ? message("panel_reset_done") : message("panel_saved"),
       );
       heading.current?.focus();
-    } catch (reason) {
-      if (mounted.current)
-        setError(reason instanceof Error ? reason.message : "Could not save changes. Try again.");
+    } catch {
+      if (mounted.current) setError(message("panel_save_error"));
     } finally {
       if (mounted.current) setBusy(false);
     }
@@ -296,13 +293,8 @@ function HiddenItems({
     setSelectionError("");
     try {
       onSelect();
-    } catch (reason) {
-      if (mounted.current)
-        setSelectionError(
-          reason instanceof Error
-            ? reason.message
-            : "Could not start selection. Reload the page and try again.",
-        );
+    } catch {
+      if (mounted.current) setSelectionError(message("panel_selection_error"));
     } finally {
       if (mounted.current) setSelecting(false);
     }
@@ -328,23 +320,16 @@ function HiddenItems({
           className="site-card"
           role="group"
           lang={browser.i18n.getUILanguage()}
-          aria-label={browser.i18n.getMessage("panel_current_site") || "Current site"}
-          aria-description={
-            browser.i18n.getMessage("panel_count_help") ||
-            "Saved hiding rules across this site. Restoring an item decreases this count."
-          }
+          aria-label={message("panel_current_site")}
+          aria-description={message("panel_count_help")}
         >
           <CardContent>
-            <p className="eyebrow">
-              {browser.i18n.getMessage("panel_current_site") || "Current site"}
-            </p>
+            <p className="eyebrow">{message("panel_current_site")}</p>
             <h1 ref={heading} tabIndex={-1} className="site-title">
               {origin.replace(/^https?:\/\//, "")}
             </h1>
             <p className="hidden-count" aria-live="polite">
-              {records === null
-                ? browser.i18n.getMessage("panel_loading") || "Loading hidden items…"
-                : getHiddenCountLabel(records.length)}
+              {records === null ? message("panel_loading") : getHiddenCountLabel(records.length)}
             </p>
           </CardContent>
         </Card>
@@ -356,11 +341,11 @@ function HiddenItems({
             onChange={(event) => {
               const value = event.currentTarget.checked;
               void setSiteHidingEnabled(origin, value).catch(() =>
-                setError("Could not change site hiding. Try again."),
+                setError(message("panel_preference_error")),
               );
             }}
           />
-          Hide saved items on this site
+          {message("panel_enable_hiding")}
         </label>
         <Button
           className="select-button"
@@ -369,71 +354,66 @@ function HiddenItems({
           onClick={() => void startSelection()}
         >
           <CursorClickIcon aria-hidden="true" />
-          {selecting ? "Starting selection…" : "Hide an item"}
+          {selecting ? message("panel_starting") : message("panel_select")}
         </Button>
         {selectionError ? (
           <p className="selection-error" role="alert">
-            Could not start selection. {selectionError}
+            {selectionError}
           </p>
         ) : null}
-        {enabled === false ? (
-          <p className="muted">Hiding is paused. Enable it above to select an item.</p>
-        ) : null}
+        {enabled === false ? <p className="muted">{message("panel_paused")}</p> : null}
       </div>
       {previewState.message ? (
         <div className="preview-notice" role="status">
           <p>{previewState.message}</p>
           {previewState.id ? (
             <Button variant="ghost" size="sm" onClick={() => preview?.clear(true)}>
-              {browser.i18n.getMessage("panel_preview_back") || "Back to hidden items"}
+              {message("panel_preview_back")}
             </Button>
           ) : null}
         </div>
       ) : null}
       <div className="list-toolbar">
-        <h2>Hidden items</h2>
+        <h2>{message("panel_hidden_items")}</h2>
         <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
-          Refresh
+          {message("panel_refresh")}
         </Button>
       </div>
       {error ? (
         <div className="notice error" role="alert">
           <p>{error}</p>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
-            Retry loading
+            {message("panel_retry_load")}
           </Button>
         </div>
       ) : null}
       <p className="status" role="status">
-        {busy ? "Saving changes…" : status}
+        {busy ? message("panel_saving") : status}
       </p>
       {unsynced > 0 ? (
         <div className="notice" role="alert">
-          <p>
-            Rules were saved, but {unsynced} open {unsynced === 1 ? "page has" : "pages have"} not
-            confirmed restoration. Reload those pages or retry page sync.
-          </p>
+          <p>{message("panel_sync_notice", [String(unsynced)])}</p>
           <Button
             size="sm"
             variant="outline"
             disabled={busy}
             onClick={() => void mutate({ type: "SYNC_HIDDEN_SITE", origin: origin })}
           >
-            Retry page sync
+            {message("panel_retry_sync")}
           </Button>
         </div>
       ) : null}
-      {records === null && !error ? <p role="status">Loading hidden items…</p> : null}
+      {records === null && !error ? <p role="status">{message("panel_loading")}</p> : null}
       {records?.length === 0 ? (
         <div className="empty">
-          <h2>Nothing hidden on this site</h2>
-          <p>Items you hide with Veil will appear here.</p>
+          <h2>{message("panel_empty_title")}</h2>
+          <p>{message("panel_empty_help")}</p>
         </div>
       ) : null}
       {records && records.length > 0 ? (
         <>
           <TooltipProvider>
-            <ul className="records" aria-label="Hidden items on this site">
+            <ul className="records" aria-label={message("panel_hidden_items")}>
               {records.map((record, index) => {
                 const label = getRecordLabel(record);
                 return (
@@ -444,7 +424,7 @@ function HiddenItems({
                         variant="ghost"
                         size="sm"
                         disabled={busy || !preview}
-                        aria-label={`Locate item ${index + 1}: ${label}`}
+                        aria-label={message("panel_locate_label", [String(index + 1), label])}
                         aria-pressed={previewState.id === record.id}
                         onClick={(event) =>
                           void preview?.show(record.id, event.currentTarget.closest("dialog"))
@@ -456,12 +436,7 @@ function HiddenItems({
                         </Badge>
                       </Button>
                       <RestoreButton
-                        label={
-                          browser.i18n.getMessage("panel_restore_label", [
-                            String(index + 1),
-                            label,
-                          ]) || `Restore item ${index + 1} and remove its hiding rule: ${label}`
-                        }
+                        label={message("panel_restore_label", [String(index + 1), label])}
                         disabled={busy}
                         portalContainer={portalContainer}
                         onRestore={() =>
@@ -476,11 +451,8 @@ function HiddenItems({
           </TooltipProvider>
           <footer className="reset">
             {confirmReset ? (
-              <div role="group" aria-label="Confirm site reset">
-                <p>
-                  Restore all {records.length} hidden items on this site? Saved hiding rules will be
-                  removed.
-                </p>
+              <div role="group" aria-label={message("panel_reset_group")}>
+                <p>{message("panel_reset_confirm", [String(records.length)])}</p>
                 <div className="actions">
                   <Button
                     variant="destructive"
@@ -488,7 +460,7 @@ function HiddenItems({
                     disabled={busy}
                     onClick={() => void mutate({ type: "RESET_HIDDEN_SITE", origin: origin })}
                   >
-                    Reset site
+                    {message("panel_reset_all")}
                   </Button>
                   <Button
                     autoFocus
@@ -500,7 +472,7 @@ function HiddenItems({
                       heading.current?.focus();
                     }}
                   >
-                    Cancel
+                    {message("panel_cancel")}
                   </Button>
                 </div>
               </div>
@@ -511,7 +483,7 @@ function HiddenItems({
                 disabled={busy}
                 onClick={() => setConfirmReset(true)}
               >
-                Reset this site…
+                {message("panel_reset")}
               </Button>
             )}
           </footer>
@@ -565,8 +537,7 @@ function RestoreButton({
       <TooltipPrimitive.Portal container={portalContainer}>
         <TooltipPrimitive.Positioner side="left" sideOffset={6}>
           <TooltipPrimitive.Popup className="restore-tooltip" role="tooltip" id={tooltipId}>
-            {browser.i18n.getMessage("panel_restore_tooltip") ||
-              "Restore this item and remove its hiding rule"}
+            {message("panel_restore_tooltip")}
           </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>
       </TooltipPrimitive.Portal>
@@ -585,14 +556,7 @@ function getRecordLabel(record: ManagedRecord): string {
       kind = "region";
     else kind = "content";
   }
-  const names = {
-    video: "Video",
-    image: "Image",
-    external: "External content",
-    region: "Region",
-    content: "Content",
-  };
-  const name = browser.i18n.getMessage(`panel_kind_${kind}`) || names[kind];
+  const name = message(`panel_kind_${kind}`);
   const text = record.target.displayText?.replace(/\s+/g, " ").trim();
   if (!text || text.toLocaleLowerCase() === name.toLocaleLowerCase()) return name;
   const characters = Array.from(text);
@@ -603,7 +567,5 @@ function getHiddenCountLabel(count: number): string {
   const formatted = new Intl.NumberFormat(browser.i18n.getUILanguage()).format(count);
   const singular = new Intl.PluralRules(browser.i18n.getUILanguage()).select(count) === "one";
   const key = singular ? "panel_hidden_count_one" : "panel_hidden_count_other";
-  return (
-    browser.i18n.getMessage(key, formatted) || `${formatted} hidden ${singular ? "item" : "items"}`
-  );
+  return message(key, [formatted]);
 }

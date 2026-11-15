@@ -18,7 +18,7 @@
     "message": "非表示の項目を読み込み中…"
   },
   "panel_count_help": {
-    "message": "このサイト全体で現在保存されている非表示ルールの数です。復元すると数が減ります。"
+    "message": "このサイトの保存済み非表示ルール数です。再表示すると減ります。"
   },
   "panel_kind_video": {
     "message": "動画"
@@ -39,12 +39,129 @@
     "message": "非表示の項目に戻る"
   },
   "panel_preview_description": {
-    "message": "この項目を一時的に表示しています。非表示ルールは保存されたままです。"
+    "message": "一時的に表示しています。非表示ルールは保持されます。"
   },
   "panel_restore_label": {
-    "message": "項目 $1 を復元して非表示ルールを削除: $2"
+    "message": "項目 $1 を再表示: $2"
   },
   "panel_restore_tooltip": {
-    "message": "この項目を復元して非表示ルールを削除"
+    "message": "再表示"
+  },
+  "panel_updates": {
+    "message": "更新情報"
+  },
+  "panel_back": {
+    "message": "戻る"
+  },
+  "panel_close": {
+    "message": "Veil を閉じる"
+  },
+  "panel_preview_title": {
+    "message": "Veil · プレビュー"
+  },
+  "panel_hidden_items": {
+    "message": "非表示の項目"
+  },
+  "panel_enable_hiding": {
+    "message": "このサイトで非表示ルールを適用"
+  },
+  "panel_select": {
+    "message": "項目を非表示にする"
+  },
+  "panel_starting": {
+    "message": "準備中…"
+  },
+  "panel_paused": {
+    "message": "非表示を一時停止しています。上で有効にすると項目を非表示にできます。"
+  },
+  "panel_refresh": {
+    "message": "再読み込み"
+  },
+  "panel_retry_load": {
+    "message": "再試行"
+  },
+  "panel_saving": {
+    "message": "保存中…"
+  },
+  "panel_saved": {
+    "message": "非表示ルールを更新しました。"
+  },
+  "panel_reset_done": {
+    "message": "このサイトの項目をすべて再表示しました。"
+  },
+  "panel_empty_title": {
+    "message": "非表示の項目はありません"
+  },
+  "panel_empty_help": {
+    "message": "非表示にした項目がここに表示されます。"
+  },
+  "panel_reset": {
+    "message": "すべて再表示…"
+  },
+  "panel_reset_confirm": {
+    "message": "このサイトの $1 件をすべて再表示しますか？非表示ルールが削除されます。"
+  },
+  "panel_reset_all": {
+    "message": "すべて再表示"
+  },
+  "panel_cancel": {
+    "message": "キャンセル"
+  },
+  "panel_sync_notice": {
+    "message": "開いている $1 ページに変更が反映されていません。再読み込みするか同期を再試行してください。"
+  },
+  "panel_retry_sync": {
+    "message": "同期を再試行"
+  },
+  "panel_load_error": {
+    "message": "項目を読み込めませんでした。再試行してください。"
+  },
+  "panel_save_error": {
+    "message": "変更を保存できませんでした。再試行してください。解決しない場合は Veil を再読み込みしてください。"
+  },
+  "panel_selection_error": {
+    "message": "選択を開始できませんでした。ページを再読み込みして再試行してください。"
+  },
+  "panel_preference_error": {
+    "message": "非表示設定を変更できませんでした。再試行してください。"
+  },
+  "panel_updates_help": {
+    "message": "新しい変更から表示します。"
+  },
+  "panel_installed_version": {
+    "message": "インストール済みのバージョン $1"
+  },
+  "panel_unreleased": {
+    "message": "リリース予定"
+  },
+  "panel_released": {
+    "message": "リリース済み"
+  },
+  "panel_find": {
+    "message": "項目を検索中…"
+  },
+  "panel_other_page": {
+    "message": "別のページの項目です。保存したページでプレビューしてください。"
+  },
+  "panel_unavailable": {
+    "message": "このページに項目が見つかりません。非表示ルールは保持されます。"
+  },
+  "panel_hidden_parent": {
+    "message": "非表示の親領域に隠れています。非表示ルールは保持されます。"
+  },
+  "panel_covered": {
+    "message": "ページのレイアウトに隠れています。非表示ルールは保持されます。"
+  },
+  "panel_preview_error": {
+    "message": "項目を表示できませんでした。ページを再読み込みして再試行してください。"
+  },
+  "panel_locate_label": {
+    "message": "項目 $1 をプレビュー: $2"
+  },
+  "panel_dialog": {
+    "message": "Veil — 現在のサイト"
+  },
+  "panel_reset_group": {
+    "message": "すべて再表示の確認"
   }
 }

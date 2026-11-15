@@ -18,7 +18,7 @@
     "message": "Cargando elementos ocultos…"
   },
   "panel_count_help": {
-    "message": "Reglas guardadas en este sitio. Al restaurar un elemento, el total disminuye."
+    "message": "Reglas guardadas en este sitio. Mostrar un elemento elimina su regla."
   },
   "panel_kind_video": {
     "message": "Vídeo"
@@ -39,12 +39,129 @@
     "message": "Volver a los elementos ocultos"
   },
   "panel_preview_description": {
-    "message": "Este elemento se muestra temporalmente. Su regla de ocultación sigue guardada."
+    "message": "Vista temporal. La regla de ocultación se mantiene."
   },
   "panel_restore_label": {
-    "message": "Restaurar elemento $1 y eliminar su regla de ocultación: $2"
+    "message": "Mostrar elemento $1: $2"
   },
   "panel_restore_tooltip": {
-    "message": "Restaurar este elemento y eliminar su regla de ocultación"
+    "message": "Mostrar"
+  },
+  "panel_updates": {
+    "message": "Novedades"
+  },
+  "panel_back": {
+    "message": "Volver"
+  },
+  "panel_close": {
+    "message": "Cerrar Veil"
+  },
+  "panel_preview_title": {
+    "message": "Veil · Vista previa"
+  },
+  "panel_hidden_items": {
+    "message": "Elementos ocultos"
+  },
+  "panel_enable_hiding": {
+    "message": "Ocultar elementos guardados en este sitio"
+  },
+  "panel_select": {
+    "message": "Ocultar un elemento"
+  },
+  "panel_starting": {
+    "message": "Preparando…"
+  },
+  "panel_paused": {
+    "message": "La ocultación está en pausa. Actívala arriba para ocultar elementos."
+  },
+  "panel_refresh": {
+    "message": "Actualizar"
+  },
+  "panel_retry_load": {
+    "message": "Reintentar"
+  },
+  "panel_saving": {
+    "message": "Guardando…"
+  },
+  "panel_saved": {
+    "message": "Reglas de ocultación actualizadas."
+  },
+  "panel_reset_done": {
+    "message": "Se muestran todos los elementos de este sitio."
+  },
+  "panel_empty_title": {
+    "message": "No hay elementos ocultos"
+  },
+  "panel_empty_help": {
+    "message": "Los elementos que ocultes aparecerán aquí."
+  },
+  "panel_reset": {
+    "message": "Mostrar todos…"
+  },
+  "panel_reset_confirm": {
+    "message": "¿Mostrar los $1 elementos de este sitio? Se eliminarán sus reglas de ocultación."
+  },
+  "panel_reset_all": {
+    "message": "Mostrar todos"
+  },
+  "panel_cancel": {
+    "message": "Cancelar"
+  },
+  "panel_sync_notice": {
+    "message": "Algunas páginas abiertas ($1) no se han actualizado. Recárgalas o reintenta la sincronización."
+  },
+  "panel_retry_sync": {
+    "message": "Reintentar sincronización"
+  },
+  "panel_load_error": {
+    "message": "No se pudieron cargar los elementos. Inténtalo de nuevo."
+  },
+  "panel_save_error": {
+    "message": "No se pudieron guardar los cambios. Reintenta y, si el problema continúa, recarga Veil."
+  },
+  "panel_selection_error": {
+    "message": "No se pudo iniciar la selección. Recarga la página e inténtalo de nuevo."
+  },
+  "panel_preference_error": {
+    "message": "No se pudo cambiar la ocultación. Inténtalo de nuevo."
+  },
+  "panel_updates_help": {
+    "message": "Cambios más recientes primero."
+  },
+  "panel_installed_version": {
+    "message": "Versión instalada $1"
+  },
+  "panel_unreleased": {
+    "message": "Próximamente"
+  },
+  "panel_released": {
+    "message": "Publicada"
+  },
+  "panel_find": {
+    "message": "Buscando elemento…"
+  },
+  "panel_other_page": {
+    "message": "Este elemento está en otra página. Abre la página guardada para verlo."
+  },
+  "panel_unavailable": {
+    "message": "No se encontró el elemento en esta página. Su regla no cambia."
+  },
+  "panel_hidden_parent": {
+    "message": "Un contenedor oculto tapa este elemento. Su regla no cambia."
+  },
+  "panel_covered": {
+    "message": "El diseño de la página tapa este elemento. Su regla no cambia."
+  },
+  "panel_preview_error": {
+    "message": "No se pudo mostrar el elemento. Recarga la página e inténtalo de nuevo."
+  },
+  "panel_locate_label": {
+    "message": "Vista previa del elemento $1: $2"
+  },
+  "panel_dialog": {
+    "message": "Veil — sitio actual"
+  },
+  "panel_reset_group": {
+    "message": "Confirmar mostrar todos"
   }
 }

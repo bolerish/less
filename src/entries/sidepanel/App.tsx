@@ -18,8 +18,8 @@ import {
 } from "@bolerish/ui/timeline";
 import { ArrowClockwiseIcon, CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
 import {
-  useCallback,
   useEffect,
+  useEffectEvent,
   useId,
   useLayoutEffect,
   useRef,
@@ -224,7 +224,7 @@ function HiddenItems({
     else if (row.top < viewport.top) list.scrollTop -= viewport.top - row.top;
   }, [previewState.id]);
 
-  const load = useCallback(async (): Promise<void> => {
+  const load = async (): Promise<void> => {
     const current = ++revision.current;
     ++pendingLoads.current;
     setRefreshing(true);
@@ -240,7 +240,9 @@ function HiddenItems({
       --pendingLoads.current;
       if (mounted.current) setRefreshing(pendingLoads.current > 0);
     }
-  }, [origin]);
+  };
+
+  const loadFromEffect = useEffectEvent(load);
 
   function refresh(): void {
     if (busy || pendingLoads.current > 0) return;
@@ -271,28 +273,28 @@ function HiddenItems({
         "type" in message &&
         message.type === "HIDDEN_ITEMS_CHANGED"
       )
-        void load();
+        void loadFromEffect();
     };
     const onFocus = (): void => {
-      void load();
+      void loadFromEffect();
     };
     browser.runtime.onMessage.addListener(onMessage);
     const onStorage: Parameters<typeof browser.storage.onChanged.addListener>[0] = (
       changes,
       area,
     ) => {
-      if (area === "local" && "veil:css:all" in changes) void load();
+      if (area === "local" && "veil:css:all" in changes) void loadFromEffect();
     };
     browser.storage.onChanged.addListener(onStorage);
     window.addEventListener("focus", onFocus);
-    void load();
+    void loadFromEffect();
     return () => {
       mounted.current = false;
       browser.runtime.onMessage.removeListener(onMessage);
       browser.storage.onChanged.removeListener(onStorage);
       window.removeEventListener("focus", onFocus);
     };
-  }, [load]);
+  }, [origin]);
 
   async function mutate(request: ManagementRequest): Promise<void> {
     preview?.clear();

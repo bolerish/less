@@ -1636,8 +1636,87 @@ try {
     1,
     "rapid duplicate refresh sends only one actual management read",
   );
+  const readProbe = await session.send("Runtime.evaluate", {
+    contextId: uiWorld.id,
+    expression: `(() => {
+      const original = chrome.runtime.sendMessage.bind(chrome.runtime);
+      const originalAdd = chrome.runtime.onMessage.addListener.bind(chrome.runtime.onMessage);
+      const originalRemove = chrome.runtime.onMessage.removeListener.bind(chrome.runtime.onMessage);
+      const listeners = new Set();
+      let calls = 0;
+      chrome.runtime.sendMessage = (...args) => {
+        if (args[0]?.type === "LIST_HIDDEN_ITEMS") calls++;
+        return original(...args);
+      };
+      chrome.runtime.onMessage.addListener = fn => { listeners.add(fn); return originalAdd(fn); };
+      chrome.runtime.onMessage.removeListener = fn => { listeners.delete(fn); return originalRemove(fn); };
+      return {
+        counts: () => ({ calls, listeners: listeners.size }),
+        restore: () => { chrome.runtime.sendMessage = original; chrome.runtime.onMessage.addListener = originalAdd; chrome.runtime.onMessage.removeListener = originalRemove; }
+      };
+    })()`,
+  });
+  async function queryCounts() {
+    const result = await session.send("Runtime.callFunctionOn", {
+      objectId: readProbe.result.objectId,
+      functionDeclaration: "function(){return this.counts()}",
+      returnByValue: true,
+    });
+    return result.result.value as { calls: number; listeners: number };
+  }
+  // Rerenders from confirmation and view navigation must not resubscribe or start more reads.
+  await click(".reset-button");
+  await site.keyboard.press("Escape");
+  await click(".updates-button");
+  await site.keyboard.press("Escape");
+  await site.waitForTimeout(250);
+  assert.equal((await queryCounts()).calls, 0, "UI rerenders do not reload records");
+  for (let cycle = 1; cycle <= 2; cycle++) {
+    await action();
+    await waitFor(
+      async () => (await site.locator("[data-veil-panel]").count()) === 0,
+      "panel unmounted for listener check",
+    );
+    assert.equal((await queryCounts()).listeners, 0, "unmount removes panel listener");
+    await action();
+    await waitFor(
+      () => panel((d) => !d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled),
+      "mount query settles",
+    );
+    await site.waitForTimeout(250);
+    assert.deepEqual(
+      await queryCounts(),
+      { calls: cycle, listeners: 1 },
+      "each mount reads once without accumulating listeners",
+    );
+  }
+  const activeTab = await worker.evaluate(
+    async () => (await chrome.tabs.query({ active: true, currentWindow: true }))[0].id!,
+  );
+  await worker.evaluate(
+    (tabId) => chrome.tabs.sendMessage(tabId, { type: "HIDDEN_ITEMS_CHANGED" }),
+    activeTab,
+  );
+  await waitFor(
+    async () => (await queryCounts()).calls === 3,
+    "runtime notification refreshes once",
+  );
+  const cssCache = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
+  await worker.evaluate(() => chrome.storage.local.set({ "veil:css:all": {} }));
+  await waitFor(
+    async () => (await queryCounts()).calls === 4,
+    "storage notification refreshes once",
+  );
+  await worker.evaluate((cache) => chrome.storage.local.set(cache), cssCache);
+  await waitFor(async () => (await queryCounts()).calls === 5, "cache restoration refreshes once");
+  await site.waitForTimeout(250);
+  assert.equal((await queryCounts()).calls, 5, "completed reads do not trigger a render/read loop");
+  await session.send("Runtime.callFunctionOn", {
+    objectId: readProbe.result.objectId,
+    functionDeclaration: "function(){this.restore()}",
+  });
   console.log(
-    "PASS five-locale real built UI, footer separation/tab order, Timeline/back/Escape, list scroll/site preservation, pending refresh deduplication",
+    "PASS five-locale UI, footer/tab order, Timeline return, refresh deduplication and render/mount/runtime/storage read counts with listener cleanup",
   );
   await site.setViewportSize({ width: 375, height: 720 });
   const zoomTab = await worker.evaluate(

@@ -164,6 +164,13 @@ try {
         getURL: (path: string) => `moz-extension://test${path}`,
       },
       browserAction: { onClicked: event("action") },
+      tabs: {
+        query: async () => [],
+        onActivated: event("activated"),
+        onUpdated: event("updated"),
+        onRemoved: event("removed"),
+      },
+      windows: { onFocusChanged: event("focus") },
       storage: { onChanged: event("storage") },
       webNavigation: { onHistoryStateUpdated: event("navigation") },
     };
@@ -2046,13 +2053,14 @@ try {
   const unsupported = await context.newPage();
   await unsupported.goto("chrome://version");
   await action(unsupported);
-  await waitFor(
-    () => activeContext.pages().some((p) => p.url().endsWith("/unavailable.html")),
-    "unsupported page opens guidance",
-  );
-  const guidance = context.pages().find((p) => p.url().endsWith("/unavailable.html"));
-  assert(guidance);
-  await guidance.getByRole("heading", { name: messages.panel_unavailable_heading }).waitFor();
+  await waitFor(async () => {
+    const { targetInfos } = await browserCDP.send("Target.getTargets");
+    return targetInfos.some((target) =>
+      target.url.startsWith(`chrome-extension://${id}/failure.html?reason=protected`),
+    );
+  }, "unsupported page opens a compact action popup");
+  assert.equal(unsupported.url(), "chrome://version/");
+  assert(!activeContext.pages().some((p) => p.url().includes("unavailable.html")));
   assert.equal(errors.length, 0, errors.join("\n"));
   console.log(
     "PASS: real toolbar action, isolated in-page UI, preview cleanup, restore/reset DB+CSS+open tabs+reload, keyboard/Escape, 320/375, themes, hostile CSS, origin validation, unsupported guidance",

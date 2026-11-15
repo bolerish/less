@@ -1,4 +1,4 @@
-import { getPanelMessage } from "../features/record/management-messages";
+import { registerPanelAction } from "../features/toolbar/panel-action";
 import {
   handleManagement,
   isManagementRequest,
@@ -34,8 +34,6 @@ function isContentPortMessage(v: unknown): v is ContentPortMessage {
 }
 
 let allCSSCache: Record<string, string[]> | null = null;
-const toolbarAction =
-  import.meta.env.MANIFEST_VERSION === 2 ? browser.browserAction : browser.action;
 
 async function getCache(): Promise<Record<string, string[]>> {
   allCSSCache = await loadAllCSSCache();
@@ -61,9 +59,7 @@ function extractCSSForURL(
 }
 
 export default defineBackground(() => {
-  toolbarAction.onClicked.addListener((tab) => {
-    void togglePagePanel(tab);
-  });
+  registerPanelAction();
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
     if (sender.id !== browser.runtime.id || !isManagementRequest(message)) return;
     void (async () => {
@@ -207,29 +203,4 @@ async function canManageSite(
   const frame = await browser.webNavigation.getFrame({ tabId: sender.tab.id, frameId: 0 });
   if (!frame || !/^https?:$/.test(new URL(frame.url).protocol)) return false;
   return new URL(sender.url).origin === origin && new URL(frame.url).origin === origin;
-}
-
-async function togglePagePanel(tab: Browser.tabs.Tab): Promise<void> {
-  if (tab.id === undefined) return;
-  try {
-    const response = await browser.tabs.sendMessage(
-      tab.id,
-      { type: "TOGGLE_PAGE_PANEL" },
-      { frameId: 0 },
-    );
-    if (!response?.ok) throw new Error("No panel receiver");
-    await toolbarAction.setBadgeText({ tabId: tab.id, text: "" });
-    await toolbarAction.setTitle({ tabId: tab.id, title: "Less" });
-  } catch {
-    try {
-      await toolbarAction.setBadgeText({ tabId: tab.id, text: "!" });
-      await toolbarAction.setTitle({
-        tabId: tab.id,
-        title: getPanelMessage("panel_toolbar_unavailable"),
-      });
-    } catch {
-      /* The tab may have closed while opening the panel. */
-    }
-    await browser.tabs.create({ url: browser.runtime.getURL("/unavailable.html") });
-  }
 }

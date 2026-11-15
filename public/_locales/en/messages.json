@@ -200,24 +200,6 @@
   "panel_selection_save_error": {
     "message": "Could not save this item. Try again."
   },
-  "panel_unavailable_title": {
-    "message": "Less — Open a website"
-  },
-  "panel_unavailable_heading": {
-    "message": "Less could not open on this page"
-  },
-  "panel_unavailable_action": {
-    "message": "Open a website, then click the Less icon in your browser toolbar."
-  },
-  "panel_unavailable_protected": {
-    "message": "Less cannot open its panel on browser settings, extension stores or other protected pages."
-  },
-  "panel_unavailable_reload": {
-    "message": "If you just installed or updated Less, reload the website and try again. Your saved hiding rules are kept."
-  },
-  "panel_toolbar_unavailable": {
-    "message": "Less cannot open here. Open a website or reload the page."
-  },
   "panel_release_1_2_0_title": {
     "message": "A simpler panel, now called Less"
   },
@@ -238,5 +220,14 @@
   },
   "panel_release_1_2_0_change_6": {
     "message": "The count shows saved hiding rules for the current site. Unhiding an item lowers it."
+  },
+  "panel_failure_protected": {
+    "message": "Less isn’t available on this page."
+  },
+  "panel_failure_reload": {
+    "message": "Reload the page and try again."
+  },
+  "panel_failure_generic": {
+    "message": "Less could not open. Try again."
   }
 }

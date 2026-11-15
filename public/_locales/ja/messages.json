@@ -200,24 +200,6 @@
   "panel_selection_save_error": {
     "message": "非表示設定を保存できませんでした。もう一度お試しください。"
   },
-  "panel_unavailable_title": {
-    "message": "Less — ウェブサイトを開く"
-  },
-  "panel_unavailable_heading": {
-    "message": "このページではLessを開けません"
-  },
-  "panel_unavailable_action": {
-    "message": "ウェブサイトを開いてから、ブラウザーのツールバーにあるLessのアイコンをクリックしてください。"
-  },
-  "panel_unavailable_protected": {
-    "message": "ブラウザーの設定や拡張機能ストアなど、保護されたページではLessのパネルを開けません。"
-  },
-  "panel_unavailable_reload": {
-    "message": "Lessをインストールまたは更新した直後は、ウェブサイトを再読み込みしてもう一度お試しください。保存済みの非表示ルールは保持されます。"
-  },
-  "panel_toolbar_unavailable": {
-    "message": "ここではLessを開けません。ウェブサイトを開くか、ページを再読み込みしてください。"
-  },
   "panel_release_1_2_0_title": {
     "message": "よりシンプルなパネル、新しい名前はLess"
   },
@@ -238,5 +220,14 @@
   },
   "panel_release_1_2_0_change_6": {
     "message": "件数は現在のサイトに保存されている非表示ルールの数です。再表示すると減ります。"
+  },
+  "panel_failure_protected": {
+    "message": "このページではLessを使用できません。"
+  },
+  "panel_failure_reload": {
+    "message": "ページを再読み込みして、もう一度お試しください。"
+  },
+  "panel_failure_generic": {
+    "message": "Lessを開けませんでした。もう一度お試しください。"
   }
 }

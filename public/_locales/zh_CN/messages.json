@@ -200,24 +200,6 @@
   "panel_selection_save_error": {
     "message": "无法保存隐藏设置，请重试。"
   },
-  "panel_unavailable_title": {
-    "message": "Less — 打开网站"
-  },
-  "panel_unavailable_heading": {
-    "message": "无法在此页面打开 Less"
-  },
-  "panel_unavailable_action": {
-    "message": "请打开网站，然后点击浏览器工具栏中的 Less 图标。"
-  },
-  "panel_unavailable_protected": {
-    "message": "Less 无法在浏览器设置、扩展程序商店等受保护的页面打开面板。"
-  },
-  "panel_unavailable_reload": {
-    "message": "如果刚安装或更新了 Less，请刷新网站后重试。已保存的隐藏规则会保留。"
-  },
-  "panel_toolbar_unavailable": {
-    "message": "无法在此处打开 Less。请打开网站或刷新页面。"
-  },
   "panel_release_1_2_0_title": {
     "message": "更简洁的面板，全新名称 Less"
   },
@@ -238,5 +220,14 @@
   },
   "panel_release_1_2_0_change_6": {
     "message": "计数表示当前网站已保存的隐藏规则数，取消隐藏后会减少。"
+  },
+  "panel_failure_protected": {
+    "message": "此页面无法使用 Less。"
+  },
+  "panel_failure_reload": {
+    "message": "请刷新页面后重试。"
+  },
+  "panel_failure_generic": {
+    "message": "无法打开 Less，请重试。"
   }
 }

@@ -200,24 +200,6 @@
   "panel_selection_save_error": {
     "message": "No se pudo guardar la ocultación. Inténtalo de nuevo."
   },
-  "panel_unavailable_title": {
-    "message": "Less — Abre un sitio web"
-  },
-  "panel_unavailable_heading": {
-    "message": "No se pudo abrir Less en esta página"
-  },
-  "panel_unavailable_action": {
-    "message": "Abre un sitio web y haz clic en el icono de Less en la barra de herramientas."
-  },
-  "panel_unavailable_protected": {
-    "message": "Less no puede abrir su panel en los ajustes del navegador, las tiendas de extensiones ni otras páginas protegidas."
-  },
-  "panel_unavailable_reload": {
-    "message": "Si acabas de instalar o actualizar Less, recarga el sitio web e inténtalo de nuevo. Tus reglas de ocultación guardadas se conservan."
-  },
-  "panel_toolbar_unavailable": {
-    "message": "Less no se puede abrir aquí. Abre un sitio web o recarga la página."
-  },
   "panel_release_1_2_0_title": {
     "message": "Un panel más sencillo, ahora llamado Less"
   },
@@ -238,5 +220,14 @@
   },
   "panel_release_1_2_0_change_6": {
     "message": "El recuento muestra las reglas de ocultación guardadas en este sitio. Disminuye al mostrar un elemento."
+  },
+  "panel_failure_protected": {
+    "message": "No se puede usar Less en esta página."
+  },
+  "panel_failure_reload": {
+    "message": "Recarga la página e inténtalo de nuevo."
+  },
+  "panel_failure_generic": {
+    "message": "No se pudo abrir Less. Inténtalo de nuevo."
   }
 }

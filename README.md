@@ -1,6 +1,6 @@
 # Less
 
-<img src="/src/assets/logo.svg" alt="Less logo" width="100" />
+<img src="/src/assets/logo.png" alt="Less logo" width="100" />
 
 Hide elements on any webpage.
 

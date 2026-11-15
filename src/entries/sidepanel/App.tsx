@@ -27,7 +27,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import logo from "~assets/logo.svg";
+import logo from "~assets/logo.png";
 import { getPanelMessage as message } from "~features/record/management-messages";
 import {
   manageRecords,

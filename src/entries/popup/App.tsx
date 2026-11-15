@@ -1,6 +1,6 @@
 import { ArrowCounterClockwiseIcon, CursorClickIcon } from "@phosphor-icons/react";
 import { useState } from "react";
-import wxtLogo from "~assets/logo.svg";
+import wxtLogo from "~assets/logo.png";
 
 import { Button } from "@bolerish/ui/button";
 import { Kbd, KbdGroup } from "@bolerish/ui/kbd";

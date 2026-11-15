@@ -10,7 +10,7 @@ import {
   TimelineTitle,
 } from "@bolerish/ui/timeline";
 import { useEffect, useState } from "react";
-import wxtLogo from "~assets/logo.svg";
+import wxtLogo from "~assets/logo.png";
 import { LanguageSelect } from "./LanguageSelect";
 import { type Locale, LOCALE_TO_LANG, detectLocale, translations } from "./locale";
 

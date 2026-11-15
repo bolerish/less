@@ -132,12 +132,7 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacingVars.space2,
     borderRadius: radiusVars.sm,
-    outline: {
-      default: "none",
-      ":hover": `2px solid ${colorVars.fgFeedbackInfo}`,
-      ":focus-within": `2px solid ${colorVars.fgFeedbackInfo}`,
-    },
-    outlineOffset: -2,
+    outline: "none",
     backgroundColor: {
       default: "transparent",
       ":hover": colorVars.interactionHover,
@@ -145,10 +140,7 @@ const styles = stylex.create({
       ":has(button:active)": colorVars.interactionPressed,
       ":is([data-selected])": colorVars.bgSelected,
     },
-    boxShadow: {
-      default: "none",
-      ":is([data-selected])": `inset 2px 0 ${colorVars.fgFeedbackInfo}`,
-    },
+    boxShadow: "none",
   },
   locateButton: {
     ":is(.locate-button)": {

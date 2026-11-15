@@ -984,6 +984,11 @@ try {
             border: style.borderTopWidth,
             borderStyle: style.borderTopStyle,
             borderColor: rgba(style.borderTopColor),
+            rawBorderColor: style.borderTopColor,
+            classes: element.className,
+            borderToken: style.getPropertyValue("--x4kr36v"),
+            hover: element.matches(":hover"),
+            disabled: element.matches(":disabled"),
             background: rgba(style.backgroundColor),
             radius: style.borderTopLeftRadius,
             height: style.height,
@@ -1013,7 +1018,11 @@ try {
       for (const control of [components.reset]) {
         assert.equal(control.border, "1px", "official ghost button keeps its border geometry");
         assert.equal(control.borderStyle, "solid");
-        assert.equal(control.borderColor[3], 0, "official ghost button has no visible border");
+        assert.equal(
+          control.borderColor[3],
+          0,
+          `official ghost button has no visible border: ${JSON.stringify(control)}`,
+        );
         assert.deepEqual(
           control.color,
           components.foreground,
@@ -2118,6 +2127,49 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#fixed-target");
   assert.equal(await panel((d) => d.dataset.preview), "false", "Escape ends preview");
+  async function assertMouseRowBackgroundOnly(state: string) {
+    const paint = await panel((d) => {
+      const button = d.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
+      const row = button.closest<HTMLElement>(".record-row")!;
+      return {
+        hovered: row.matches(":hover"),
+        pressed: button.matches(":active"),
+        focusVisible: button.matches(":focus-visible"),
+        background: getComputedStyle(row).backgroundColor,
+        inner: getComputedStyle(button).backgroundColor,
+        layers: [row, button].flatMap((element) =>
+          [null, "::before", "::after"].map((pseudo) => {
+            const style = getComputedStyle(element, pseudo);
+            return {
+              outline: style.outlineStyle,
+              outlineWidth: style.outlineWidth,
+              borders: [
+                [style.borderTopWidth, style.borderTopStyle, style.borderTopColor],
+                [style.borderRightWidth, style.borderRightStyle, style.borderRightColor],
+                [style.borderBottomWidth, style.borderBottomStyle, style.borderBottomColor],
+                [style.borderLeftWidth, style.borderLeftStyle, style.borderLeftColor],
+              ],
+              shadow: style.boxShadow,
+            };
+          }),
+        ),
+      };
+    });
+    console.log("ROW PAINT", state, JSON.stringify(paint));
+    assert.equal(paint.focusVisible, false, `${state}: mouse focus is not keyboard focus`);
+    assert.notEqual(paint.background, "rgba(0, 0, 0, 0)", `${state}: semantic row background`);
+    assert.equal(paint.inner, "rgba(0, 0, 0, 0)", `${state}: no nested button background`);
+    for (const layer of paint.layers) {
+      assert.equal(layer.outline, "none", `${state}: no row/button/pseudo outline`);
+      for (const [width, style, color] of layer.borders)
+        assert(
+          width === "0px" || style === "none" || color === "rgba(0, 0, 0, 0)",
+          `${state}: no visible row/button/pseudo border`,
+        );
+      assert.equal(layer.shadow, "none", `${state}: no row/button/pseudo shadow`);
+    }
+    return paint;
+  }
   for (const width of [320, 375]) {
     await site.setViewportSize({ width, height: 720 });
     for (const colorScheme of ["light", "dark"] as const) {
@@ -2139,10 +2191,22 @@ try {
           ),
         "text button has no nested hover layer",
       );
+      const hover = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/hover`);
+      assert(hover.hovered && !hover.pressed, "real mouse hover without pressing");
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-row-hover-${width}-${colorScheme}.png`),
       });
-      await click('.locate-button[aria-label*="Nested"]');
+      await site.mouse.down();
+      const pressed = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/pressed`);
+      assert(pressed.pressed, "real mouse press changes only the background");
+      await site.screenshot({
+        path: values.screenshot.replace(/\.png$/, `-row-pressed-${width}-${colorScheme}.png`),
+      });
+      await site.mouse.up();
+      await waitFor(
+        () => panel((d, t) => !d.innerText.includes(t), messages.panel_find),
+        "preview settled after mouse release",
+      );
       await hidden("#nested-target", false);
       assert.equal(
         await site.locator("#nested-target").evaluate((e) => e.getAnimations().length),
@@ -2153,6 +2217,7 @@ try {
         () => panel((d) => d.dataset.previewLayout === "compact"),
         "narrow compact preview",
       );
+      await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/click-selected`);
       const state = await panel((d) => {
         const row = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
         row.focus();
@@ -2179,6 +2244,10 @@ try {
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       });
       await site.mouse.move(selectedPoint.x, selectedPoint.y);
+      const selectedHover = await assertMouseRowBackgroundOnly(
+        `${width}/${colorScheme}/selected-hover`,
+      );
+      assert(selectedHover.hovered, "selected row is really hovered");
       const paint = await panel((d) => {
         const button = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
         const row = button.closest<HTMLElement>(".record-row")!;
@@ -2190,6 +2259,8 @@ try {
           inner: getComputedStyle(button).backgroundColor,
           overlay: getComputedStyle(button, "::after").backgroundColor,
           radius: getComputedStyle(row).borderRadius,
+          outline: getComputedStyle(row).outlineStyle,
+          shadow: getComputedStyle(row).boxShadow,
           fullWidth: a.left === b.left && a.right === b.right,
         };
       });
@@ -2200,6 +2271,12 @@ try {
       );
       assert.equal(paint.inner, "rgba(0, 0, 0, 0)");
       assert.equal(paint.overlay, "rgba(0, 0, 0, 0)");
+      assert.equal(
+        paint.outline,
+        "none",
+        "selected/hovered row uses background without an outline",
+      );
+      assert.equal(paint.shadow, "none", "selected row has no inset blue edge");
       assert(
         paint.fullWidth && paint.radius !== "0px",
         "hover and selected paint share full row bounds and radius",
@@ -2221,6 +2298,8 @@ try {
           width: s.outlineWidth,
           color: s.outlineColor,
           background: getComputedStyle(e.closest(".record-row")!).backgroundColor,
+          rowOutline: getComputedStyle(e.closest(".record-row")!).outlineStyle,
+          rowShadow: getComputedStyle(e.closest(".record-row")!).boxShadow,
         };
       });
       assert(
@@ -2228,6 +2307,9 @@ try {
         "keyboard focus remains visible",
       );
       assert.notEqual(focus.background, "rgba(0, 0, 0, 0)", "keyboard row focus has a background");
+      assert.equal(focus.rowOutline, "none", "keyboard ring belongs to the focused button");
+      assert.equal(focus.rowShadow, "none", "keyboard selection has no extra row line");
+      console.log("ROW FOCUS", width, colorScheme, JSON.stringify(focus));
       assert.equal(
         focus.color,
         await site.locator("#nested-target").evaluate((e) => getComputedStyle(e).outlineColor),
@@ -2256,6 +2338,11 @@ try {
     }),
     true,
     "row hover background resolves",
+  );
+  assert.equal(
+    await panel((d) => getComputedStyle(d.querySelector(".record-row")!).outlineStyle),
+    "none",
+    "row hover uses background without an outline",
   );
   await click(".record:first-child .restore-button");
   await hidden("#fixed-target", false);

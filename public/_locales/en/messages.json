@@ -72,7 +72,7 @@
     "message": "Hiding is paused. Turn it on above to hide an item."
   },
   "panel_refresh": {
-    "message": "Refresh"
+    "message": "Refresh list"
   },
   "panel_retry_load": {
     "message": "Try again"

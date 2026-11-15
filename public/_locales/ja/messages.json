@@ -72,7 +72,7 @@
     "message": "非表示を一時停止しています。上で有効にすると項目を非表示にできます。"
   },
   "panel_refresh": {
-    "message": "再読み込み"
+    "message": "一覧を再読み込み"
   },
   "panel_retry_load": {
     "message": "再試行"

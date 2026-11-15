@@ -72,7 +72,7 @@
     "message": "숨김이 일시 중지됐습니다. 위에서 켜면 항목을 숨길 수 있습니다."
   },
   "panel_refresh": {
-    "message": "새로고침"
+    "message": "목록 새로고침"
   },
   "panel_retry_load": {
     "message": "다시 시도"

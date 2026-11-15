@@ -72,7 +72,7 @@
     "message": "La ocultación está en pausa. Actívala arriba para ocultar elementos."
   },
   "panel_refresh": {
-    "message": "Actualizar"
+    "message": "Recargar lista"
   },
   "panel_retry_load": {
     "message": "Reintentar"

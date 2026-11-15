@@ -72,7 +72,7 @@
     "message": "隐藏已暂停。请在上方开启后隐藏项目。"
   },
   "panel_refresh": {
-    "message": "刷新"
+    "message": "刷新列表"
   },
   "panel_retry_load": {
     "message": "重试"

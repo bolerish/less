@@ -16,8 +16,17 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@bolerish/ui/timeline";
-import { CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { ArrowClockwiseIcon, CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import logo from "~assets/logo.svg";
 import { getPanelMessage as message } from "~features/record/management-messages";
 import {
@@ -57,7 +66,8 @@ export default function App({
 
   useEffect(() => {
     if (view === "updates") updatesHeading.current?.focus();
-    else if (previousView.current === "updates") updatesButton.current?.focus();
+    else if (previousView.current === "updates")
+      updatesButton.current?.focus({ preventScroll: true });
     previousView.current = view;
     updatesHeading.current?.closest("dialog")?.scrollTo(0, 0);
   }, [view]);
@@ -75,24 +85,11 @@ export default function App({
     >
       <header className="panel-header">
         {view === "hidden" ? (
-          <>
-            <div className="brand">
-              <img src={logo} alt="" width="22" height="22" />
-              <span className="brand-name">Veil</span>
-              <span className="preview-label">{message("panel_preview_title")}</span>
-            </div>
-            <Button
-              ref={updatesButton}
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                preview?.clear();
-                setView("updates");
-              }}
-            >
-              {message("panel_updates")}
-            </Button>
-          </>
+          <div className="brand">
+            <img src={logo} alt="" width="22" height="22" />
+            <span className="brand-name">Veil</span>
+            <span className="preview-label">{message("panel_preview_title")}</span>
+          </div>
         ) : (
           <>
             <Button variant="ghost" size="sm" onClick={() => setView("hidden")}>
@@ -121,12 +118,19 @@ export default function App({
         </Button>
       </header>
       <div hidden={view !== "hidden"}>
-        <HiddenItems
-          origin={origin}
-          onSelect={onSelect}
-          preview={preview}
-          portalContainer={portalContainer}
-        />
+        <TooltipProvider>
+          <HiddenItems
+            updatesButton={updatesButton}
+            onUpdates={() => {
+              preview?.clear();
+              setView("updates");
+            }}
+            origin={origin}
+            onSelect={onSelect}
+            preview={preview}
+            portalContainer={portalContainer}
+          />
+        </TooltipProvider>
       </div>
       {view === "updates" ? <Updates /> : null}
     </main>
@@ -175,11 +179,15 @@ function Updates() {
 }
 
 function HiddenItems({
+  updatesButton,
+  onUpdates,
   origin,
   onSelect,
   preview,
   portalContainer,
 }: {
+  updatesButton: RefObject<HTMLButtonElement | null>;
+  onUpdates: () => void;
   origin: string;
   onSelect: () => void;
   preview?: HiddenItemPreview;
@@ -188,6 +196,8 @@ function HiddenItems({
   const [previewState, setPreviewState] = useState<PreviewState>({ id: null, message: "" });
   useEffect(() => preview?.subscribe(setPreviewState), [preview]);
   const [records, setRecords] = useState<ManagedRecord[] | null>(null);
+  const [refreshing, setRefreshing] = useState(true);
+  const pendingLoads = useRef(0);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
@@ -216,6 +226,8 @@ function HiddenItems({
 
   const load = useCallback(async (): Promise<void> => {
     const current = ++revision.current;
+    ++pendingLoads.current;
+    setRefreshing(true);
     try {
       const response = await manageRecords({ type: "LIST_HIDDEN_ITEMS", origin });
       if (mounted.current && current === revision.current) {
@@ -224,8 +236,16 @@ function HiddenItems({
       }
     } catch {
       if (mounted.current && current === revision.current) setError(message("panel_load_error"));
+    } finally {
+      --pendingLoads.current;
+      if (mounted.current) setRefreshing(pendingLoads.current > 0);
     }
   }, [origin]);
+
+  function refresh(): void {
+    if (busy || pendingLoads.current > 0) return;
+    void load();
+  }
 
   useEffect(() => {
     let active = true;
@@ -311,6 +331,9 @@ function HiddenItems({
   }
 
   const hiddenCount = records === null ? null : getHiddenCount(records.length);
+  let feedback = status;
+  if (refreshing) feedback = message("panel_loading");
+  if (busy) feedback = message("panel_saving");
   return (
     <section
       aria-busy={busy}
@@ -383,20 +406,28 @@ function HiddenItems({
       </p>
       <div className="list-toolbar">
         <h2>{message("panel_hidden_items")}</h2>
-        <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
-          {message("panel_refresh")}
-        </Button>
+        <IconTooltipButton
+          className="refresh-button"
+          label={message("panel_refresh")}
+          tooltip={message("panel_refresh")}
+          disabled={busy || refreshing}
+          loading={refreshing}
+          portalContainer={portalContainer}
+          onClick={refresh}
+        >
+          <ArrowClockwiseIcon aria-hidden="true" />
+        </IconTooltipButton>
       </div>
       {error ? (
         <div className="notice error" role="alert">
           <p>{error}</p>
-          <Button variant="outline" size="sm" disabled={busy} onClick={() => void load()}>
+          <Button variant="outline" size="sm" disabled={busy || refreshing} onClick={refresh}>
             {message("panel_retry_load")}
           </Button>
         </div>
       ) : null}
       <p className="status" role="status">
-        {busy ? message("panel_saving") : status}
+        {feedback}
       </p>
       {unsynced > 0 ? (
         <div className="notice" role="alert">
@@ -411,7 +442,6 @@ function HiddenItems({
           </Button>
         </div>
       ) : null}
-      {records === null && !error ? <p role="status">{message("panel_loading")}</p> : null}
       {records?.length === 0 ? (
         <Empty className="empty">
           <Heading level={2} size="subsection">
@@ -421,97 +451,118 @@ function HiddenItems({
         </Empty>
       ) : null}
       {records && records.length > 0 ? (
-        <>
-          <TooltipProvider>
-            <ul className="records" aria-label={message("panel_hidden_items")}>
-              {records.map((record, index) => {
-                const label = getRecordLabel(record);
-                return (
-                  <li key={record.id} className="record">
-                    <Item size="xs" className="record-row">
-                      <Button
-                        className="locate-button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={busy || !preview}
-                        aria-label={message("panel_locate_label", [String(index + 1), label])}
-                        aria-pressed={previewState.id === record.id}
-                        onClick={(event) =>
-                          void preview?.show(record.id, event.currentTarget.closest("dialog"))
-                        }
-                      >
-                        <span className="record-label">{label}</span>
-                        <Badge className="record-tag" variant="outline" aria-hidden="true">
-                          {record.target.tagName.toLowerCase()}
-                        </Badge>
-                      </Button>
-                      <RestoreButton
-                        label={message("panel_restore_label", [String(index + 1), label])}
-                        disabled={busy}
-                        portalContainer={portalContainer}
-                        onRestore={() =>
-                          void mutate({ type: "RESTORE_HIDDEN_ITEM", origin, id: record.id })
-                        }
-                      />
-                    </Item>
-                  </li>
-                );
-              })}
-            </ul>
-          </TooltipProvider>
-          <footer className="reset">
-            {confirmReset ? (
-              <div role="group" aria-label={message("panel_reset_group")}>
-                <p>{message("panel_reset_confirm", [String(records.length)])}</p>
-                <div className="actions">
+        <ul className="records" aria-label={message("panel_hidden_items")}>
+          {records.map((record, index) => {
+            const label = getRecordLabel(record);
+            return (
+              <li key={record.id} className="record">
+                <Item size="xs" className="record-row">
                   <Button
-                    variant="destructive"
+                    className="locate-button"
+                    variant="ghost"
                     size="sm"
-                    disabled={busy}
-                    onClick={() => void mutate({ type: "RESET_HIDDEN_SITE", origin: origin })}
+                    disabled={busy || !preview}
+                    aria-label={message("panel_locate_label", [String(index + 1), label])}
+                    aria-pressed={previewState.id === record.id}
+                    onClick={(event) =>
+                      void preview?.show(record.id, event.currentTarget.closest("dialog"))
+                    }
                   >
-                    {message("panel_reset_all")}
+                    <span className="record-label">{label}</span>
+                    <Badge className="record-tag" variant="outline" aria-hidden="true">
+                      {record.target.tagName.toLowerCase()}
+                    </Badge>
                   </Button>
-                  <Button
-                    autoFocus
-                    variant="outline"
-                    size="sm"
+                  <IconTooltipButton
+                    className="restore-button"
+                    tooltip={message("panel_restore_tooltip")}
+                    label={message("panel_restore_label", [String(index + 1), label])}
                     disabled={busy}
-                    onClick={() => {
-                      setConfirmReset(false);
-                      heading.current?.focus();
-                    }}
+                    portalContainer={portalContainer}
+                    onClick={() =>
+                      void mutate({ type: "RESTORE_HIDDEN_ITEM", origin, id: record.id })
+                    }
                   >
-                    {message("panel_cancel")}
-                  </Button>
-                </div>
-              </div>
-            ) : (
+                    <XIcon aria-hidden="true" />
+                  </IconTooltipButton>
+                </Item>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      <footer className="reset">
+        <div className="footer-links">
+          <Button
+            ref={updatesButton}
+            className="updates-button"
+            variant="ghost"
+            size="sm"
+            onClick={onUpdates}
+          >
+            {message("panel_updates")}
+          </Button>
+          {records && records.length > 0 && !confirmReset ? (
+            <Button
+              className="reset-button"
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => setConfirmReset(true)}
+            >
+              {message("panel_reset")}
+            </Button>
+          ) : null}
+        </div>
+        {confirmReset && records ? (
+          <div role="group" aria-label={message("panel_reset_group")}>
+            <p>{message("panel_reset_confirm", [String(records.length)])}</p>
+            <div className="actions">
               <Button
+                variant="destructive"
+                size="sm"
+                disabled={busy}
+                onClick={() => void mutate({ type: "RESET_HIDDEN_SITE", origin: origin })}
+              >
+                {message("panel_reset_all")}
+              </Button>
+              <Button
+                autoFocus
                 variant="outline"
                 size="sm"
                 disabled={busy}
-                onClick={() => setConfirmReset(true)}
+                onClick={() => {
+                  setConfirmReset(false);
+                  heading.current?.focus();
+                }}
               >
-                {message("panel_reset")}
+                {message("panel_cancel")}
               </Button>
-            )}
-          </footer>
-        </>
-      ) : null}
+            </div>
+          </div>
+        ) : null}
+      </footer>
     </section>
   );
 }
 
-function RestoreButton({
+function IconTooltipButton({
   label,
+  tooltip,
+  className,
+  children,
   disabled,
-  onRestore,
+  loading = false,
+  onClick,
   portalContainer,
 }: {
   label: string;
+  tooltip: string;
+  className: string;
+  children: ReactNode;
   disabled: boolean;
-  onRestore: () => void;
+  loading?: boolean;
+  onClick: () => void;
   portalContainer?: HTMLElement;
 }) {
   const [open, setOpen] = useState(false);
@@ -524,10 +575,11 @@ function RestoreButton({
             variant="ghost"
             size="icon"
             disabled={disabled}
-            className="restore-button"
+            className={className}
+            aria-busy={loading}
             aria-label={label}
             aria-describedby={open ? tooltipId : undefined}
-            onClick={onRestore}
+            onClick={onClick}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
             onPointerEnter={() => setOpen(true)}
@@ -540,14 +592,14 @@ function RestoreButton({
               }
             }}
           >
-            <XIcon aria-hidden="true" />
+            {children}
           </Button>
         }
       />
       <TooltipPrimitive.Portal container={portalContainer}>
         <TooltipPrimitive.Positioner side="left" sideOffset={6}>
           <TooltipPrimitive.Popup className="restore-tooltip" role="tooltip" id={tooltipId}>
-            {message("panel_restore_tooltip")}
+            {tooltip}
           </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>
       </TooltipPrimitive.Portal>

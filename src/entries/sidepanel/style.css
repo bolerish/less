@@ -316,10 +316,29 @@ time {
   color: var(--veil-color-fg-secondary);
 }
 .reset {
+  margin-top: auto;
   padding-top: var(--veil-spacing-space-3);
   border-top: 1px solid var(--veil-color-stroke-default);
   max-height: 35dvh;
   overflow: auto;
+}
+.footer-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--veil-spacing-space-2) var(--veil-spacing-space-4);
+}
+.footer-links > button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  padding-block: var(--veil-spacing-space-2);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.reset-button {
+  margin-inline-start: auto;
 }
 .actions {
   display: flex;

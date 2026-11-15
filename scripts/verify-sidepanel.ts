@@ -140,12 +140,7 @@ try {
       );
     }
     assert(catalog.panel_restore_tooltip.message.length <= 12, `${locale}: brief unhide tooltip`);
-    assert(catalog.panel_refresh.message.length <= 16, `${locale}: brief refresh tooltip`);
-    assert.notEqual(
-      catalog.panel_refresh.message,
-      catalog.panel_updates.message,
-      `${locale}: refresh differs from release updates`,
-    );
+    assert(!("panel_refresh" in catalog), `${locale}: retired refresh action removed`);
   }
   if (values["firefox-build"]) {
     const registered: Record<string, (...args: unknown[]) => unknown> = {};
@@ -407,7 +402,7 @@ try {
     ? manifest.version
     : getLatestReleasedUpdate(productUpdates, manifest.version)?.version;
   await waitFor(
-    () => panel((d) => !d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled),
+    () => panel((d) => d.querySelector(".count-value")?.textContent !== "…"),
     "initial records load before update notice checks",
   );
   if (unreadVersion) {
@@ -757,17 +752,14 @@ try {
   );
   await site.keyboard.press("Escape");
   assert.equal(await site.locator("[data-veil-panel]").count(), 1, "tooltip Escape takes priority");
-  await panel((d) => d.querySelector<HTMLElement>(".refresh-button")!.focus());
-  await waitFor(
-    () =>
-      panel(
-        (d, label) =>
-          Array.from(d.querySelectorAll('[role="tooltip"]')).some((e) => e.textContent === label),
-        messages.panel_refresh,
-      ),
-    "refresh tooltip is separate from release updates",
+  await panel((d) => d.querySelector<HTMLElement>(".updates-button")!.focus());
+  await site.waitForTimeout(400);
+  assert.equal(
+    await panel((d) => d.querySelectorAll('[role="tooltip"]').length),
+    0,
+    "version badge has no visible tooltip",
   );
-  await site.keyboard.press("Escape");
+  assert.equal(await panel((d) => d.querySelector(".updates-button")!.getAttribute("title")), null);
   await click(".updates-button");
   await waitFor(() => textIncludes(messages.panel_updates_help), "updates timeline");
   assert(
@@ -826,13 +818,13 @@ try {
         const select = d.querySelector<HTMLElement>(".select-button")!.getBoundingClientRect();
         return {
           columns: identity.right <= count.left && identity.top < count.bottom,
-          rows: select.bottom <= card.top && card.bottom <= preference.top,
+          rows: card.bottom <= select.top && select.bottom <= preference.top,
           countFont: getComputedStyle(d.querySelector(".count-value")!).fontSize,
         };
       });
       assert(
         cardLayout.columns && cardLayout.rows,
-        "primary action precedes the two-column site card and separate setting",
+        "site card precedes primary action and separate site switch",
       );
       assert.equal(cardLayout.countFont, "24px", "the count retains its semantic heading size");
       if (width <= 375) {
@@ -901,7 +893,6 @@ try {
           blue: resolveColor("--veil-panel-focus"),
           primary: resolveColor("--veil-color-bg-action-primary"),
           foreground: resolveColor("--veil-color-fg-primary"),
-          refresh: inspect(".list-toolbar button"),
           reset: inspect(".reset-button"),
           select: inspect(".select-button"),
           badge: inspect(".record-tag"),
@@ -913,7 +904,7 @@ try {
         false,
         "package CSS imports are bundled in shadow",
       );
-      for (const control of [components.refresh, components.reset]) {
+      for (const control of [components.reset]) {
         assert.equal(control.border, "1px", "official ghost button keeps its border geometry");
         assert.equal(control.borderStyle, "solid");
         assert.equal(control.borderColor[3], 0, "official ghost button has no visible border");
@@ -925,9 +916,7 @@ try {
         assert.equal(control.font, "14px");
         assert.notEqual(control.radius, "0px");
       }
-      assert.equal(components.refresh.height, "36px", "official icon button size");
-      assert.equal(components.refresh.width, "36px", "refresh stays square");
-      assert.equal(components.reset.height, "36px", "reset uses the official icon target");
+      assert.equal(components.reset.height, "32px", "reset uses the official small text button");
       assert.deepEqual(
         components.select.background,
         components.primary,
@@ -952,9 +941,12 @@ try {
           "modal keyboard focus stays inside",
         );
       }
+      await panel((d) => d.querySelector<HTMLElement>(".panel-header button:last-child")!.focus());
+      await waitFor(
+        () => panel((d) => !d.querySelector('[role="tooltip"]')),
+        "previous tooltip closes before a new focus transition",
+      );
       await panel((d) => {
-        // A fresh focus transition is required after Escape or a prior keyboard cycle.
-        d.querySelector<HTMLElement>(".panel-header button:last-child")!.focus();
         const button = d.querySelector<HTMLElement>(".restore-button")!;
         button.scrollIntoView({ block: "nearest" });
         button.focus();
@@ -1107,6 +1099,32 @@ try {
     ["single"],
     "no automatically saved ancestors or descendants",
   );
+  const borderShell = await site.locator("#outer").evaluate((element) => ({
+    connected: element.isConnected,
+    display: getComputedStyle(element).display,
+    border: getComputedStyle(element).borderTopWidth,
+    width: element.getBoundingClientRect().width,
+    height: element.getBoundingClientRect().height,
+    visibleText: Array.from(element.querySelectorAll<HTMLElement>("p")).filter(
+      (child) => getComputedStyle(child).display !== "none",
+    ).length,
+  }));
+  assert(
+    borderShell.connected &&
+      borderShell.display !== "none" &&
+      borderShell.border === "2px" &&
+      borderShell.width > 0 &&
+      borderShell.height > 0,
+  );
+  assert.equal(
+    borderShell.visibleText,
+    0,
+    "border-only shell reproduced after explicitly hiding its sole text target",
+  );
+  console.log(
+    "PASS border-only fixture: selected child is hidden, enclosing border remains; one record, no automatic ancestor mutation",
+  );
+
   await hide("#outer", { position: { x: 2, y: 2 } });
   await waitFor(
     async () => (await count()) === 2,
@@ -1699,15 +1717,31 @@ try {
         const list = d.querySelector<HTMLElement>(".records")!;
         list.scrollTop = Math.floor((list.scrollHeight - list.clientHeight) / 2);
         const reset = d.querySelector<HTMLElement>(".reset-button")!;
-        const a = d.querySelector<HTMLElement>(".refresh-button")!.getBoundingClientRect(),
-          b = reset.getBoundingClientRect();
+        const card = d.querySelector<HTMLElement>(".site-card")!;
+        const content = card.firstElementChild!;
+        const label = d.querySelector<HTMLElement>(".eyebrow")!.getBoundingClientRect();
+        const setting = d.querySelector<HTMLElement>(".preference > span")!.getBoundingClientRect();
+        const toggle = d
+          .querySelector<HTMLElement>('.preference [role="switch"]')!
+          .getBoundingClientRect();
         return {
           scroll: list.scrollTop,
           site: d.querySelector(".site-title")!.textContent,
-          left: a.toJSON(),
-          right: b.toJSON(),
+          reset: reset.getBoundingClientRect().toJSON(),
+          labelOffset: setting.left - label.left,
+          switchOffset:
+            toggle.right -
+            (card.getBoundingClientRect().right -
+              parseFloat(getComputedStyle(card).borderRightWidth) -
+              parseFloat(getComputedStyle(content).paddingRight)),
+          padding: getComputedStyle(content).paddingInline,
+          border: getComputedStyle(card).borderInlineWidth,
           width: d.clientWidth,
           overflow: d.scrollWidth,
+          refresh: d.querySelector(".refresh-button"),
+          resetText: reset.textContent,
+          resetIcons: reset.querySelectorAll("svg").length,
+          versionBadge: d.querySelector(".updates-button > span")?.textContent,
         };
       });
       assert(
@@ -1715,14 +1749,20 @@ try {
         `${locale}/${width}: list scrolls without clipping`,
       );
       assert(
-        before.left.right + 15 <= before.right.left,
-        `${locale}/${width}: refresh and reset are separated in their toolbar`,
+        Math.abs(before.labelOffset) < 0.5 && Math.abs(before.switchOffset) < 0.5,
+        `${locale}/${width}: switch row aligns with CardContent (${before.padding} + ${before.border})`,
       );
-      assert(before.right.bottom <= 720, `${locale}/${width}: footer stays visible`);
-      assert.equal(
-        await panel((d) => d.querySelector(".refresh-button")!.getAttribute("aria-label")),
-        catalog.panel_refresh.message,
+      assert.equal(before.refresh, null);
+      assert.equal(before.resetText, catalog.panel_reset.message);
+      assert.equal(before.resetIcons, 0);
+      assert.equal(before.versionBadge, `v${manifest.version}`);
+      assert(before.reset.bottom <= 720);
+      console.log(
+        `ALIGN ${locale}/${width}: label ${before.labelOffset}px, switch ${before.switchOffset}px, CardContent padding ${before.padding}, border ${before.border}`,
       );
+      await site.screenshot({
+        path: values.screenshot.replace(/\.png$/, `-${locale}-${width}.png`),
+      });
       await panel((d) =>
         d.querySelector<HTMLElement>(".record:last-child .restore-button")!.focus(),
       );
@@ -1748,10 +1788,11 @@ try {
       await panel((d, top) => {
         d.querySelector<HTMLElement>(".records")!.scrollTop = top;
       }, before.scroll);
-      await click(".updates-button");
+      await panel((d) => d.querySelector<HTMLElement>(".updates-button")!.focus());
+      await site.keyboard.press(width === 320 ? "Enter" : "Space");
       await waitFor(
         () => panel((d) => !!d.querySelector(".updates ol li")),
-        "actual Timeline rendered",
+        "actual Timeline rendered by keyboard",
       );
       assert.equal(
         await panel(
@@ -1800,7 +1841,12 @@ try {
     () => panel((d) => d.querySelectorAll(".record").length >= 17),
     "original locale restored",
   );
-  const delayedRefresh = await session.send("Runtime.evaluate", {
+  await action();
+  await waitFor(
+    async () => (await site.locator("[data-veil-panel]").count()) === 0,
+    "close for retry fixture",
+  );
+  const delayedRetry = await session.send("Runtime.evaluate", {
     contextId: uiWorld.id,
     expression: `(() => {
       const original = chrome.runtime.sendMessage.bind(chrome.runtime);
@@ -1808,38 +1854,40 @@ try {
       chrome.runtime.sendMessage = (...args) => {
         if (args[0]?.type !== "LIST_HIDDEN_ITEMS") return original(...args);
         calls++;
+        if (calls === 1) return Promise.reject(new Error("fixture load failure"));
         return original(...args).then(result => new Promise(resolve => setTimeout(() => resolve(result), 400)));
       };
       return { count: () => calls, restore: () => { chrome.runtime.sendMessage = original; } };
     })()`,
   });
+  await action();
+  await waitFor(
+    () => panel((d) => !!d.querySelector(".notice.error button")),
+    "load error exposes retry",
+  );
   await panel((d) => {
-    const button = d.querySelector<HTMLButtonElement>(".refresh-button")!;
+    const button = d.querySelector<HTMLButtonElement>(".notice.error button")!;
     button.click();
     button.click();
   });
   await waitFor(
-    () =>
-      panel(
-        (d) =>
-          d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled &&
-          d.querySelector(".refresh-button")!.getAttribute("aria-busy") === "true",
-      ),
-    "refresh pending prevents another activation",
+    () => panel((d) => !!d.querySelector<HTMLButtonElement>(".notice.error button")?.disabled),
+    "retry pending prevents duplicate read",
   );
   await waitFor(
-    () => panel((d) => !d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled),
-    "refresh completes",
+    () =>
+      panel((d) => !d.querySelector(".notice.error") && d.querySelectorAll(".record").length >= 17),
+    "retry recovers list",
   );
   const calls = await session.send("Runtime.callFunctionOn", {
-    objectId: delayedRefresh.result.objectId,
+    objectId: delayedRetry.result.objectId,
     functionDeclaration: "function(){const n=this.count();this.restore();return n}",
     returnByValue: true,
   });
   assert.equal(
     calls.result.value,
-    1,
-    "rapid duplicate refresh sends only one actual management read",
+    2,
+    "one failed initial load and one retry despite duplicate activation",
   );
   const readProbe = await session.send("Runtime.evaluate", {
     contextId: uiWorld.id,
@@ -1885,7 +1933,7 @@ try {
     assert.equal((await queryCounts()).listeners, 0, "unmount removes panel listener");
     await action();
     await waitFor(
-      () => panel((d) => !d.querySelector<HTMLButtonElement>(".refresh-button")!.disabled),
+      () => panel((d) => d.querySelector(".count-value")?.textContent !== "…"),
       "mount query settles",
     );
     await site.waitForTimeout(250);
@@ -1921,7 +1969,7 @@ try {
     functionDeclaration: "function(){this.restore()}",
   });
   console.log(
-    "PASS five-locale UI, footer/tab order, Timeline return, refresh deduplication and render/mount/runtime/storage read counts with listener cleanup",
+    "PASS five-locale UI, footer/tab order, Timeline return, error retry deduplication and render/mount/runtime/storage read counts with listener cleanup",
   );
   await site.setViewportSize({ width: 375, height: 720 });
   const zoomTab = await worker.evaluate(

@@ -71,9 +71,6 @@
   "panel_paused": {
     "message": "Hiding is off for this site. Turn it on to hide an item."
   },
-  "panel_refresh": {
-    "message": "Refresh list"
-  },
   "panel_retry_load": {
     "message": "Try again"
   },
@@ -174,10 +171,10 @@
     "message": "Latest"
   },
   "panel_version_updates": {
-    "message": "v$1 · Updates"
+    "message": "v$1 · Update history"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · Unread updates"
+    "message": "v$1 · Unread update history"
   },
   "panel_selection_prompt": {
     "message": "Select an item"
@@ -207,7 +204,7 @@
     "message": "Less keeps your saved hiding rules and site settings."
   },
   "panel_release_1_2_0_change_2": {
-    "message": "Refresh the hidden-item list or unhide all items from the list toolbar. Open updates from the version at the bottom."
+    "message": "Unhide all items from the list toolbar. Open update history from the version badge at the bottom."
   },
   "panel_release_1_2_0_change_3": {
     "message": "An unread indicator appears for released updates you have not opened yet."

@@ -8,7 +8,6 @@ import { Item } from "@bolerish/ui/item";
 import { Empty, EmptyDescription } from "@bolerish/ui/empty";
 import { Heading } from "@bolerish/ui/heading";
 import { Switch } from "@bolerish/ui/switch";
-import { Separator } from "@bolerish/ui/separator";
 import {
   Timeline,
   TimelineContent,
@@ -17,13 +16,7 @@ import {
   TimelineTime,
   TimelineTitle,
 } from "@bolerish/ui/timeline";
-import {
-  ArrowClockwiseIcon,
-  CaretLeftIcon,
-  EyeIcon,
-  CursorClickIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CaretLeftIcon, CursorClickIcon, XIcon } from "@phosphor-icons/react";
 import {
   useEffect,
   useEffectEvent,
@@ -374,15 +367,6 @@ function HiddenItems({
       }}
     >
       <div className="site-overview">
-        <Button
-          className="select-button"
-          size="sm"
-          disabled={busy || selecting || enabled !== true}
-          onClick={() => void startSelection()}
-        >
-          <CursorClickIcon aria-hidden="true" />
-          {selecting ? message("panel_starting") : message("panel_select")}
-        </Button>
         <Card
           className="site-card"
           role="group"
@@ -405,6 +389,15 @@ function HiddenItems({
             </p>
           </CardContent>
         </Card>
+        <Button
+          className="select-button"
+          size="sm"
+          disabled={busy || selecting || enabled !== true}
+          onClick={() => void startSelection()}
+        >
+          <CursorClickIcon aria-hidden="true" />
+          {selecting ? message("panel_starting") : message("panel_select")}
+        </Button>
         <label className="preference">
           <span>{message("panel_enable_hiding")}</span>
           <Switch
@@ -430,30 +423,15 @@ function HiddenItems({
       </p>
       <div className="list-toolbar">
         <h2>{message("panel_hidden_items")}</h2>
-        <div className="list-actions">
-          <TooltipButton
-            className="refresh-button"
-            label={message("panel_refresh")}
-            tooltip={message("panel_refresh")}
-            disabled={busy || refreshing}
-            loading={refreshing}
-            portalContainer={portalContainer}
-            onClick={refresh}
-          >
-            <ArrowClockwiseIcon aria-hidden="true" />
-          </TooltipButton>
-          <Separator orientation="vertical" className="toolbar-separator" />
-          <TooltipButton
-            className="reset-button"
-            label={message("panel_reset")}
-            tooltip={message("panel_reset")}
-            disabled={busy || !records?.length}
-            portalContainer={portalContainer}
-            onClick={() => setConfirmReset(true)}
-          >
-            <EyeIcon aria-hidden="true" />
-          </TooltipButton>
-        </div>
+        <Button
+          className="reset-button"
+          variant="ghost"
+          size="sm"
+          disabled={busy || !records?.length}
+          onClick={() => setConfirmReset(true)}
+        >
+          {message("panel_reset")}
+        </Button>
       </div>
       {confirmReset && records ? (
         <div className="reset-confirmation" role="group" aria-label={message("panel_reset_group")}>
@@ -556,22 +534,20 @@ function HiddenItems({
         </ul>
       ) : null}
       <footer className="panel-footer">
-        <TooltipButton
+        <Button
           size="sm"
-          buttonRef={updatesButton}
+          variant="ghost"
+          ref={updatesButton}
           className="updates-button"
-          label={message(
+          aria-label={message(
             hasUnreadUpdates ? "panel_version_updates_unread" : "panel_version_updates",
             [browser.runtime.getManifest().version],
           )}
-          tooltip={message(hasUnreadUpdates ? "panel_updates_unread" : "panel_updates")}
-          disabled={false}
-          portalContainer={portalContainer}
           onClick={onUpdates}
         >
-          v{browser.runtime.getManifest().version}
+          <Badge variant="outline">v{browser.runtime.getManifest().version}</Badge>
           {hasUnreadUpdates ? <span className="update-notice-dot" aria-hidden="true" /> : null}
-        </TooltipButton>
+        </Button>
       </footer>
     </section>
   );

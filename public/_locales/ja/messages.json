@@ -71,9 +71,6 @@
   "panel_paused": {
     "message": "このサイトの非表示設定はオフです。オンにすると項目を非表示にできます。"
   },
-  "panel_refresh": {
-    "message": "一覧を再読み込み"
-  },
   "panel_retry_load": {
     "message": "再試行"
   },
@@ -174,10 +171,10 @@
     "message": "最新"
   },
   "panel_version_updates": {
-    "message": "v$1 · 更新情報"
+    "message": "v$1 · 更新履歴"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 未読の更新情報"
+    "message": "v$1 · 未読の更新履歴"
   },
   "panel_selection_prompt": {
     "message": "隠す項目を選択"
@@ -207,7 +204,7 @@
     "message": "保存済みの非表示ルールとサイト設定はそのまま保持されます。"
   },
   "panel_release_1_2_0_change_2": {
-    "message": "一覧のツールバーから再読み込みやすべての再表示ができます。下部のバージョンを押すと更新情報が開きます。"
+    "message": "一覧のツールバーからすべて再表示できます。下部のバージョンバッジから更新履歴を開けます。"
   },
   "panel_release_1_2_0_change_3": {
     "message": "まだ開いていないリリース済みの更新情報があると、未読マークが表示されます。"

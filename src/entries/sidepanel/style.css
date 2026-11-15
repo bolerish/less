@@ -88,6 +88,8 @@ svg {
   align-items: center;
   gap: var(--veil-spacing-space-2);
   margin-block: var(--veil-spacing-space-5) var(--veil-spacing-space-3);
+  /* Align with CardContent, including the card's 1px border. */
+  padding-inline: calc(var(--veil-spacing-space-3) + 1px);
 }
 .preference > span {
   min-width: 0;
@@ -219,14 +221,8 @@ time {
   color: var(--veil-color-fg-secondary);
   font-weight: var(--veil-font-weight-semibold);
 }
-.list-actions {
-  display: flex;
+.reset-button {
   flex-shrink: 0;
-  align-items: center;
-  gap: var(--veil-spacing-space-2);
-}
-.toolbar-separator {
-  height: 16px;
 }
 .records {
   flex: 1 1 0;

@@ -71,9 +71,6 @@
   "panel_paused": {
     "message": "La ocultación está desactivada en este sitio. Actívala para ocultar un elemento."
   },
-  "panel_refresh": {
-    "message": "Recargar lista"
-  },
   "panel_retry_load": {
     "message": "Reintentar"
   },
@@ -174,10 +171,10 @@
     "message": "Más reciente"
   },
   "panel_version_updates": {
-    "message": "v$1 · Novedades"
+    "message": "v$1 · Historial de actualizaciones"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · Novedades sin leer"
+    "message": "v$1 · Historial de actualizaciones sin leer"
   },
   "panel_selection_prompt": {
     "message": "Elige un elemento"
@@ -207,7 +204,7 @@
     "message": "Less conserva tus reglas de ocultación y los ajustes de cada sitio."
   },
   "panel_release_1_2_0_change_2": {
-    "message": "Actualiza la lista o muestra todos los elementos desde su barra de herramientas. Abre las novedades desde la versión que aparece abajo."
+    "message": "Muestra todos los elementos desde la barra de la lista. Abre el historial de actualizaciones desde la insignia de versión de la parte inferior."
   },
   "panel_release_1_2_0_change_3": {
     "message": "Un indicador señala las novedades publicadas que aún no has abierto."

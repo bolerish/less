@@ -71,9 +71,6 @@
   "panel_paused": {
     "message": "此网站的隐藏功能已关闭。开启后即可隐藏项目。"
   },
-  "panel_refresh": {
-    "message": "刷新列表"
-  },
   "panel_retry_load": {
     "message": "重试"
   },
@@ -174,10 +171,10 @@
     "message": "最新"
   },
   "panel_version_updates": {
-    "message": "v$1 · 更新"
+    "message": "v$1 · 更新记录"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 有未读更新"
+    "message": "v$1 · 未读更新记录"
   },
   "panel_selection_prompt": {
     "message": "选择要隐藏的项目"
@@ -207,7 +204,7 @@
     "message": "Less 会保留已保存的隐藏规则和网站设置。"
   },
   "panel_release_1_2_0_change_2": {
-    "message": "可在列表工具栏中刷新列表或取消全部隐藏。点击底部版本号可查看更新内容。"
+    "message": "可在列表工具栏中取消全部隐藏，也可通过底部的版本徽章查看更新记录。"
   },
   "panel_release_1_2_0_change_3": {
     "message": "尚未查看的已发布更新会显示未读标记。"

@@ -396,7 +396,7 @@ try {
   async function textIncludes(text: string) {
     return panel((d, t) => d.innerText.includes(t), text);
   }
-  async function count() {
+  async function storedRecords() {
     return worker.evaluate(async (o) => {
       const db = await new Promise<IDBDatabase>((res, rej) => {
         const r = indexedDB.open("veil-db");
@@ -404,12 +404,10 @@ try {
         r.onerror = () => rej(r.error);
       });
       try {
-        return await new Promise<number>((res, rej) => {
+        return await new Promise<HiddenElementRecord[]>((res, rej) => {
           const r = db.transaction("records").objectStore("records").getAll();
           r.onsuccess = () =>
-            res(
-              (r.result as HiddenElementRecord[]).filter((x) => x.pageContext.origin === o).length,
-            );
+            res((r.result as HiddenElementRecord[]).filter((x) => x.pageContext.origin === o));
           r.onerror = () => rej(r.error);
         });
       } finally {
@@ -417,6 +415,10 @@ try {
       }
     }, origin);
   }
+  async function count() {
+    return (await storedRecords()).length;
+  }
+
   async function hidden(selector: string, expected = true, page = site) {
     await page.waitForFunction(
       ({ selector, expected }) =>
@@ -1189,12 +1191,11 @@ try {
     await site.locator("#a11y-button").focus();
     await site.keyboard.press("Control+Shift+E");
     await site.locator("#a11y-button").click({ modifiers: ["Shift"] });
-    assert.deepEqual(
-      await site.locator("[data-less-highlight]").boundingBox(),
-      await site.locator("#a11y-target").boundingBox(),
-      "Shift selects controls' parent before hiding",
+    assert.equal(
+      await site.locator("#a11y-target").getAttribute("data-veil-hidden"),
+      "true",
+      "Shift immediately hides controls' direct parent",
     );
-    await site.keyboard.press("Enter");
     assert.equal(await site.locator("#a11y-target").getAttribute("aria-hidden"), aria);
     assert.equal(
       await site.locator("#a11y-button").evaluate((e) => {
@@ -1328,59 +1329,96 @@ try {
     [null, null, null],
     "selection intercepts site capture handlers before activation",
   );
-  assert.equal(await count(), 0, "Shift+click never hides or stores a rule");
-  await site.keyboard.press("Escape");
-  await site.keyboard.press("Control+Shift+E");
+  assert.equal(await count(), 0, "Shift+click cannot hide a body/html parent");
   await site.locator("#single").click({ modifiers: ["Shift"] });
-  assert.deepEqual(
-    await site.locator("[data-less-highlight]").boundingBox(),
-    await site.locator("#middle").boundingBox(),
-    "Shift+click selects exactly one parent",
+  assert.equal(
+    await site.locator("#middle").getAttribute("data-veil-hidden"),
+    "true",
+    "one Shift+click immediately hides the direct parent",
   );
+  assert.equal(
+    await site.locator("#outer").getAttribute("data-veil-hidden"),
+    null,
+    "Shift never hides the grandparent",
+  );
+  await hidden("#middle");
+  assert.equal(await count(), 1, "one Shift+click saves exactly one record");
+  const parentSelector = (await storedRecords())[0].cssSelector;
+  assert(parentSelector);
+  assert.equal(
+    await site.evaluate((selector) => document.querySelector(selector)?.id, parentSelector),
+    "middle",
+    "the stored rule resolves only to the direct parent",
+  );
+  await site.keyboard.press("Escape");
+  await site.reload();
+  await hidden("#middle");
+  assert.equal(
+    await site.locator("#outer").getAttribute("data-veil-hidden"),
+    null,
+    "reload never hides the grandparent",
+  );
+  await action();
+  await click(".restore-button");
+  await hidden("#middle", false);
+  await waitFor(async () => (await count()) === 0, "Shift parent restore removes its rule");
+  await site.keyboard.press("Escape");
+  await waitFor(
+    async () => (await site.locator("[data-less-panel]").count()) === 0,
+    "panel closes before keyboard parent selection",
+  );
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#single").hover();
+  await site.keyboard.press("ArrowUp");
   const childBox = await site.locator("#single").boundingBox();
   assert(childBox);
   await site.mouse.move(childBox.x + 30, childBox.y + 10);
   assert.deepEqual(
     await site.locator("[data-less-highlight]").boundingBox(),
     await site.locator("#middle").boundingBox(),
-    "moving inside the parent retains the selection",
+    "moving inside the keyboard-selected parent retains selection",
   );
-  await site.locator("#single").click({ modifiers: ["Shift"] });
-  assert.deepEqual(
-    await site.locator("[data-less-highlight]").boundingBox(),
-    await site.locator("#outer").boundingBox(),
-    "repeated Shift+click expands one ancestor",
-  );
-  for (let i = 0; i < 4; i++) await site.locator("#single").click({ modifiers: ["Shift"] });
-  assert.deepEqual(
-    await site.locator("[data-less-highlight]").boundingBox(),
-    await site.locator("#outer").boundingBox(),
-    "Shift+click excludes body/html",
-  );
-  assert.equal(await count(), 0, "repeated selection still creates no records");
+  await site.keyboard.press("ArrowUp");
   await site.mouse.wheel(0, 50);
   await site.waitForTimeout(150);
   assert.deepEqual(
     await site.locator("[data-less-highlight]").boundingBox(),
     await site.locator("#outer").boundingBox(),
-    "scroll keeps the chosen parent's outline aligned",
+    "scroll keeps the selected parent's outline aligned",
   );
+  await site.locator("#single").click({ modifiers: ["Shift"] });
+  assert.equal(
+    await site.locator("#middle").getAttribute("data-veil-hidden"),
+    "true",
+    "Shift uses the clicked target even with a keyboard-selected ancestor",
+  );
+  assert.equal(
+    await site.locator("#outer").getAttribute("data-veil-hidden"),
+    null,
+    "keyboard plus Shift never promotes the stored target",
+  );
+  await hidden("#middle");
+  assert.equal(await count(), 1);
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#middle", false);
+  await waitFor(async () => (await count()) === 0, "Shift undo removes the parent rule");
+  await site.locator("#single").hover();
+  await site.keyboard.press("ArrowUp");
   await site.keyboard.press("ArrowDown");
   assert.deepEqual(
     await site.locator("[data-less-highlight]").boundingBox(),
-    await site.locator("#middle").boundingBox(),
-    "ArrowDown also reverses Shift+click",
+    await site.locator("#single").boundingBox(),
+    "ArrowDown returns to the child",
   );
-  await site.locator("#single").click();
+  await site.keyboard.press("ArrowUp");
+  await site.keyboard.press("Enter");
   await hidden("#middle");
-  await waitFor(async () => (await count()) === 1, "ordinary click hides the chosen parent once");
+  assert.equal(await count(), 1, "keyboard parent selection and Enter save once");
   await site.keyboard.press("Control+Shift+Z");
   await hidden("#middle", false);
-  await waitFor(async () => (await count()) === 0, "selected parent restores");
-  await site.keyboard.press("Escape");
-  await site.evaluate(() => window.scrollTo(0, 0));
-  await site.keyboard.press("Control+Shift+E");
-  await site.locator("#single").click({ modifiers: ["Shift"] });
+  await waitFor(async () => (await count()) === 0, "keyboard parent restores");
+  await site.locator("#single").hover();
+  await site.keyboard.press("ArrowUp");
   await site.locator("h1").hover();
   assert.deepEqual(
     await site.locator("[data-less-highlight]").boundingBox(),
@@ -1393,9 +1431,27 @@ try {
     await site.locator("#single").boundingBox(),
     "returning starts a fresh child selection",
   );
+  await worker.evaluate(() => {
+    const original = IDBObjectStore.prototype.add;
+    IDBObjectStore.prototype.add = function () {
+      IDBObjectStore.prototype.add = original;
+      throw Error("injected Shift DB save failure");
+    };
+  });
+  await site.locator("#single").click({ modifiers: ["Shift"] });
+  await waitFor(
+    async () =>
+      (await selectionSurface(
+        "data-less-ui",
+        (e) => e.querySelector('[role="alert"]')?.textContent,
+      )) === messages.panel_selection_save_error,
+    "Shift save error shown",
+  );
+  await hidden("#middle", false);
+  assert.equal(await count(), 0, "failed Shift save rolls back DB and live hiding");
   await site.keyboard.press("Escape");
   console.log(
-    "PASS Shift parent selection, repeated expansion, pointer retention, root guard, scroll, no site activation, ordinary click and undo",
+    "PASS Shift immediate direct parent, one record, reload/restore/undo, keyboard combination, root guard, site activation prevention and failed-save rollback",
   );
   await site.addStyleTag({
     content:

@@ -177,10 +177,10 @@
     "message": "v$1 · Historial de actualizaciones sin leer"
   },
   "panel_selection_prompt": {
-    "message": "Clic oculta · Mayús+clic selecciona padre"
+    "message": "Clic: ocultar · Mayús+clic: ocultar padre"
   },
   "panel_selection_keys": {
-    "message": "Mayús+clic: seleccionar padre · ↑/↓: padre/hijo · Intro: ocultar"
+    "message": "Mayús+clic: ocultar padre · ↑/↓: padre/hijo · Intro: ocultar"
   },
   "panel_selection_count_one": {
     "message": "$1 oculto"

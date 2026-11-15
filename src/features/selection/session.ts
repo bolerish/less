@@ -148,15 +148,11 @@ function handleClick(event: MouseEvent): void {
   event.preventDefault();
   event.stopImmediatePropagation();
 
-  const target = hoveredEl ?? resolveTarget(event.clientX, event.clientY);
+  const clickedTarget = resolveTarget(event.clientX, event.clientY);
+  const target = event.shiftKey
+    ? clickedTarget && resolveSelectionParent(clickedTarget, isOverlayOrHidden)
+    : (hoveredEl ?? clickedTarget);
   if (target === null) return;
-
-  if (event.shiftKey) {
-    hoveredEl = target;
-    selectParent();
-    updateHighlight(hoveredEl);
-    return;
-  }
 
   hoveredEl = null;
   ancestorTrail.length = 0;

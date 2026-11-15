@@ -103,13 +103,16 @@ export function resolveSelectionParent(
   element: HTMLElement,
   isIgnored: IsIgnored = () => false,
 ): HTMLElement | null {
-  let parent = element.parentElement;
-  while (parent !== null && !isDocumentShell(parent)) {
-    if (!isIgnored(parent) && !isHideExcludedElement(parent) && hasNonZeroRect(parent))
-      return parent;
-    parent = parent.parentElement;
-  }
-  return null;
+  const parent = element.parentElement;
+  if (
+    parent === null ||
+    isDocumentShell(parent) ||
+    isIgnored(parent) ||
+    isHideExcludedElement(parent) ||
+    !hasNonZeroRect(parent)
+  )
+    return null;
+  return parent;
 }
 
 // Polymer/LitElement scoped-CSS pattern: inner elements carry the host's tag

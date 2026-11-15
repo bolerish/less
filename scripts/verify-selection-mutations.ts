@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 import { parseArgs } from "node:util";
 
 // Fixed semantic mutations, not a random or exhaustive operator campaign.
-const seed = "less-selection-v1";
+const seed = "less-selection-v2";
 const session = "src/features/selection/session.ts";
 const hiding = "src/features/element-hiding/element-hide.ts";
 const resolver = "src/features/selection/targeting/target-resolver.ts";
@@ -23,7 +23,16 @@ const mutants = [
       ],
     ],
   },
-  { id: "shift-hides", edits: [[session, "if (event.shiftKey) {", "if (false) {"]] },
+  {
+    id: "shift-skips-parent",
+    edits: [
+      [
+        session,
+        "const target = event.shiftKey\n",
+        "const target = event.shiftKey && event.altKey\n",
+      ],
+    ],
+  },
   {
     id: "parent-unpinned",
     edits: [
@@ -37,16 +46,8 @@ const mutants = [
   {
     id: "root-parent",
     edits: [
-      [
-        resolver,
-        "while (parent !== null && !isDocumentShell(parent)) {\n    if (!isIgnored(parent)",
-        "while (parent !== null) {\n    if (!isIgnored(parent)",
-      ],
-      [
-        resolver,
-        "!isIgnored(parent) && !isHideExcludedElement(parent) && hasNonZeroRect(parent)",
-        "!isIgnored(parent) && hasNonZeroRect(parent)",
-      ],
+      [resolver, "    isDocumentShell(parent) ||\n", ""],
+      [resolver, "    isHideExcludedElement(parent) ||\n", ""],
     ],
   },
   {

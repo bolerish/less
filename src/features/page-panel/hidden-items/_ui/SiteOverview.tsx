@@ -8,7 +8,7 @@ import { Card, CardContent } from "@bolerish/ui/card";
 import { Button } from "@bolerish/ui/button";
 import { Heading } from "@bolerish/ui/heading";
 import { Switch } from "@bolerish/ui/switch";
-import { CursorClickIcon } from "@phosphor-icons/react";
+import { CursorIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 
@@ -100,7 +100,7 @@ export function SiteOverview({
         disabled={busy || selecting || enabled !== true}
         onClick={() => void startSelection()}
       >
-        <CursorClickIcon {...stylex.props(styles.icon)} aria-hidden="true" />
+        <CursorIcon {...stylex.props(styles.icon)} aria-hidden="true" />
         {selecting ? message("panel_starting") : message("panel_select")}
       </Button>
       <label

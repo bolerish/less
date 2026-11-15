@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
-import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@bolerish/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@bolerish/ui/empty";
 import { ScrollArea, ScrollAreaViewport, ScrollAreaContent } from "@bolerish/ui/scroll-area";
 import { useRef, useState } from "react";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
@@ -13,6 +13,7 @@ import { SiteOverview } from "./SiteOverview";
 import { RecordRow } from "./RecordRow";
 import { ResetDialog } from "./ResetDialog";
 import { useRefreshOnFocus } from "./useRefreshOnFocus";
+import { SelectionIcon } from "@phosphor-icons/react";
 
 export function HiddenItems({
   origin,
@@ -139,8 +140,11 @@ export function HiddenItems({
         </div>
       ) : null}
       {records?.length === 0 ? (
-        <Empty className="empty" xstyle={styles.empty}>
+        <Empty className="empty">
           <EmptyHeader>
+            <EmptyMedia>
+              <SelectionIcon aria-hidden="true" />
+            </EmptyMedia>
             <EmptyTitle>{message("panel_empty_title")}</EmptyTitle>
             <EmptyDescription>{message("panel_empty_help")}</EmptyDescription>
           </EmptyHeader>
@@ -230,11 +234,7 @@ const styles = stylex.create({
     flexShrink: 0,
     marginBlock: { default: spacingVars.space2, ":empty": 0 },
   },
-  empty: {
-    borderStyle: "none",
-    marginBlock: spacingVars.space4,
-    flexShrink: 0,
-  },
+
   recordsRoot: {
     flex: "1 1 0",
     minHeight: 48,

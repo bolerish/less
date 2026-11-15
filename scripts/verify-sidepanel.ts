@@ -810,6 +810,8 @@ try {
         );
       }
       await panel((d) => {
+        // A fresh focus transition is required after Escape or a prior keyboard cycle.
+        d.querySelector<HTMLElement>(".panel-header button:last-child")!.focus();
         const button = d.querySelector<HTMLElement>(".restore-button")!;
         button.scrollIntoView({ block: "nearest" });
         button.focus();

@@ -3,25 +3,58 @@ import { HIDDEN_INLINE_STYLE_ATTRIBUTE } from "~features/element-hiding/hide-pol
 import { resolveMatchedElement } from "~features/element-hiding/match/record-match-resolver";
 import type { HiddenElementRecord } from "~features/record/schema";
 import { portRequest } from "./port";
+import { finishHiddenElementAnimation } from "~features/element-hiding/element-hide";
+import { positionPreview } from "./preview-position";
 
 export type PreviewState = { id: string | null; message: string };
 export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
 
 export function createHiddenItemPreview() {
   let state: PreviewState = { id: null, message: "" };
-  let current: { element: HTMLElement; style: string | null } | null = null;
+  type Target = { element: HTMLElement; style: string | null; animation?: Animation };
+  let current: Target | null = null;
+  const outgoing = new Set<Target>();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  function restore(target: Target): void {
+    target.animation?.cancel();
+    if (target.style === null) target.element.removeAttribute("style");
+    else target.element.setAttribute("style", target.style);
+  }
   let revision = 0;
+  let cleanupPosition: (() => void) | undefined;
+  let previewPanel: HTMLDialogElement | null = null;
   const listeners = new Set<(state: PreviewState) => void>();
   function publish(next: PreviewState): void {
     state = next;
     for (const listener of listeners) listener(next);
   }
-  function clear(): void {
+  function clear(animate = false): void {
     revision++;
+    cleanupPosition?.();
+    cleanupPosition = undefined;
+    if (previewPanel) {
+      delete previewPanel.dataset.previewLayout;
+      delete previewPanel.dataset.previewEdge;
+      previewPanel = null;
+    }
+    for (const target of outgoing) restore(target);
+    outgoing.clear();
     if (current) {
-      if (current.style === null) current.element.removeAttribute("style");
-      else current.element.setAttribute("style", current.style);
+      const target = current;
       current = null;
+      target.animation?.cancel();
+      if (animate && !reducedMotion.matches && target.element.isConnected) {
+        outgoing.add(target);
+        target.animation = target.element.animate(
+          [{ opacity: getComputedStyle(target.element).opacity }, { opacity: 0 }],
+          { duration: 140, easing: "ease-in", fill: "forwards" },
+        );
+        void target.animation.finished
+          .then(() => {
+            if (outgoing.delete(target)) restore(target);
+          })
+          .catch(() => {});
+      } else restore(target);
     }
     publish({ id: null, message: "" });
   }
@@ -38,7 +71,7 @@ export function createHiddenItemPreview() {
       };
     },
     async show(id: string, panel: HTMLDialogElement | null = null): Promise<void> {
-      clear();
+      clear(true);
       const pending = revision;
       const { origin, pathname: path, search } = location;
       publish({ id: null, message: "Finding this item on the page…" });
@@ -73,7 +106,14 @@ export function createHiddenItemPreview() {
           return;
         }
         const element = match.matchedElement;
+        for (const target of outgoing) {
+          if (target.element !== element) continue;
+          outgoing.delete(target);
+          restore(target);
+        }
+        finishHiddenElementAnimation(element);
         current = { element, style: element.getAttribute("style") };
+        previewPanel = panel;
         const savedStyle = element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
         if (savedStyle === null) element.removeAttribute("style");
         else element.setAttribute("style", savedStyle);
@@ -89,14 +129,17 @@ export function createHiddenItemPreview() {
         }
         // Inline importance beats preload !important without editing its rules or the stored cache.
         element.style.setProperty("display", display, "important");
-        element.style.setProperty("opacity", "1", "important");
+        const originalOpacity = getComputedStyle(element).opacity;
+        const opacity = Number(originalOpacity) > 0 ? originalOpacity : "1";
+        element.style.setProperty("opacity", opacity);
+        element.style.setProperty("transition", "none", "important");
         element.style.setProperty("visibility", "visible", "important");
-        element.style.setProperty("outline", "3px solid #3884ff", "important");
+        const outline = panel
+          ? getComputedStyle(panel).getPropertyValue("--veil-color-stroke-focus").trim()
+          : "Highlight";
+        element.style.setProperty("outline", `3px solid ${outline}`, "important");
         element.style.setProperty("outline-offset", "3px", "important");
-        publish({
-          id,
-          message: "Temporarily showing this item on the page. Its hiding rule is still saved.",
-        });
+
         const rect = element.getBoundingClientRect();
         const visible = element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
         if (!rect.width || !rect.height || !visible) {
@@ -108,43 +151,50 @@ export function createHiddenItemPreview() {
           });
           return;
         }
-        // The compact preview panel leaves room for the page, including on a 320px screen.
-        const panelRect = panel?.getBoundingClientRect();
-        const visibleBesidePanel = panelRect
-          ? Math.max(0, Math.min(rect.right, panelRect.left) - Math.max(0, rect.left))
-          : rect.width;
-        const bottom =
-          panelRect && visibleBesidePanel < Math.min(80, rect.width)
-            ? panelRect.top - 8
-            : innerHeight;
-        const visibleHeight = Math.min(rect.bottom, bottom) - Math.max(rect.top, 0);
-        if (
-          visibleHeight < Math.min(rect.height, bottom, 80) ||
-          rect.right <= 0 ||
-          rect.left >= innerWidth
-        ) {
-          element.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
-          const after = element.getBoundingClientRect();
-          if (after.top >= bottom - Math.min(after.height, 80)) {
-            window.scrollBy({
-              top: after.top - Math.max(8, (bottom - Math.min(after.height, bottom)) / 2),
-              behavior: "instant",
-            });
-          }
+        if (!reducedMotion.matches) {
+          current.animation = element.animate([{ opacity: 0 }, { opacity }], {
+            duration: 140,
+            easing: "ease-out",
+          });
         }
-        const after = element.getBoundingClientRect();
-        if (
-          Math.min(after.bottom, bottom) <= Math.max(after.top, 0) ||
-          after.right <= 0 ||
-          after.left >= innerWidth
-        ) {
+        // Wait for the panel's React update and the restored target's actual layout.
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+        if (pending !== revision) return;
+        if (!positionPreview(element, panel)) {
           clear();
           publish({
             id: null,
             message:
-              "The panel or page layout covers this item. It cannot be shown here. Its saved rule is unchanged.",
+              "The page layout covers this item. It cannot be shown here. Its saved rule is unchanged.",
           });
+          return;
         }
+        publish({
+          id,
+          message:
+            browser.i18n.getMessage("panel_preview_description") ||
+            "Temporarily showing this item. Its hiding rule is still saved.",
+        });
+        let frame = 0;
+        const reposition = (): void => {
+          cancelAnimationFrame(frame);
+          frame = requestAnimationFrame(() => {
+            if (pending === revision) positionPreview(element, panel);
+          });
+        };
+        const observer = new ResizeObserver(reposition);
+        observer.observe(element);
+        observer.observe(document.body);
+        window.addEventListener("resize", reposition);
+        document.addEventListener("load", reposition, true);
+        cleanupPosition = () => {
+          cancelAnimationFrame(frame);
+          observer.disconnect();
+          window.removeEventListener("resize", reposition);
+          document.removeEventListener("load", reposition, true);
+        };
       } catch {
         if (pending !== revision) return;
         clear();

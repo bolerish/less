@@ -26,7 +26,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   };
 
   function close(restoreFocus = true): void {
-    preview.clear();
+    preview.clear(restoreFocus);
     unsubscribePreview?.();
     unsubscribePreview = undefined;
     resumeAfterSelection = false;
@@ -95,7 +95,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
       if (preview.hasNotice) {
-        preview.clear();
+        preview.clear(true);
         return;
       }
       close();

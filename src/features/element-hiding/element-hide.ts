@@ -5,6 +5,12 @@ import {
   isHideExcludedElement,
 } from "./hide-policy";
 
+const pendingAnimations = new WeakMap<HTMLElement, () => void>();
+
+export function finishHiddenElementAnimation(element: HTMLElement): void {
+  pendingAnimations.get(element)?.();
+}
+
 export function applyHiddenElement(element: HTMLElement, animated = false): void {
   if (isHideExcludedElement(element) || isHiddenElement(element)) return;
 
@@ -18,33 +24,33 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
     element.style.setProperty("will-change", "opacity", "important");
     element.style.setProperty("opacity", "1", "important");
 
-    // Double rAF ensures the browser has painted opacity:1 before starting
-    // the transition, preventing the first-frame jump that getBoundingClientRect
-    // reflow causes.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finalize = (): void => {
+      pendingAnimations.delete(element);
+      clearTimeout(timer);
+      element.removeEventListener("transitionend", onEnd);
+      if (!isHiddenElement(element)) return;
+      element.style.removeProperty("transition");
+      element.style.removeProperty("opacity");
+      element.style.removeProperty("will-change");
+      element.style.setProperty("display", "none", "important");
+    };
+    const onEnd = (event: TransitionEvent): void => {
+      if (event.target === element && event.propertyName === "opacity") finalize();
+    };
+    pendingAnimations.set(element, finalize);
+    // Double rAF lets the initial opacity paint before the fade starts.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (!isHiddenElement(element)) return;
+        if (pendingAnimations.get(element) !== finalize) return;
         element.style.setProperty(
           "transition",
           "opacity 0.28s cubic-bezier(0.4, 0, 1, 1)",
           "important",
         );
         element.style.setProperty("opacity", "0", "important");
-
-        const finalize = () => {
-          if (!isHiddenElement(element)) return;
-          element.style.removeProperty("transition");
-          element.style.removeProperty("opacity");
-          element.style.removeProperty("will-change");
-          element.style.setProperty("display", "none", "important");
-        };
-        const timer = setTimeout(finalize, 360);
-        element.addEventListener("transitionend", function onEnd(e: TransitionEvent) {
-          if (e.propertyName !== "opacity") return;
-          element.removeEventListener("transitionend", onEnd);
-          clearTimeout(timer);
-          finalize();
-        });
+        timer = setTimeout(finalize, 360);
+        element.addEventListener("transitionend", onEnd);
       });
     });
   } else {
@@ -55,6 +61,7 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
 export function restoreHiddenElement(element: HTMLElement): void {
   if (!isHiddenElement(element)) return;
 
+  finishHiddenElementAnimation(element);
   const inlineStyle = element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
   if (inlineStyle !== null) {
     element.setAttribute("style", inlineStyle);

@@ -46,7 +46,7 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   });
   ctx.onInvalidated(() => {
     unsubscribe();
-    panel.close();
+    panel.close(false);
     stopSelectionMode();
     stopReapplyWatcher();
     invalidateRecordCache();

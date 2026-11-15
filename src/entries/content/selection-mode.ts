@@ -1,7 +1,6 @@
 import {
   applyHiddenElement,
   isHiddenElement,
-  isHideExcludedElement,
   restoreHiddenElement,
 } from "~features/element-hiding";
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
@@ -148,6 +147,7 @@ function handleViewportChange(): void {
 }
 
 async function hideAndSave(element: HTMLElement): Promise<void> {
+  if (isHiddenElement(element)) return;
   const record = deriveHiddenElementRecord(element, document);
   applyHiddenElement(element, true);
   try {
@@ -162,52 +162,6 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
     updateStatusBarError("Could not save this item. Try again.");
     return;
   }
-  await collapseEmptyAncestors(element);
-}
-
-async function collapseEmptyAncestors(origin: HTMLElement): Promise<void> {
-  const MAX_DEPTH = 2;
-  let current = origin.parentElement;
-  let depth = 0;
-
-  while (current !== null && depth < MAX_DEPTH) {
-    if (isHideExcludedElement(current)) break;
-    if (isHiddenElement(current)) break;
-    if (current.closest(`[${HIGHLIGHT_ATTR}],[${STATUS_BAR_ATTR}],[${SHIELD_ATTR}]`)) break;
-    if (!hasNoVisibleContent(current)) break;
-
-    const record = deriveHiddenElementRecord(current, document);
-    applyHiddenElement(current, false);
-    try {
-      // eslint-disable-next-line no-await-in-loop -- Each ancestor depends on the previous hide.
-      const response = await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
-      if (!response.ok) throw new Error("Could not save hidden item");
-      invalidateRecordCache();
-      sessionHiddenCount++;
-      undoStack.push({ element: current, recordId: record.id });
-      updateStatusBarContent(sessionHiddenCount, undoStack.length > 0);
-    } catch {
-      restoreHiddenElement(current);
-      updateStatusBarError("Could not save an empty container. Try again.");
-      break;
-    }
-
-    current = current.parentElement;
-    depth++;
-  }
-}
-
-function hasNoVisibleContent(el: HTMLElement): boolean {
-  for (const node of el.childNodes) {
-    if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) return false;
-  }
-  for (const child of el.children) {
-    if (!(child instanceof HTMLElement)) continue;
-    if (isHiddenElement(child)) continue;
-    const rect = child.getBoundingClientRect();
-    if (rect.width > 0 || rect.height > 0) return false;
-  }
-  return true;
 }
 
 function resolveTarget(x: number, y: number): HTMLElement | null {

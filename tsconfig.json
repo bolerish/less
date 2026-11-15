@@ -1,6 +1,8 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    // Preserve this project's indexed-access policy across the WXT 0.21 default change.
+    "noUncheckedIndexedAccess": false,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "paths": {

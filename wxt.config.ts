@@ -42,6 +42,9 @@ export default defineConfig({
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   }),
   vite: () => ({
+    optimizeDeps: {
+      entries: ["src/entries/welcome/index.html", "src/entries/content.ts"],
+    },
     plugins: [bolerishTokens(), babel({ presets: [reactCompilerPreset()] })],
   }),
 });

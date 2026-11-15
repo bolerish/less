@@ -1,4 +1,13 @@
-const INTERACTIVE_TAG_NAMES = new Set(["a", "button", "canvas", "input", "select", "summary", "textarea", "video"]);
+const INTERACTIVE_TAG_NAMES = new Set([
+  "a",
+  "button",
+  "canvas",
+  "input",
+  "select",
+  "summary",
+  "textarea",
+  "video",
+]);
 const VISUAL_DESCENDANT_SELECTOR = "iframe, img, svg, canvas, video, picture, object, embed";
 const MEANINGFUL_ATTRIBUTE_NAMES = new Set(["title", "alt"]);
 
@@ -46,14 +55,26 @@ export function hasMeaningfulOwnText(element: HTMLElement): boolean {
 export function hasMeaningfulSelectionAttributes(element: HTMLElement): boolean {
   return Array.from(element.attributes).some(({ name, value }) => {
     if (value.trim().length === 0) return false;
-    return MEANINGFUL_ATTRIBUTE_NAMES.has(name) || (name.startsWith("aria-") && name !== "aria-hidden");
+    return (
+      MEANINGFUL_ATTRIBUTE_NAMES.has(name) || (name.startsWith("aria-") && name !== "aria-hidden")
+    );
   });
 }
 
 export function hasVisibleBorder(element: HTMLElement): boolean {
   const style = window.getComputedStyle(element);
-  const styles = [style.borderTopStyle, style.borderRightStyle, style.borderBottomStyle, style.borderLeftStyle];
-  const widths = [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
+  const styles = [
+    style.borderTopStyle,
+    style.borderRightStyle,
+    style.borderBottomStyle,
+    style.borderLeftStyle,
+  ];
+  const widths = [
+    style.borderTopWidth,
+    style.borderRightWidth,
+    style.borderBottomWidth,
+    style.borderLeftWidth,
+  ];
 
   return styles.some((s, i) => {
     if (s === "none" || s === "hidden") return false;

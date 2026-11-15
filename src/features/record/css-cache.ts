@@ -42,9 +42,15 @@ export async function loadAllCSSCache(): Promise<Record<string, string[]>> {
 
   // Slow path: legacy migration (bare:css:* → veil:css:*)
   const allStorage = await browser.storage.local.get(null);
-  if (!(CSS_ALL_KEY in allStorage) && !Object.keys(allStorage).some(
-    (k) => k.startsWith(LEGACY_CSS_PAGE_PREFIX) || k.startsWith(LEGACY_CSS_SITE_PREFIX) || k === LEGACY_CSS_ALL_KEY
-  )) {
+  if (
+    !(CSS_ALL_KEY in allStorage) &&
+    !Object.keys(allStorage).some(
+      (k) =>
+        k.startsWith(LEGACY_CSS_PAGE_PREFIX) ||
+        k.startsWith(LEGACY_CSS_SITE_PREFIX) ||
+        k === LEGACY_CSS_ALL_KEY,
+    )
+  ) {
     return {};
   }
 
@@ -65,7 +71,10 @@ export async function loadAllCSSCache(): Promise<Record<string, string[]>> {
 
   // Migrate from old per-key format (bare:css:page:... / bare:css:site:...)
   for (const [key, value] of Object.entries(allStorage)) {
-    if ((key.startsWith(LEGACY_CSS_PAGE_PREFIX) || key.startsWith(LEGACY_CSS_SITE_PREFIX)) && Array.isArray(value)) {
+    if (
+      (key.startsWith(LEGACY_CSS_PAGE_PREFIX) || key.startsWith(LEGACY_CSS_SITE_PREFIX)) &&
+      Array.isArray(value)
+    ) {
       const newKey = key
         .replace(LEGACY_CSS_PAGE_PREFIX, CSS_PAGE_CACHE_PREFIX)
         .replace(LEGACY_CSS_SITE_PREFIX, CSS_SITE_CACHE_PREFIX);

@@ -7,7 +7,8 @@ export function computeTextMatchScore(
   storedText: string | null | undefined,
 ): number {
   if (candidateText === undefined || storedText == null) return 0;
-  if (candidateText === storedText || candidateText.startsWith(storedText)) return EXACT_OR_PREFIX_SCORE;
+  if (candidateText === storedText || candidateText.startsWith(storedText))
+    return EXACT_OR_PREFIX_SCORE;
   if (storedText.length >= MIN_TEXT_SNIPPET_LENGTH && candidateText.includes(storedText)) {
     return CONTAINED_SNIPPET_SCORE;
   }

@@ -47,7 +47,11 @@ function deriveOuterSiblingContexts(element: HTMLElement): OuterSiblingContext[]
   let ancestor: HTMLElement | null = element;
   let depth = 0;
 
-  while (ancestor !== null && !isDocumentShell(ancestor) && contexts.length < MAX_OUTER_SIBLING_CONTEXTS) {
+  while (
+    ancestor !== null &&
+    !isDocumentShell(ancestor) &&
+    contexts.length < MAX_OUTER_SIBLING_CONTEXTS
+  ) {
     const ctx = deriveOuterSiblingContext(ancestor, depth);
     if (ctx !== null) contexts.push(ctx);
     ancestor = ancestor.parentElement;
@@ -62,7 +66,10 @@ function isDocumentShell(element: HTMLElement): boolean {
   return tag === "body" || tag === "html";
 }
 
-function deriveOuterSiblingContext(ancestor: HTMLElement, depth: number): OuterSiblingContext | null {
+function deriveOuterSiblingContext(
+  ancestor: HTMLElement,
+  depth: number,
+): OuterSiblingContext | null {
   const prev = deriveSiblingNode(ancestor.previousElementSibling);
   const next = deriveSiblingNode(ancestor.nextElementSibling);
   if (prev === null && next === null) return null;
@@ -82,7 +89,9 @@ function deriveSiblingNode(element: Element | null): SiblingNode | null {
 
 function deriveChildTagSummary(element: HTMLElement | null): string[] | undefined {
   if (element === null) return undefined;
-  const tags = Array.from(new Set(Array.from(element.children).map((c) => c.tagName.toLowerCase()))).sort();
+  const tags = Array.from(
+    new Set(Array.from(element.children).map((c) => c.tagName.toLowerCase())),
+  ).sort();
   return tags.length === 0 ? undefined : tags;
 }
 

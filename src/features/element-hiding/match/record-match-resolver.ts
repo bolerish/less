@@ -7,7 +7,10 @@ export type MatchResult =
   | { status: "matched"; matchedElement: HTMLElement; matchedAt: number }
   | { status: "unmatched" };
 
-export function resolveMatchedElement(documentRef: Document, record: HiddenElementRecord): MatchResult {
+export function resolveMatchedElement(
+  documentRef: Document,
+  record: HiddenElementRecord,
+): MatchResult {
   for (const strategy of record.matchPlan) {
     switch (strategy) {
       case "CSS_SELECTOR": {
@@ -43,7 +46,8 @@ function matchByCSSSelector(documentRef: Document, record: HiddenElementRecord):
   if (!record.cssSelector) return { status: "unmatched" };
   try {
     const matched = documentRef.querySelectorAll<HTMLElement>(record.cssSelector);
-    if (matched.length === 1) return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
+    if (matched.length === 1)
+      return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
   } catch {
     // invalid selector
   }
@@ -58,7 +62,8 @@ function matchByUniqueAttribute(documentRef: Document, record: HiddenElementReco
   const matched = Array.from(documentRef.querySelectorAll<HTMLElement>(selector));
 
   if (matched.length === 0) return { status: "unmatched" };
-  if (matched.length === 1) return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
+  if (matched.length === 1)
+    return { status: "matched", matchedElement: matched[0], matchedAt: Date.now() };
 
   // Multiple elements share this attribute (e.g. responsive layout duplicates).
   // Narrow down using the tree structure candidates as an intersection.
@@ -74,7 +79,8 @@ function matchByUniqueAttribute(documentRef: Document, record: HiddenElementReco
 function matchByStructure(documentRef: Document, record: HiddenElementRecord): MatchResult {
   const candidates = resolveTreeCandidateElements(documentRef, record);
   if (candidates.length === 0) return { status: "unmatched" };
-  if (candidates.length === 1) return { status: "matched", matchedElement: candidates[0], matchedAt: Date.now() };
+  if (candidates.length === 1)
+    return { status: "matched", matchedElement: candidates[0], matchedAt: Date.now() };
 
   const top = resolveTopTreeCandidate(candidates, record);
   if (top === null) return { status: "unmatched" };

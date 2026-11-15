@@ -16,4 +16,3 @@ export function applyRecordsHiding(
     applyHiddenElement(el, false);
   }
 }
-

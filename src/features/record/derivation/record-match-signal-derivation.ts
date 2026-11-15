@@ -316,10 +316,7 @@ function resolveGeneratedClassBasedSelector(
   return undefined;
 }
 
-function resolveAnchoredSelector(
-  element: HTMLElement,
-  documentRef: Document,
-): string | undefined {
+function resolveAnchoredSelector(element: HTMLElement, documentRef: Document): string | undefined {
   const stableClasses = deriveStableClassTokens(element.className);
   const generatedClasses = deriveGeneratedClassTokens(element.className);
   const tag = element.tagName.toLowerCase();
@@ -378,11 +375,7 @@ function resolvePositionalFallbackSelector(
   return undefined;
 }
 
-function isUniqueSelector(
-  selector: string,
-  target: HTMLElement,
-  documentRef: Document,
-): boolean {
+function isUniqueSelector(selector: string, target: HTMLElement, documentRef: Document): boolean {
   try {
     const results = documentRef.querySelectorAll<HTMLElement>(selector);
     return results.length === 1 && results[0] === target;

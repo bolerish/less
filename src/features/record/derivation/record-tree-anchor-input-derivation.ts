@@ -21,10 +21,15 @@ const CLASS_TOKEN_SCORE = 1;
 const ATTRIBUTE_FINGERPRINT_SCORE = 2;
 const DESCENDANT_ATTRIBUTE_FINGERPRINT_SCORE = 2;
 
-export function deriveTreeAnchorInput(element: HTMLElement, documentRef: Document): AnchorInput | undefined {
+export function deriveTreeAnchorInput(
+  element: HTMLElement,
+  documentRef: Document,
+): AnchorInput | undefined {
   const parent = element.parentElement;
   const grandParent = parent?.parentElement ?? null;
-  const children = Array.from(element.children).filter((c): c is HTMLElement => c instanceof HTMLElement);
+  const children = Array.from(element.children).filter(
+    (c): c is HTMLElement => c instanceof HTMLElement,
+  );
   const descendants = Array.from(element.querySelectorAll<HTMLElement>("*"))
     .filter((d) => !children.includes(d))
     .slice(0, MAX_DESCENDANT_ANCHOR_CANDIDATES);
@@ -32,7 +37,11 @@ export function deriveTreeAnchorInput(element: HTMLElement, documentRef: Documen
   const phases: Array<() => Array<AnchorNode | undefined>> = [
     () => children.map((c) => deriveStrongAnchor("child", c, documentRef)),
     () => [
-      deriveStrongAnchor("previousSibling", getSibling(element, "previousElementSibling"), documentRef),
+      deriveStrongAnchor(
+        "previousSibling",
+        getSibling(element, "previousElementSibling"),
+        documentRef,
+      ),
       deriveStrongAnchor("nextSibling", getSibling(element, "nextElementSibling"), documentRef),
     ],
     () => [deriveStrongAnchor("parent", parent, documentRef)],
@@ -70,7 +79,8 @@ function deriveAnchor(
   const attributeFingerprints = deriveAttributeFingerprints(element);
   const descendantAttributeFingerprints = deriveDescendantAttributeFingerprints(element);
   const text = normalizeTextPreview(element.innerText || element.textContent) ?? null;
-  const fullTextFingerprint = deriveFullTextFingerprint(element.innerText || element.textContent) ?? null;
+  const fullTextFingerprint =
+    deriveFullTextFingerprint(element.innerText || element.textContent) ?? null;
   const uniqueAttribute = resolveUniqueAttributeInput(element, documentRef) ?? null;
 
   const anchor: AnchorNode = {
@@ -94,14 +104,19 @@ function deriveStrongAnchor(
 ): AnchorNode | undefined {
   if (element === null) return undefined;
   const anchor = deriveAnchor(relation, element, documentRef);
-  return anchor !== undefined && computeAnchorScore(anchor) >= MIN_STRONG_ANCHOR_SCORE ? anchor : undefined;
+  return anchor !== undefined && computeAnchorScore(anchor) >= MIN_STRONG_ANCHOR_SCORE
+    ? anchor
+    : undefined;
 }
 
 function appendStrongAnchors(
   selected: AnchorNode[],
   candidates: Array<AnchorNode | undefined>,
 ): AnchorNode[] {
-  const deduped = dedupeAnchors([...selected, ...candidates.filter((a): a is AnchorNode => a !== undefined)]);
+  const deduped = dedupeAnchors([
+    ...selected,
+    ...candidates.filter((a): a is AnchorNode => a !== undefined),
+  ]);
   return deduped
     .sort((a, b) => computeAnchorScore(b) - computeAnchorScore(a))
     .slice(0, MAX_TREE_ANCHORS);

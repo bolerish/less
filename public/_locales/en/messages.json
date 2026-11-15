@@ -87,16 +87,16 @@
     "message": "Nothing hidden here"
   },
   "panel_empty_help": {
-    "message": "Items you hide will appear here."
+    "message": "Choose Hide an item to select what to hide on this site."
   },
   "panel_reset": {
-    "message": "Unhide all"
+    "message": "Show all"
   },
   "panel_reset_confirm": {
-    "message": "Unhide every saved item on this site ($1)? Their hiding rules will be removed."
+    "message": "Show all $1 hidden items on this site and delete their hiding rules."
   },
   "panel_reset_all": {
-    "message": "Unhide all"
+    "message": "Show all"
   },
   "panel_cancel": {
     "message": "Cancel"
@@ -156,7 +156,7 @@
     "message": "Less — current site"
   },
   "panel_reset_group": {
-    "message": "Confirm unhide all"
+    "message": "Show all hidden items?"
   },
   "panel_hidden_noun_one": {
     "message": "Hidden item"

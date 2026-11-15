@@ -87,16 +87,16 @@
     "message": "숨긴 항목이 없습니다"
   },
   "panel_empty_help": {
-    "message": "숨긴 항목이 여기에 표시됩니다."
+    "message": "항목 숨기기로 이 사이트에서 숨길 항목을 선택하세요."
   },
   "panel_reset": {
-    "message": "모두 숨김 해제"
+    "message": "모두 다시 표시"
   },
   "panel_reset_confirm": {
-    "message": "이 사이트의 항목 $1개를 모두 표시할까요? 해당 숨김 규칙이 제거됩니다."
+    "message": "이 사이트의 숨긴 항목 $1개를 다시 표시하고 숨김 규칙을 삭제합니다."
   },
   "panel_reset_all": {
-    "message": "모두 숨김 해제"
+    "message": "모두 다시 표시"
   },
   "panel_cancel": {
     "message": "취소"
@@ -156,7 +156,7 @@
     "message": "Less — 현재 사이트"
   },
   "panel_reset_group": {
-    "message": "모두 숨김 해제 확인"
+    "message": "숨긴 항목을 모두 표시할까요?"
   },
   "panel_hidden_noun_one": {
     "message": "숨긴 항목"

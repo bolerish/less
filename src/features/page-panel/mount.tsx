@@ -126,8 +126,9 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     dialog.setAttribute("data-bolerish-surface", "solid");
     dialog.addEventListener("keydown", (event) => {
       if (event.key !== "Tab" || !dialog) return;
+      const scope = dialog.querySelector<HTMLElement>('[role="alertdialog"]') ?? dialog;
       const controls = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
+        scope.querySelectorAll<HTMLElement>(
           'button:not([disabled]), input:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])',
         ),
       ).filter((element) => element.getClientRects().length > 0 && !element.closest("[hidden]"));
@@ -140,7 +141,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
         !controls.includes(active as HTMLElement)
       ) {
         event.preventDefault();
-        (event.shiftKey ? last : first)?.focus();
+        ((event.shiftKey ? last : first) ?? scope).focus();
       }
     });
     unsubscribePreview = preview.subscribe((state) => {

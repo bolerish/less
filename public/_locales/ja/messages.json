@@ -84,19 +84,19 @@
     "message": "このサイトの非表示ルールをすべて削除しました。"
   },
   "panel_empty_title": {
-    "message": "非表示の項目はありません"
+    "message": "隠した項目はありません"
   },
   "panel_empty_help": {
-    "message": "非表示にした項目がここに表示されます。"
+    "message": "「項目を非表示にする」から、このサイトで隠す項目を選べます。"
   },
   "panel_reset": {
-    "message": "すべて再表示"
+    "message": "すべて表示"
   },
   "panel_reset_confirm": {
-    "message": "このサイトの $1 件をすべて再表示しますか？非表示ルールが削除されます。"
+    "message": "このサイトで隠した$1件の項目を表示し、非表示ルールを削除します。"
   },
   "panel_reset_all": {
-    "message": "すべて再表示"
+    "message": "すべて表示"
   },
   "panel_cancel": {
     "message": "キャンセル"
@@ -156,7 +156,7 @@
     "message": "Less — 現在のサイト"
   },
   "panel_reset_group": {
-    "message": "すべて再表示の確認"
+    "message": "隠した項目をすべて表示しますか？"
   },
   "panel_hidden_noun_one": {
     "message": "非表示の項目"

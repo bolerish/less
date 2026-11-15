@@ -87,16 +87,16 @@
     "message": "No hay elementos ocultos"
   },
   "panel_empty_help": {
-    "message": "Los elementos que ocultes aparecerán aquí."
+    "message": "Selecciona Ocultar un elemento para elegir qué ocultar en este sitio."
   },
   "panel_reset": {
-    "message": "Mostrar todos"
+    "message": "Mostrar todo"
   },
   "panel_reset_confirm": {
-    "message": "¿Mostrar todos los elementos ocultos de este sitio ($1)? Se eliminarán sus reglas de ocultación."
+    "message": "Se mostrarán los $1 elementos ocultos de este sitio y se eliminarán sus reglas de ocultación."
   },
   "panel_reset_all": {
-    "message": "Mostrar todos"
+    "message": "Mostrar todo"
   },
   "panel_cancel": {
     "message": "Cancelar"
@@ -156,7 +156,7 @@
     "message": "Less — sitio actual"
   },
   "panel_reset_group": {
-    "message": "Confirmar mostrar todos"
+    "message": "¿Mostrar todos los elementos ocultos?"
   },
   "panel_hidden_noun_one": {
     "message": "Elemento oculto"

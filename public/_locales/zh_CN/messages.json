@@ -84,19 +84,19 @@
     "message": "已移除此网站的全部隐藏规则。"
   },
   "panel_empty_title": {
-    "message": "暂无隐藏项目"
+    "message": "没有隐藏项"
   },
   "panel_empty_help": {
-    "message": "隐藏的项目会显示在这里。"
+    "message": "选择“隐藏项目”，开始选择此网站上要隐藏的内容。"
   },
   "panel_reset": {
-    "message": "全部取消隐藏"
+    "message": "全部显示"
   },
   "panel_reset_confirm": {
-    "message": "显示此网站的全部 $1 个项目？其隐藏规则将被移除。"
+    "message": "将显示此网站的全部 $1 个隐藏项，并删除对应的隐藏规则。"
   },
   "panel_reset_all": {
-    "message": "全部取消隐藏"
+    "message": "全部显示"
   },
   "panel_cancel": {
     "message": "取消"
@@ -156,7 +156,7 @@
     "message": "Less — 当前网站"
   },
   "panel_reset_group": {
-    "message": "确认全部取消隐藏"
+    "message": "显示所有隐藏项？"
   },
   "panel_hidden_noun_one": {
     "message": "隐藏项目"

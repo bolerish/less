@@ -452,6 +452,21 @@ try {
   await waitFor(() => site.locator("[data-less-panel]").count(), "toolbar opens panel");
   await waitFor(() => textIncludes(messages.panel_empty_title), "empty state");
   assert.equal(
+    await panel((d) => d.querySelector(".empty h3")?.textContent),
+    messages.panel_empty_title,
+    "official Empty title and description render as one header",
+  );
+  assert.equal(
+    await panel((d) => getComputedStyle(d.querySelector(".empty")!).borderStyle),
+    "none",
+    "empty state has no improvised dashed border",
+  );
+  assert.equal(
+    await panel((d) => d.querySelector<HTMLButtonElement>(".reset-button")!.disabled),
+    true,
+    "show all is unavailable when empty",
+  );
+  assert.equal(
     await site.locator("[data-less-panel]").evaluate((e) => e.shadowRoot),
     null,
     "closed shadow",
@@ -1163,13 +1178,105 @@ try {
   await panel((d) => d.querySelector<HTMLElement>(".reset-button")!.scrollIntoView());
   await click(".reset-button");
   await site.keyboard.press("Escape");
-  assert.equal(
-    await panel((d) => !!d.querySelector<HTMLElement>(".reset-confirmation")),
-    false,
+  await waitFor(
+    () => panel((d) => !d.querySelector(".reset-confirmation")),
     "Esc cancels reset first",
   );
+  assert.equal(
+    await panel(
+      (d) => (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".reset-button"),
+    ),
+    true,
+    "cancel returns focus to the trigger",
+  );
   await click(".reset-button");
-  await click(".reset-confirmation .actions button:first-child");
+  await waitFor(
+    () =>
+      panel(
+        (d) =>
+          (d.getRootNode() as ShadowRoot).activeElement ===
+          d.querySelector(".reset-confirmation button"),
+      ),
+    "cancel gets initial focus",
+  );
+  assert.equal(
+    await panel((d) => d.querySelector(".reset-confirmation")?.getAttribute("role")),
+    "alertdialog",
+  );
+  await site.keyboard.press("Shift+Tab");
+  assert.equal(
+    await panel(
+      (d) => (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".reset-submit"),
+    ),
+    true,
+    "dialog traps backwards focus",
+  );
+  await site.keyboard.press("Tab");
+  assert.equal(
+    await panel(
+      (d) =>
+        (d.getRootNode() as ShadowRoot).activeElement ===
+        d.querySelector(".reset-confirmation button"),
+    ),
+    true,
+    "dialog traps forward focus",
+  );
+  await click(".reset-confirmation button");
+  await waitFor(
+    () => panel((d) => !d.querySelector(".reset-confirmation")),
+    "cancel leaves the saved item intact",
+  );
+  assert.equal(await count(), 1);
+  await click(".reset-button");
+  const resetContexts: ExecutionContext[] = [];
+  session.on("Runtime.executionContextCreated", (e) => resetContexts.push(e.context));
+  await session.send("Runtime.disable");
+  await session.send("Runtime.enable");
+  const resetWorld = resetContexts.find((c) => c.origin === `chrome-extension://${id}`);
+  assert(resetWorld);
+  const resetFailure = await session.send("Runtime.evaluate", {
+    contextId: resetWorld.id,
+    expression: `(() => {
+      const original = chrome.runtime.sendMessage.bind(chrome.runtime);
+      let calls = 0;
+      chrome.runtime.sendMessage = (...args) => {
+        if (args[0]?.type !== "RESET_HIDDEN_SITE") return original(...args);
+        calls++;
+        return new Promise((_, reject) => setTimeout(() => reject(new Error("injected reset failure")), 350));
+      };
+      return () => { chrome.runtime.sendMessage = original; return calls; };
+    })()`,
+  });
+  await click(".reset-submit");
+  assert.equal(
+    await panel((d) => d.querySelector(".reset-confirmation")?.getAttribute("aria-busy")),
+    "true",
+    "reset announces pending state",
+  );
+  await site.keyboard.press("Tab");
+  assert.equal(
+    await panel((d) =>
+      d
+        .querySelector(".reset-confirmation")!
+        .contains((d.getRootNode() as ShadowRoot).activeElement),
+    ),
+    true,
+    "pending confirmation retains keyboard focus",
+  );
+  await site.keyboard.press("Escape");
+  await panel((d) => d.querySelector<HTMLButtonElement>(".reset-submit")!.click());
+  await waitFor(
+    () => panel((d) => !!d.querySelector('.reset-confirmation [role="alert"]')),
+    "failed reset keeps the dialog and error visible",
+  );
+  assert.equal(await count(), 1, "failed reset retains records");
+  const resetCalls = await session.send("Runtime.callFunctionOn", {
+    objectId: resetFailure.result.objectId,
+    functionDeclaration: "function(){return this()}",
+    returnByValue: true,
+  });
+  assert.equal(resetCalls.result.value, 1, "pending reset blocks duplicate submission");
+  await click(".reset-confirmation .reset-submit");
   await waitFor(async () => (await count()) === 0, "reset DB");
   await hidden("#one", false);
   await hidden("#one", false, sibling);
@@ -1672,7 +1779,7 @@ try {
     "explicit parent and child have two rows",
   );
   await click(".reset-button");
-  await click(".reset-confirmation .actions button:first-child");
+  await click(".reset-confirmation .reset-submit");
   await waitFor(async () => (await count()) === 0, "reset regression selection");
   await waitFor(
     () =>
@@ -2385,7 +2492,136 @@ try {
         before.site,
         "current site retained",
       );
+      const backgrounds: string[] = [];
+      for (const colorScheme of ["light", "dark"] as const) {
+        await site.emulateMedia({ colorScheme });
+        await click(".reset-button");
+        await waitFor(
+          () => panel((d) => !!d.querySelector('[role="alertdialog"]')),
+          "localized confirmation opens",
+        );
+        const confirmation = await panel((d) => {
+          const popup = d.querySelector<HTMLElement>('[role="alertdialog"]')!;
+          const root = popup.getRootNode() as ShadowRoot;
+          const title = root.getElementById(popup.getAttribute("aria-labelledby")!)!;
+          const description = root.getElementById(popup.getAttribute("aria-describedby")!)!;
+          const r = popup.getBoundingClientRect();
+          return {
+            title: title.textContent,
+            description: description.textContent,
+            background: getComputedStyle(popup).backgroundColor,
+            fits:
+              r.left >= 0 &&
+              r.right <= innerWidth &&
+              r.top >= 0 &&
+              r.bottom <= innerHeight &&
+              popup.scrollWidth <= popup.clientWidth,
+            buttons: Array.from(popup.querySelectorAll("button")).map((button) => {
+              const b = button.getBoundingClientRect();
+              return (
+                b.left >= r.left &&
+                b.right <= r.right &&
+                b.top >= r.top &&
+                b.bottom <= r.bottom &&
+                button.scrollWidth <= button.clientWidth
+              );
+            }),
+            focus: popup.contains(root.activeElement),
+          };
+        });
+        assert.equal(confirmation.title, catalog.panel_reset_group.message);
+        assert.equal(
+          confirmation.description,
+          catalog.panel_reset_confirm.message.replace("$1", String(await count())),
+        );
+        assert(
+          confirmation.fits && confirmation.buttons.every(Boolean) && confirmation.focus,
+          `${locale}/${width}/${colorScheme}: readable confirmation, buttons and contained focus`,
+        );
+        backgrounds.push(confirmation.background);
+        await site.screenshot({
+          path: values.screenshot.replace(
+            /\.png$/,
+            `-confirm-${locale}-${width}-${colorScheme}.png`,
+          ),
+        });
+        await site.keyboard.press("Escape");
+        await waitFor(
+          () => panel((d) => !d.querySelector('[role="alertdialog"]')),
+          "Escape leaves the panel open",
+        );
+        assert.equal(
+          await panel(
+            (d) =>
+              (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".reset-button"),
+          ),
+          true,
+        );
+      }
+      assert.notEqual(backgrounds[0], backgrounds[1], "confirmation follows the inherited theme");
     }
+    await action();
+    await waitFor(
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
+      "close before empty response fixture",
+    );
+    const emptyResponse = await session.send("Runtime.evaluate", {
+      contextId: uiWorld.id,
+      expression: `(() => {
+        const original = chrome.runtime.sendMessage.bind(chrome.runtime);
+        chrome.runtime.sendMessage = (...args) => args[0]?.type === "LIST_HIDDEN_ITEMS" ? Promise.resolve({ok:true, records:[], unsyncedTabs:0}) : original(...args);
+        return () => { chrome.runtime.sendMessage = original; };
+      })()`,
+    });
+    await action();
+    await waitFor(
+      () => panel((d) => !!d.querySelector(".empty") && d.getAnimations().length === 0),
+      "localized empty response fixture is stable",
+    );
+    for (const width of [320, 375]) {
+      for (const colorScheme of ["light", "dark"] as const) {
+        await site.setViewportSize({ width, height: 720 });
+        await site.emulateMedia({ colorScheme });
+        const empty = await panel((d) => {
+          const e = d.querySelector<HTMLElement>(".empty")!;
+          const r = e.getBoundingClientRect();
+          return {
+            title: e.querySelector("h3")?.textContent,
+            help: e.querySelector("p")?.textContent,
+            border: getComputedStyle(e).borderStyle,
+            fits: r.left >= 0 && r.right <= innerWidth && e.scrollWidth <= e.clientWidth,
+            disabled: d.querySelector<HTMLButtonElement>(".reset-button")!.disabled,
+          };
+        });
+        assert.equal(empty.title, catalog.panel_empty_title.message);
+        assert.equal(empty.help, catalog.panel_empty_help.message);
+        assert.equal(empty.border, "none");
+        assert(
+          empty.fits && empty.disabled,
+          `${locale}/${width}/${colorScheme}: empty state fits and reset remains disabled`,
+        );
+        await site.screenshot({
+          path: values.screenshot.replace(/\.png$/, `-empty-${locale}-${width}-${colorScheme}.png`),
+        });
+      }
+    }
+    await action();
+    await waitFor(
+      async () => (await site.locator("[data-less-panel]").count()) === 0,
+      "close empty response fixture",
+    );
+    await session.send("Runtime.callFunctionOn", {
+      objectId: emptyResponse.result.objectId,
+      functionDeclaration: "function(){this()}",
+    });
+    await action();
+    await waitFor(
+      () => panel((d) => d.querySelectorAll(".record").length >= 17),
+      "saved records unchanged by locale/empty fixtures",
+    );
+    console.log(
+      `PASS ${locale}: Empty and AlertDialog 320/375 light/dark, translated effect, focus and Escape`,
+    );
   }
   await action();
   await waitFor(

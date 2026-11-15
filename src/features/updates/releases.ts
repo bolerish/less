@@ -13,7 +13,7 @@ export const productUpdates: readonly ProductUpdate[] = [
     status: "unreleased",
     title: "Your hidden items, in one place",
     changes: [
-      "Click the Veil toolbar icon to open your panel right on the current website.",
+      "Click the Less toolbar icon to open your panel right on the current website.",
       "Restore an individual item or reset the site while keeping the page open.",
       "See the current site’s saved hiding rules. Restoring an item decreases the count.",
     ],

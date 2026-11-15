@@ -29,19 +29,19 @@ export type Translations = {
 
 export const translations: Record<Locale, Translations> = {
   en: {
-    title: "Hide distractions with Veil.",
+    title: "Hide distractions with Less.",
     steps: [
       {
         title: "Pin the extension",
-        description: 'Click the puzzle icon in your toolbar and pin "Veil" to keep it accessible.',
+        description: 'Click the puzzle icon in your toolbar and pin "Less" to keep it accessible.',
       },
       {
-        title: "Open Veil on any page",
-        description: "Navigate to a website and click the Veil icon in your toolbar.",
+        title: "Open Less on any page",
+        description: "Navigate to a website and click the Less icon in your toolbar.",
       },
       {
         title: "Enter selection mode",
-        description: "Choose “Hide an item” in the Veil panel, or use the shortcut.",
+        description: "Choose “Hide an item” in the Less panel, or use the shortcut.",
         kbdLabel: "Toggle selection mode",
       },
       {
@@ -53,19 +53,19 @@ export const translations: Record<Locale, Translations> = {
     ],
   },
   ko: {
-    title: "Veil로 불필요한 것을 숨기세요.",
+    title: "Less로 불필요한 것을 숨기세요.",
     steps: [
       {
         title: "확장 프로그램 고정",
-        description: '툴바의 퍼즐 아이콘을 클릭하고 "Veil"을 고정하세요.',
+        description: '툴바의 퍼즐 아이콘을 클릭하고 "Less"을 고정하세요.',
       },
       {
-        title: "아무 페이지에서 Veil 열기",
-        description: "웹사이트로 이동한 후 툴바의 Veil 아이콘을 클릭하세요.",
+        title: "아무 페이지에서 Less 열기",
+        description: "웹사이트로 이동한 후 툴바의 Less 아이콘을 클릭하세요.",
       },
       {
         title: "선택 모드 진입",
-        description: "Veil 패널의 “Hide an item”을 클릭하거나 단축키를 사용하세요.",
+        description: "Less 패널의 “Hide an item”을 클릭하거나 단축키를 사용하세요.",
         kbdLabel: "선택 모드 켜기/끄기",
       },
       {
@@ -76,20 +76,20 @@ export const translations: Record<Locale, Translations> = {
     ],
   },
   ja: {
-    title: "Veilで邪魔なものを非表示にしましょう。",
+    title: "Lessで邪魔なものを非表示にしましょう。",
     steps: [
       {
         title: "拡張機能を固定する",
-        description: 'ツールバーのパズルアイコンをクリックして"Veil"を固定してください。',
+        description: 'ツールバーのパズルアイコンをクリックして"Less"を固定してください。',
       },
       {
-        title: "任意のページでVeilを開く",
-        description: "ウェブサイトに移動し、ツールバーのVeilアイコンをクリックしてください。",
+        title: "任意のページでLessを開く",
+        description: "ウェブサイトに移動し、ツールバーのLessアイコンをクリックしてください。",
       },
       {
         title: "選択モードに入る",
         description:
-          "Veilパネルの「Hide an item」をクリックするか、ショートカットを使ってください。",
+          "Lessパネルの「Hide an item」をクリックするか、ショートカットを使ってください。",
         kbdLabel: "選択モードの切り替え",
       },
       {
@@ -101,20 +101,20 @@ export const translations: Record<Locale, Translations> = {
     ],
   },
   es: {
-    title: "Oculta lo innecesario con Veil.",
+    title: "Oculta lo innecesario con Less.",
     steps: [
       {
         title: "Ancla la extensión",
-        description: 'Haz clic en el icono de rompecabezas en tu barra y ancla "Veil".',
+        description: 'Haz clic en el icono de rompecabezas en tu barra y ancla "Less".',
       },
       {
-        title: "Abre Veil en cualquier página",
+        title: "Abre Less en cualquier página",
         description:
-          "Navega a un sitio web y haz clic en el icono de Veil en tu barra de herramientas.",
+          "Navega a un sitio web y haz clic en el icono de Less en tu barra de herramientas.",
       },
       {
         title: "Entra en modo selección",
-        description: "Elige «Hide an item» en el panel de Veil o usa el atajo de teclado.",
+        description: "Elige «Hide an item» en el panel de Less o usa el atajo de teclado.",
         kbdLabel: "Activar o desactivar modo selección",
       },
       {
@@ -126,19 +126,19 @@ export const translations: Record<Locale, Translations> = {
     ],
   },
   zh_CN: {
-    title: "用 Veil 隐藏不需要的内容。",
+    title: "用 Less 隐藏不需要的内容。",
     steps: [
       {
         title: "固定扩展程序",
-        description: '点击工具栏中的拼图图标并固定"Veil"。',
+        description: '点击工具栏中的拼图图标并固定"Less"。',
       },
       {
-        title: "在任意页面打开 Veil",
-        description: "导航到网站，然后点击工具栏中的 Veil 图标。",
+        title: "在任意页面打开 Less",
+        description: "导航到网站，然后点击工具栏中的 Less 图标。",
       },
       {
         title: "进入选择模式",
-        description: "点击 Veil 面板中的“Hide an item”，或使用快捷键。",
+        description: "点击 Less 面板中的“Hide an item”，或使用快捷键。",
         kbdLabel: "切换选择模式",
       },
       {

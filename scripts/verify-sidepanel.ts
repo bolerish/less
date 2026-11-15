@@ -65,6 +65,10 @@ try {
   assert(address && typeof address !== "string");
   const origin = `http://127.0.0.1:${address.port}`;
   const manifest = JSON.parse(await readFile(join(values.build, "manifest.json"), "utf8"));
+  assert.equal(manifest.short_name, "Less");
+  assert.equal(manifest.action.default_title, "Less");
+  assert.equal(manifest.name, "__MSG_ext_name__");
+  assert.equal(manifest.description, "__MSG_ext_description__");
   assert(!manifest.action.default_popup && !manifest.side_panel && !manifest.sidebar_action);
   assert(!manifest.permissions.includes("sidePanel") && !manifest.permissions.includes("tabs"));
   const baseCatalog: Record<string, { message: string }> = JSON.parse(
@@ -73,6 +77,13 @@ try {
   for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
     const catalog = JSON.parse(
       await readFile(join(values.build, "_locales", locale, "messages.json"), "utf8"),
+    );
+    assert.equal(catalog.ext_name.message, "Less", `${locale}: product name`);
+    assert(
+      !Object.values(catalog).some((entry) =>
+        (entry as { message: string }).message.includes("Veil"),
+      ),
+      `${locale}: no old product name`,
     );
     for (const key of ["panel_current_site", "panel_loading", "panel_count_help"])
       assert(catalog[key]?.message, `${locale}: ${key}`);
@@ -616,6 +627,10 @@ try {
   await site.keyboard.press("Escape");
   await click(".updates-button");
   await waitFor(() => textIncludes(messages.panel_updates_help), "updates timeline");
+  assert(
+    !(await panel((d) => d.innerText)).includes("Veil"),
+    "unreleased update copy uses current name",
+  );
   await site.keyboard.press("Escape");
   await waitFor(() => textIncludes(messages.panel_hidden_items), "updates back");
   assert.equal(
@@ -1758,7 +1773,7 @@ try {
   );
   const guidance = context.pages().find((p) => p.url().endsWith("/unavailable.html"));
   assert(guidance);
-  await guidance.getByRole("heading", { name: "Veil could not open on that page" }).waitFor();
+  await guidance.getByRole("heading", { name: "Less could not open on that page" }).waitFor();
   assert.equal(errors.length, 0, errors.join("\n"));
   console.log(
     "PASS: real toolbar action, isolated in-page UI, preview cleanup, restore/reset DB+CSS+open tabs+reload, keyboard/Escape, 320/375, themes, hostile CSS, origin validation, unsupported guidance",

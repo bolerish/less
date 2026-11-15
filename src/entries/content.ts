@@ -112,7 +112,7 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
       if (message.enabled && !hidingEnabled) {
         sendResponse({
           ok: false,
-          error: "Hiding is paused for this site. Enable it in the Veil panel first.",
+          error: "Hiding is paused for this site. Enable it in the Less panel first.",
         });
         return;
       }

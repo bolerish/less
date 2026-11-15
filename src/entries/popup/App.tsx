@@ -41,15 +41,15 @@ function App() {
     void browser.tabs
       .sendMessage(currentTab.id, { type: "TOGGLE_PAGE_PANEL" }, { frameId: 0 })
       .then(() => window.close())
-      .catch(() => setPanelError("Reload the website, then click the Veil toolbar icon."));
+      .catch(() => setPanelError("Reload the website, then click the Less toolbar icon."));
   };
 
   return (
     <div className="popup">
       <div className="popup-header">
         <div className="popup-brand">
-          <img src={wxtLogo} alt="Veil logo" width={22} />
-          <span className="popup-title">Veil</span>
+          <img src={wxtLogo} alt="Less logo" width={22} />
+          <span className="popup-title">Less</span>
         </div>
         <Switch
           aria-label="Hide saved items on this site"

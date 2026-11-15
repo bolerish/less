@@ -61,7 +61,7 @@ export async function handleManagement(request: ManagementRequest): Promise<Mana
     return {
       ok: false,
       error:
-        "Veil could not read or save your hidden items. Try again. If this continues, reload the extension.",
+        "Less could not read or save your hidden items. Try again. If this continues, reload the extension.",
     };
   }
 }

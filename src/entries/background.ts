@@ -67,12 +67,12 @@ export default defineBackground(() => {
     if (sender.id !== browser.runtime.id || !isManagementRequest(message)) return;
     void (async () => {
       if (!(await canManageSite(sender, message.origin))) {
-        sendResponse({ ok: false, error: "Veil can only manage the site in this tab." });
+        sendResponse({ ok: false, error: "Less can only manage the site in this tab." });
         return;
       }
       sendResponse(await handleManagement(message));
     })().catch(() =>
-      sendResponse({ ok: false, error: "The page changed. Reopen Veil and try again." }),
+      sendResponse({ ok: false, error: "The page changed. Reopen Less and try again." }),
     );
     return true;
   });
@@ -218,13 +218,13 @@ async function togglePagePanel(tab: Browser.tabs.Tab): Promise<void> {
     );
     if (!response?.ok) throw new Error("No panel receiver");
     await toolbarAction.setBadgeText({ tabId: tab.id, text: "" });
-    await toolbarAction.setTitle({ tabId: tab.id, title: "Veil" });
+    await toolbarAction.setTitle({ tabId: tab.id, title: "Less" });
   } catch {
     try {
       await toolbarAction.setBadgeText({ tabId: tab.id, text: "!" });
       await toolbarAction.setTitle({
         tabId: tab.id,
-        title: "Veil cannot open here. Open a regular website or reload the page.",
+        title: "Less cannot open here. Open a regular website or reload the page.",
       });
     } catch {
       /* The tab may have closed while opening the panel. */

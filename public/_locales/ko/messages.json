@@ -1,9 +1,9 @@
 {
   "ext_name": {
-    "message": "Veil — 무엇이든 숨기세요"
+    "message": "Less"
   },
   "ext_description": {
-    "message": "무엇이든 숨기세요."
+    "message": "웹페이지에서 원하는 요소를 숨기세요."
   },
   "panel_current_site": {
     "message": "현재 사이트"
@@ -51,10 +51,10 @@
     "message": "뒤로"
   },
   "panel_close": {
-    "message": "Veil 닫기"
+    "message": "Less 닫기"
   },
   "panel_preview_title": {
-    "message": "Veil · 미리보기"
+    "message": "Less · 미리보기"
   },
   "panel_hidden_items": {
     "message": "숨긴 항목"
@@ -114,7 +114,7 @@
     "message": "숨긴 항목을 불러오지 못했습니다. 다시 시도하세요."
   },
   "panel_save_error": {
-    "message": "변경을 저장하지 못했습니다. 다시 시도하고, 문제가 계속되면 Veil을 다시 로드하세요."
+    "message": "변경을 저장하지 못했습니다. 다시 시도하고, 문제가 계속되면 Less을 다시 로드하세요."
   },
   "panel_selection_error": {
     "message": "선택을 시작하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
@@ -156,7 +156,7 @@
     "message": "항목 $1 미리보기: $2"
   },
   "panel_dialog": {
-    "message": "Veil — 현재 사이트"
+    "message": "Less — 현재 사이트"
   },
   "panel_reset_group": {
     "message": "모두 숨김 해제 확인"

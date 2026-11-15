@@ -1,9 +1,8 @@
-# Veil
+# Less
 
-<img src="/src/assets/logo.svg" alt="Veil logo" width="100" />
+<img src="/src/assets/logo.svg" alt="Less logo" width="100" />
 
-Hide anything on any page. Remembered across visits.  
-Point at anything. Click. Gone.
+Hide elements on any webpage.
 
 ---
 

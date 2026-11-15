@@ -1,9 +1,9 @@
 {
   "ext_name": {
-    "message": "Veil — 隐藏一切"
+    "message": "Less"
   },
   "ext_description": {
-    "message": "隐藏一切。"
+    "message": "隐藏任意网页上想隐藏的元素。"
   },
   "panel_current_site": {
     "message": "当前网站"
@@ -51,10 +51,10 @@
     "message": "返回"
   },
   "panel_close": {
-    "message": "关闭 Veil"
+    "message": "关闭 Less"
   },
   "panel_preview_title": {
-    "message": "Veil · 预览"
+    "message": "Less · 预览"
   },
   "panel_hidden_items": {
     "message": "隐藏项目"
@@ -114,7 +114,7 @@
     "message": "无法加载隐藏项目，请重试。"
   },
   "panel_save_error": {
-    "message": "无法保存更改。请重试；若问题持续，请重新加载 Veil。"
+    "message": "无法保存更改。请重试；若问题持续，请重新加载 Less。"
   },
   "panel_selection_error": {
     "message": "无法开始选择。请刷新页面后重试。"
@@ -156,7 +156,7 @@
     "message": "预览项目 $1：$2"
   },
   "panel_dialog": {
-    "message": "Veil — 当前网站"
+    "message": "Less — 当前网站"
   },
   "panel_reset_group": {
     "message": "确认全部取消隐藏"

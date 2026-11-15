@@ -12,7 +12,7 @@ export default defineConfig({
   filterEntrypoints: ["background", "content", "preload", "welcome", "unavailable"],
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
   autoIcons: {
-    baseIconPath: "assets/logo.svg",
+    baseIconPath: "assets/logo.png",
     developmentIndicator: false,
     sizes: [128, 96, 48, 32, 16],
   },
@@ -25,11 +25,11 @@ export default defineConfig({
   manifest: ({ browser }) => ({
     minimum_chrome_version: browser === "firefox" ? undefined : "116",
     name: "__MSG_ext_name__",
-    short_name: "Veil",
+    short_name: "Less",
     description: "__MSG_ext_description__",
     default_locale: "en",
     action: {
-      default_title: "Veil",
+      default_title: "Less",
       default_icon: {
         16: "icons/16.png",
         32: "icons/32.png",

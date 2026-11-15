@@ -87,7 +87,7 @@ export default function App({
         {view === "hidden" ? (
           <div className="brand">
             <img src={logo} alt="" width="22" height="22" />
-            <span className="brand-name">Veil</span>
+            <span className="brand-name">Less</span>
             <span className="preview-label">{message("panel_preview_title")}</span>
           </div>
         ) : (

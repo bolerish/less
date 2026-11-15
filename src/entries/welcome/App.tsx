@@ -31,7 +31,7 @@ function App() {
         {/* Header */}
         <div className="welcome-header">
           <div className="welcome-brand">
-            <img src={wxtLogo} alt="Veil logo" width={32} />
+            <img src={wxtLogo} alt="Less logo" width={32} />
             <Heading level={1} size="page" className="welcome-title">
               {t.title}
             </Heading>

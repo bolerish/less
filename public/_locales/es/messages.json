@@ -1,9 +1,9 @@
 {
   "ext_name": {
-    "message": "Veil — Oculta todo"
+    "message": "Less"
   },
   "ext_description": {
-    "message": "Oculta cualquier cosa."
+    "message": "Oculta elementos en cualquier página web."
   },
   "panel_current_site": {
     "message": "Sitio actual"
@@ -51,10 +51,10 @@
     "message": "Volver"
   },
   "panel_close": {
-    "message": "Cerrar Veil"
+    "message": "Cerrar Less"
   },
   "panel_preview_title": {
-    "message": "Veil · Vista previa"
+    "message": "Less · Vista previa"
   },
   "panel_hidden_items": {
     "message": "Elementos ocultos"
@@ -114,7 +114,7 @@
     "message": "No se pudieron cargar los elementos. Inténtalo de nuevo."
   },
   "panel_save_error": {
-    "message": "No se pudieron guardar los cambios. Reintenta y, si el problema continúa, recarga Veil."
+    "message": "No se pudieron guardar los cambios. Reintenta y, si el problema continúa, recarga Less."
   },
   "panel_selection_error": {
     "message": "No se pudo iniciar la selección. Recarga la página e inténtalo de nuevo."
@@ -156,7 +156,7 @@
     "message": "Vista previa del elemento $1: $2"
   },
   "panel_dialog": {
-    "message": "Veil — sitio actual"
+    "message": "Less — sitio actual"
   },
   "panel_reset_group": {
     "message": "Confirmar mostrar todos"

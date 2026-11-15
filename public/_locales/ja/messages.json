@@ -1,9 +1,9 @@
 {
   "ext_name": {
-    "message": "Veil — なんでも隠せる"
+    "message": "Less"
   },
   "ext_description": {
-    "message": "なんでも隠せる。"
+    "message": "ウェブページ上の好きな要素を非表示に。"
   },
   "panel_current_site": {
     "message": "現在のサイト"
@@ -51,10 +51,10 @@
     "message": "戻る"
   },
   "panel_close": {
-    "message": "Veil を閉じる"
+    "message": "Less を閉じる"
   },
   "panel_preview_title": {
-    "message": "Veil · プレビュー"
+    "message": "Less · プレビュー"
   },
   "panel_hidden_items": {
     "message": "非表示の項目"
@@ -114,7 +114,7 @@
     "message": "項目を読み込めませんでした。再試行してください。"
   },
   "panel_save_error": {
-    "message": "変更を保存できませんでした。再試行してください。解決しない場合は Veil を再読み込みしてください。"
+    "message": "変更を保存できませんでした。再試行してください。解決しない場合は Less を再読み込みしてください。"
   },
   "panel_selection_error": {
     "message": "選択を開始できませんでした。ページを再読み込みして再試行してください。"
@@ -156,7 +156,7 @@
     "message": "項目 $1 をプレビュー: $2"
   },
   "panel_dialog": {
-    "message": "Veil — 現在のサイト"
+    "message": "Less — 現在のサイト"
   },
   "panel_reset_group": {
     "message": "すべて再表示の確認"

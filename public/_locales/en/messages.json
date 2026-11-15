@@ -1,9 +1,9 @@
 {
   "ext_name": {
-    "message": "Veil — Hide anything"
+    "message": "Less"
   },
   "ext_description": {
-    "message": "Hide anything."
+    "message": "Hide elements on any webpage."
   },
   "panel_current_site": {
     "message": "Current site"
@@ -51,10 +51,10 @@
     "message": "Back"
   },
   "panel_close": {
-    "message": "Close Veil"
+    "message": "Close Less"
   },
   "panel_preview_title": {
-    "message": "Veil · Preview"
+    "message": "Less · Preview"
   },
   "panel_hidden_items": {
     "message": "Hidden items"
@@ -114,7 +114,7 @@
     "message": "Could not load hidden items. Try again."
   },
   "panel_save_error": {
-    "message": "Could not save changes. Try again. If this continues, reload Veil."
+    "message": "Could not save changes. Try again. If this continues, reload Less."
   },
   "panel_selection_error": {
     "message": "Could not start selection. Reload the page and try again."
@@ -156,7 +156,7 @@
     "message": "Preview item $1: $2"
   },
   "panel_dialog": {
-    "message": "Veil — current site"
+    "message": "Less — current site"
   },
   "panel_reset_group": {
     "message": "Confirm unhide all"

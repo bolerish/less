@@ -17,7 +17,7 @@ createRoot(document.getElementById("root")!).render(
 // Retained source for the retired document; WXT excludes this native entrypoint.
 function LegacyPanel() {
   const { site } = useActiveSite();
-  if (!site) return <p>Open a website and click the Veil toolbar icon.</p>;
+  if (!site) return <p>Open a website and click the Less toolbar icon.</p>;
   return (
     <App
       origin={site.origin}

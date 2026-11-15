@@ -23,6 +23,6 @@ export async function manageRecords(
 ): Promise<ManagementResponse & { ok: true }> {
   const response: ManagementResponse = await browser.runtime.sendMessage(request);
   if (!response?.ok)
-    throw new Error(response?.error ?? "Veil could not reach its background service. Try again.");
+    throw new Error(response?.error ?? "Less could not reach its background service. Try again.");
   return response;
 }

@@ -93,7 +93,7 @@
     "message": "Los elementos que ocultes aparecerán aquí."
   },
   "panel_reset": {
-    "message": "Mostrar todos…"
+    "message": "Mostrar todos"
   },
   "panel_reset_confirm": {
     "message": "¿Mostrar los $1 elementos de este sitio? Se eliminarán sus reglas de ocultación."
@@ -172,5 +172,11 @@
   },
   "panel_latest": {
     "message": "Más reciente"
+  },
+  "panel_version_updates": {
+    "message": "v$1 · Novedades"
+  },
+  "panel_version_updates_unread": {
+    "message": "v$1 · Novedades sin leer"
   }
 }

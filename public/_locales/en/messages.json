@@ -93,7 +93,7 @@
     "message": "Items you hide will appear here."
   },
   "panel_reset": {
-    "message": "Unhide all…"
+    "message": "Unhide all"
   },
   "panel_reset_confirm": {
     "message": "Unhide all $1 items on this site? Their hiding rules will be removed."
@@ -172,5 +172,11 @@
   },
   "panel_latest": {
     "message": "Latest"
+  },
+  "panel_version_updates": {
+    "message": "v$1 · Updates"
+  },
+  "panel_version_updates_unread": {
+    "message": "v$1 · Unread updates"
   }
 }

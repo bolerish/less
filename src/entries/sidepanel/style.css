@@ -59,7 +59,7 @@ dialog.veil-theme[data-preview-layout="compact"] {
 }
 [data-preview-layout="compact"] .site-overview,
 [data-preview-layout="compact"] .list-toolbar,
-[data-preview-layout="compact"] .reset {
+[data-preview-layout="compact"] .panel-footer {
   display: none;
 }
 dialog.veil-theme[data-preview-edge="top"] {
@@ -84,9 +84,16 @@ svg {
 }
 .preference {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: var(--veil-spacing-space-2);
-  margin-bottom: var(--veil-spacing-space-3);
+  margin-block: var(--veil-spacing-space-5) var(--veil-spacing-space-3);
+}
+.preference > span {
+  min-width: 0;
+}
+.preference > [role="switch"] {
+  flex-shrink: 0;
 }
 .panel {
   padding-inline: var(--veil-spacing-space-4);
@@ -198,6 +205,7 @@ time {
 }
 .select-button {
   width: 100%;
+  margin-bottom: var(--veil-spacing-space-4);
 }
 .list-toolbar {
   display: flex;
@@ -206,6 +214,19 @@ time {
   gap: var(--veil-spacing-space-2);
   padding-block: var(--veil-spacing-space-2);
   border-bottom: 1px solid var(--veil-color-stroke-default);
+}
+.list-toolbar h2 {
+  color: var(--veil-color-fg-secondary);
+  font-weight: var(--veil-font-weight-semibold);
+}
+.list-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--veil-spacing-space-2);
+}
+.toolbar-separator {
+  height: 16px;
 }
 .records {
   flex: 1 1 0;
@@ -321,30 +342,15 @@ time {
   line-height: inherit;
   color: var(--veil-color-fg-secondary);
 }
-.reset {
+.panel-footer {
   margin-top: auto;
   padding-top: var(--veil-spacing-space-3);
   border-top: 1px solid var(--veil-color-stroke-default);
+}
+.reset-confirmation {
   max-height: 35dvh;
   overflow: auto;
-}
-.footer-links {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--veil-spacing-space-2) var(--veil-spacing-space-4);
-}
-.footer-links > .reset-button {
-  min-width: 0;
-  max-width: 100%;
-  height: auto;
-  min-height: 32px;
-  padding-block: var(--veil-spacing-space-2);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.reset-button {
-  margin-inline-start: auto;
+  padding-block: var(--veil-spacing-space-3);
 }
 .actions {
   display: flex;

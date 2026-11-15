@@ -200,6 +200,19 @@ try {
     Object.keys(englishCatalog) as (keyof typeof import("../public/_locales/en/messages.json"))[],
   );
 
+  Object.assign(
+    messages,
+    await worker.evaluate(
+      (version) => ({
+        panel_version_updates: chrome.i18n.getMessage("panel_version_updates", [version]),
+        panel_version_updates_unread: chrome.i18n.getMessage("panel_version_updates_unread", [
+          version,
+        ]),
+      }),
+      manifest.version,
+    ),
+  );
+
   await waitFor(
     async () => activeContext.pages().some((p) => p.url().endsWith("/welcome.html")),
     "install finished",
@@ -373,6 +386,16 @@ try {
     await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.getAttribute("aria-label")),
     messages.panel_close,
   );
+  const commands = await worker.evaluate(() => chrome.commands?.getAll?.() ?? []);
+  assert(
+    !commands.some((command) => command.shortcut),
+    "no configured browser command supplies a selection shortcut",
+  );
+  assert.equal(
+    await panel((d) => d.querySelector(".select-button kbd")),
+    null,
+    "no invented shortcut hint",
+  );
   const unreadVersion = values["released-update-fixture"]
     ? manifest.version
     : getLatestReleasedUpdate(productUpdates, manifest.version)?.version;
@@ -396,7 +419,10 @@ try {
         hidden: dot.getAttribute("aria-hidden"),
       };
     });
-    assert.equal(badge.label, messages.panel_updates_unread);
+    assert.equal(
+      badge.label,
+      messages.panel_version_updates_unread.replace("$1", manifest.version),
+    );
     assert(
       badge.side && badge.hidden === "true",
       "decorative unread dot occupies the top right of the full icon target",
@@ -745,7 +771,7 @@ try {
   await waitFor(() => textIncludes(messages.panel_hidden_items), "updates back");
   assert.equal(
     await panel((d) => (d.getRootNode() as ShadowRoot).activeElement!.getAttribute("aria-label")),
-    messages.panel_updates,
+    messages.panel_version_updates.replace("$1", manifest.version),
   );
 
   console.log("PASS preview and persistent restore, tooltip and updates");
@@ -766,7 +792,7 @@ try {
           panel((d) =>
             Array.from(
               d.querySelectorAll(
-                ".list-toolbar button,.reset button,.select-button,.site-card,.record-tag",
+                ".list-toolbar button,.panel-footer button,.select-button,.site-card,.record-tag",
               ),
             ).every((element) => element.getAnimations().length === 0),
           ),
@@ -793,13 +819,13 @@ try {
         const select = d.querySelector<HTMLElement>(".select-button")!.getBoundingClientRect();
         return {
           columns: identity.right <= count.left && identity.top < count.bottom,
-          rows: card.bottom <= preference.top && preference.bottom <= select.top,
+          rows: select.bottom <= card.top && card.bottom <= preference.top,
           countFont: getComputedStyle(d.querySelector(".count-value")!).fontSize,
         };
       });
       assert(
         cardLayout.columns && cardLayout.rows,
-        "site identity/count use two columns above separate actions",
+        "primary action precedes the two-column site card and separate setting",
       );
       assert.equal(cardLayout.countFont, "24px", "the count retains its semantic heading size");
       if (width <= 375) {
@@ -894,7 +920,7 @@ try {
       }
       assert.equal(components.refresh.height, "36px", "official icon button size");
       assert.equal(components.refresh.width, "36px", "refresh stays square");
-      assert(parseFloat(components.reset.height) >= 32, "footer retains readable control height");
+      assert.equal(components.reset.height, "36px", "reset uses the official icon target");
       assert.deepEqual(
         components.select.background,
         components.primary,
@@ -1047,12 +1073,12 @@ try {
   await click(".reset-button");
   await site.keyboard.press("Escape");
   assert.equal(
-    await panel((d) => !!d.querySelector<HTMLElement>('.reset [role="group"]')),
+    await panel((d) => !!d.querySelector<HTMLElement>(".reset-confirmation")),
     false,
     "Esc cancels reset first",
   );
   await click(".reset-button");
-  await click(".reset .actions button:first-child");
+  await click(".reset-confirmation .actions button:first-child");
   await waitFor(async () => (await count()) === 0, "reset DB");
   await hidden("#one", false);
   await hidden("#one", false, sibling);
@@ -1085,13 +1111,13 @@ try {
     "explicit parent and child have two rows",
   );
   await click(".reset-button");
-  await click(".reset .actions button:first-child");
+  await click(".reset-confirmation .actions button:first-child");
   await waitFor(async () => (await count()) === 0, "reset regression selection");
   await waitFor(
     () =>
       panel(
         (d) =>
-          d.querySelectorAll(".record").length === 0 && !d.querySelector('.reset [role="group"]'),
+          d.querySelectorAll(".record").length === 0 && !d.querySelector(".reset-confirmation"),
       ),
     "reset UI settled",
   );
@@ -1561,7 +1587,7 @@ try {
     await site.setViewportSize(size);
     const before = await panel((d) => {
       const list = d.querySelector<HTMLElement>(".records")!,
-        footer = d.querySelector<HTMLElement>(".reset")!;
+        footer = d.querySelector<HTMLElement>(".panel-footer")!;
       list.scrollTop = 0;
       return {
         footer: footer.getBoundingClientRect().toJSON(),
@@ -1573,7 +1599,7 @@ try {
     assert(before.scroll > before.client && before.client > 0, "remaining list viewport scrolls");
     const after = await panel((d) => {
       const list = d.querySelector<HTMLElement>(".records")!,
-        footer = d.querySelector<HTMLElement>(".reset")!;
+        footer = d.querySelector<HTMLElement>(".panel-footer")!;
       list.scrollTop = list.scrollHeight;
       const li = list.querySelector<HTMLElement>(".record")!,
         row = li.querySelector<HTMLElement>(".record-row")!,
@@ -1665,9 +1691,8 @@ try {
       const before = await panel((d) => {
         const list = d.querySelector<HTMLElement>(".records")!;
         list.scrollTop = Math.floor((list.scrollHeight - list.clientHeight) / 2);
-        const updates = d.querySelector<HTMLElement>(".updates-button")!;
         const reset = d.querySelector<HTMLElement>(".reset-button")!;
-        const a = updates.getBoundingClientRect(),
+        const a = d.querySelector<HTMLElement>(".refresh-button")!.getBoundingClientRect(),
           b = reset.getBoundingClientRect();
         return {
           scroll: list.scrollTop,
@@ -1684,7 +1709,7 @@ try {
       );
       assert(
         before.left.right + 15 <= before.right.left,
-        `${locale}/${width}: footer actions separated`,
+        `${locale}/${width}: refresh and reset are separated in their toolbar`,
       );
       assert(before.right.bottom <= 720, `${locale}/${width}: footer stays visible`);
       assert.equal(
@@ -1700,15 +1725,17 @@ try {
           (d.getRootNode() as ShadowRoot).activeElement!.classList.contains("updates-button"),
         ),
         true,
-        "footer updates follows list in tab order",
+        "footer version follows list in tab order",
       );
       await site.keyboard.press("Tab");
       assert.equal(
-        await panel((d) =>
-          (d.getRootNode() as ShadowRoot).activeElement!.classList.contains("reset-button"),
+        await panel(
+          (d) =>
+            (d.getRootNode() as ShadowRoot).activeElement ===
+            d.querySelector(".panel-header button:last-child"),
         ),
         true,
-        "reset follows updates in tab order",
+        "version footer loops back to close in tab order",
       );
       // Restore a middle position after keyboard focus scrolled the last row into view.
       await panel((d, top) => {
@@ -1900,7 +1927,7 @@ try {
     width: d.clientWidth,
     scroll: d.scrollWidth,
     body: d.querySelector<HTMLElement>(".panel")!.getBoundingClientRect().toJSON(),
-    footer: d.querySelector<HTMLElement>(".reset")!.getBoundingClientRect().toJSON(),
+    footer: d.querySelector<HTMLElement>(".panel-footer")!.getBoundingClientRect().toJSON(),
   }));
   assert(
     zoom.scroll <= zoom.width && zoom.width <= zoom.viewport,

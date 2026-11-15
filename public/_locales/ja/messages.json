@@ -93,7 +93,7 @@
     "message": "非表示にした項目がここに表示されます。"
   },
   "panel_reset": {
-    "message": "すべて再表示…"
+    "message": "すべて再表示"
   },
   "panel_reset_confirm": {
     "message": "このサイトの $1 件をすべて再表示しますか？非表示ルールが削除されます。"
@@ -172,5 +172,11 @@
   },
   "panel_latest": {
     "message": "最新"
+  },
+  "panel_version_updates": {
+    "message": "v$1 · 更新情報"
+  },
+  "panel_version_updates_unread": {
+    "message": "v$1 · 未読の更新情報"
   }
 }

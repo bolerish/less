@@ -8,6 +8,7 @@ import { Item } from "@bolerish/ui/item";
 import { Empty, EmptyDescription } from "@bolerish/ui/empty";
 import { Heading } from "@bolerish/ui/heading";
 import { Switch } from "@bolerish/ui/switch";
+import { Separator } from "@bolerish/ui/separator";
 import {
   Timeline,
   TimelineContent,
@@ -19,7 +20,7 @@ import {
 import {
   ArrowClockwiseIcon,
   CaretLeftIcon,
-  ClockCounterClockwiseIcon,
+  EyeIcon,
   CursorClickIcon,
   XIcon,
 } from "@phosphor-icons/react";
@@ -373,6 +374,15 @@ function HiddenItems({
       }}
     >
       <div className="site-overview">
+        <Button
+          className="select-button"
+          size="sm"
+          disabled={busy || selecting || enabled !== true}
+          onClick={() => void startSelection()}
+        >
+          <CursorClickIcon aria-hidden="true" />
+          {selecting ? message("panel_starting") : message("panel_select")}
+        </Button>
         <Card
           className="site-card"
           role="group"
@@ -396,6 +406,7 @@ function HiddenItems({
           </CardContent>
         </Card>
         <label className="preference">
+          <span>{message("panel_enable_hiding")}</span>
           <Switch
             size="sm"
             checked={enabled ?? true}
@@ -406,17 +417,7 @@ function HiddenItems({
               );
             }}
           />
-          {message("panel_enable_hiding")}
         </label>
-        <Button
-          className="select-button"
-          size="sm"
-          disabled={busy || selecting || enabled !== true}
-          onClick={() => void startSelection()}
-        >
-          <CursorClickIcon aria-hidden="true" />
-          {selecting ? message("panel_starting") : message("panel_select")}
-        </Button>
         {selectionError ? (
           <p className="selection-error" role="alert">
             {selectionError}
@@ -429,18 +430,58 @@ function HiddenItems({
       </p>
       <div className="list-toolbar">
         <h2>{message("panel_hidden_items")}</h2>
-        <IconTooltipButton
-          className="refresh-button"
-          label={message("panel_refresh")}
-          tooltip={message("panel_refresh")}
-          disabled={busy || refreshing}
-          loading={refreshing}
-          portalContainer={portalContainer}
-          onClick={refresh}
-        >
-          <ArrowClockwiseIcon aria-hidden="true" />
-        </IconTooltipButton>
+        <div className="list-actions">
+          <TooltipButton
+            className="refresh-button"
+            label={message("panel_refresh")}
+            tooltip={message("panel_refresh")}
+            disabled={busy || refreshing}
+            loading={refreshing}
+            portalContainer={portalContainer}
+            onClick={refresh}
+          >
+            <ArrowClockwiseIcon aria-hidden="true" />
+          </TooltipButton>
+          <Separator orientation="vertical" className="toolbar-separator" />
+          <TooltipButton
+            className="reset-button"
+            label={message("panel_reset")}
+            tooltip={message("panel_reset")}
+            disabled={busy || !records?.length}
+            portalContainer={portalContainer}
+            onClick={() => setConfirmReset(true)}
+          >
+            <EyeIcon aria-hidden="true" />
+          </TooltipButton>
+        </div>
       </div>
+      {confirmReset && records ? (
+        <div className="reset-confirmation" role="group" aria-label={message("panel_reset_group")}>
+          <p>{message("panel_reset_confirm", [String(records.length)])}</p>
+          <div className="actions">
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={busy}
+              onClick={() => void mutate({ type: "RESET_HIDDEN_SITE", origin: origin })}
+            >
+              {message("panel_reset_all")}
+            </Button>
+            <Button
+              autoFocus
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                setConfirmReset(false);
+                heading.current?.focus();
+              }}
+            >
+              {message("panel_cancel")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       {error ? (
         <div className="notice error" role="alert">
           <p>{error}</p>
@@ -496,7 +537,7 @@ function HiddenItems({
                       {record.target.tagName.toLowerCase()}
                     </Badge>
                   </Button>
-                  <IconTooltipButton
+                  <TooltipButton
                     className="restore-button"
                     tooltip={message("panel_restore_tooltip")}
                     label={message("panel_restore_label", [String(index + 1), label])}
@@ -507,72 +548,37 @@ function HiddenItems({
                     }
                   >
                     <XIcon aria-hidden="true" />
-                  </IconTooltipButton>
+                  </TooltipButton>
                 </Item>
               </li>
             );
           })}
         </ul>
       ) : null}
-      <footer className="reset">
-        <div className="footer-links">
-          <IconTooltipButton
-            buttonRef={updatesButton}
-            className="updates-button"
-            label={hasUnreadUpdates ? message("panel_updates_unread") : message("panel_updates")}
-            tooltip={hasUnreadUpdates ? message("panel_updates_unread") : message("panel_updates")}
-            disabled={false}
-            portalContainer={portalContainer}
-            onClick={onUpdates}
-          >
-            <ClockCounterClockwiseIcon aria-hidden="true" />
-            {hasUnreadUpdates ? <span className="update-notice-dot" aria-hidden="true" /> : null}
-          </IconTooltipButton>
-          {records && records.length > 0 && !confirmReset ? (
-            <Button
-              className="reset-button"
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => setConfirmReset(true)}
-            >
-              {message("panel_reset")}
-            </Button>
-          ) : null}
-        </div>
-        {confirmReset && records ? (
-          <div role="group" aria-label={message("panel_reset_group")}>
-            <p>{message("panel_reset_confirm", [String(records.length)])}</p>
-            <div className="actions">
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={busy}
-                onClick={() => void mutate({ type: "RESET_HIDDEN_SITE", origin: origin })}
-              >
-                {message("panel_reset_all")}
-              </Button>
-              <Button
-                autoFocus
-                variant="outline"
-                size="sm"
-                disabled={busy}
-                onClick={() => {
-                  setConfirmReset(false);
-                  heading.current?.focus();
-                }}
-              >
-                {message("panel_cancel")}
-              </Button>
-            </div>
-          </div>
-        ) : null}
+      <footer className="panel-footer">
+        <TooltipButton
+          size="sm"
+          buttonRef={updatesButton}
+          className="updates-button"
+          label={message(
+            hasUnreadUpdates ? "panel_version_updates_unread" : "panel_version_updates",
+            [browser.runtime.getManifest().version],
+          )}
+          tooltip={message(hasUnreadUpdates ? "panel_updates_unread" : "panel_updates")}
+          disabled={false}
+          portalContainer={portalContainer}
+          onClick={onUpdates}
+        >
+          v{browser.runtime.getManifest().version}
+          {hasUnreadUpdates ? <span className="update-notice-dot" aria-hidden="true" /> : null}
+        </TooltipButton>
       </footer>
     </section>
   );
 }
 
-function IconTooltipButton({
+function TooltipButton({
+  size = "icon",
   buttonRef,
   label,
   tooltip,
@@ -583,6 +589,7 @@ function IconTooltipButton({
   onClick,
   portalContainer,
 }: {
+  size?: "sm" | "icon";
   buttonRef?: RefObject<HTMLButtonElement | null>;
   label: string;
   tooltip: string;
@@ -602,7 +609,7 @@ function IconTooltipButton({
           <Button
             ref={buttonRef}
             variant="ghost"
-            size="icon"
+            size={size}
             disabled={disabled}
             className={className}
             aria-busy={loading}

@@ -93,7 +93,7 @@
     "message": "隐藏的项目会显示在这里。"
   },
   "panel_reset": {
-    "message": "全部取消隐藏…"
+    "message": "全部取消隐藏"
   },
   "panel_reset_confirm": {
     "message": "显示此网站的全部 $1 个项目？其隐藏规则将被移除。"
@@ -172,5 +172,11 @@
   },
   "panel_latest": {
     "message": "最新"
+  },
+  "panel_version_updates": {
+    "message": "v$1 · 更新"
+  },
+  "panel_version_updates_unread": {
+    "message": "v$1 · 有未读更新"
   }
 }

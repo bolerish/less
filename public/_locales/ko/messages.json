@@ -93,7 +93,7 @@
     "message": "숨긴 항목이 여기에 표시됩니다."
   },
   "panel_reset": {
-    "message": "모두 숨김 해제…"
+    "message": "모두 숨김 해제"
   },
   "panel_reset_confirm": {
     "message": "이 사이트의 항목 $1개를 모두 표시할까요? 해당 숨김 규칙이 제거됩니다."
@@ -172,5 +172,11 @@
   },
   "panel_latest": {
     "message": "최신"
+  },
+  "panel_version_updates": {
+    "message": "v$1 · 업데이트"
+  },
+  "panel_version_updates_unread": {
+    "message": "v$1 · 읽지 않은 업데이트"
   }
 }

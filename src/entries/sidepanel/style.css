@@ -1,3 +1,7 @@
+body,
+dialog.veil-theme {
+  --veil-panel-focus: var(--veil-color-fg-feedback-info);
+}
 body {
   margin: 0;
   background: var(--veil-app-background, var(--veil-color-bg-canvas));
@@ -120,11 +124,13 @@ dialog.veil-theme .panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--veil-spacing-space-2);
   padding-block: var(--veil-spacing-space-3);
   background: var(--veil-app-background, var(--veil-color-bg-canvas));
 }
 .brand {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--veil-spacing-space-2);
@@ -150,7 +156,7 @@ p {
   min-width: 0;
 }
 :focus-visible {
-  outline: 2px solid var(--veil-color-stroke-focus);
+  outline: 2px solid var(--veil-panel-focus);
   outline-offset: 3px;
 }
 button,
@@ -226,15 +232,16 @@ time {
 .record-row {
   border-radius: var(--veil-radius-sm);
 }
-.record-row:hover {
+.record-row:hover,
+.record-row:focus-within {
   background: var(--veil-color-interaction-hover);
 }
 .record-row:has(.locate-button[aria-pressed="true"]) {
   background: var(--veil-color-bg-selected);
-  box-shadow: inset 2px 0 var(--veil-color-stroke-focus);
+  box-shadow: inset 2px 0 var(--veil-panel-focus);
 }
 .record-row .locate-button:focus-visible {
-  outline: 2px solid var(--veil-color-stroke-focus);
+  outline: 2px solid var(--veil-panel-focus);
   outline-offset: -2px;
 }
 .record-row .locate-button:active {
@@ -349,4 +356,10 @@ time {
   flex: 0 1 auto;
   min-height: 0;
   overflow: auto;
+}
+
+@media (max-width: 15em) {
+  .panel-header > button:last-child {
+    margin-inline-start: auto;
+  }
 }

@@ -137,7 +137,7 @@ export function createHiddenItemPreview() {
         element.style.setProperty("transition", "none", "important");
         element.style.setProperty("visibility", "visible", "important");
         const outline = panel
-          ? getComputedStyle(panel).getPropertyValue("--veil-color-stroke-focus").trim()
+          ? getComputedStyle(panel).getPropertyValue("--veil-panel-focus").trim()
           : "Highlight";
         element.style.setProperty("outline", `3px solid ${outline}`, "important");
         element.style.setProperty("outline-offset", "3px", "important");

@@ -1,6 +1,8 @@
+import { getPaintedRect } from "~shared/lib/painted-rect";
+
 // Position the temporary target without changing the website's layout or scroll behavior.
 export function positionPreview(element: HTMLElement, panel: HTMLDialogElement | null): boolean {
-  const rect = element.getBoundingClientRect();
+  const rect = getPaintedRect(element);
   const visible = clippedRect(element);
   if (
     visible.right - visible.left < Math.min(80, rect.width) ||
@@ -21,7 +23,7 @@ export function positionPreview(element: HTMLElement, panel: HTMLDialogElement |
 
 function hasVisibleTarget(element: HTMLElement, panel: HTMLDialogElement | null): boolean {
   const rect = clippedRect(element);
-  const target = element.getBoundingClientRect();
+  const target = getPaintedRect(element);
   const width = rect.right - rect.left;
   const height = rect.bottom - rect.top;
   if (width <= 0 || height <= 0) return false;
@@ -42,7 +44,7 @@ function hasVisibleTarget(element: HTMLElement, panel: HTMLDialogElement | null)
 }
 
 function clippedRect(element: HTMLElement) {
-  const rect = element.getBoundingClientRect();
+  const rect = getPaintedRect(element);
   let left = Math.max(0, rect.left);
   let right = Math.min(innerWidth, rect.right);
   let top = Math.max(0, rect.top);

@@ -1,4 +1,5 @@
 import { isHideExcludedElement } from "~features/element-hiding/hide-policy";
+import { getPaintedRect } from "~shared/lib/painted-rect";
 
 import { resolveIframeFromPoint } from "./iframe-target-resolver";
 import {
@@ -20,14 +21,39 @@ export function resolveSelectionTarget(
   isIgnored: IsIgnored = () => false,
 ): HTMLElement | null {
   const ignored = (el: HTMLElement): boolean => isIgnored(el) || isHideExcludedElement(el);
+  const stack = documentRef.elementsFromPoint(x, y);
+  const hit = stack.find((element) => element instanceof HTMLElement && !isIgnored(element));
+  const emptyHit =
+    hit instanceof HTMLElement &&
+    isIgnorableEmptyElement(hit) &&
+    getComputedStyle(hit).backgroundColor === "rgba(0, 0, 0, 0)" &&
+    getComputedStyle(hit).boxShadow === "none";
+  const collapsed = new Set(stack.flatMap((element) => Array.from(element.children)));
+  for (const element of collapsed) {
+    if (
+      !(element instanceof HTMLElement) ||
+      ignored(element) ||
+      (!hit?.contains(element) && !emptyHit)
+    )
+      continue;
+    const rect = element.getBoundingClientRect();
+    if (rect.height !== 0 || rect.width <= 0) continue;
+    const painted = getPaintedRect(element);
+    if (
+      painted.height > 0 &&
+      x >= painted.left &&
+      x <= painted.right &&
+      y >= painted.top - 2 &&
+      y <= painted.bottom + 2
+    )
+      return element;
+  }
 
   const iframe = resolveIframeFromPoint(documentRef, x, y, ignored);
   if (iframe !== null) return resolveIframeContainer(iframe);
 
   const top =
-    documentRef
-      .elementsFromPoint(x, y)
-      .find((el): el is HTMLElement => el instanceof HTMLElement && !ignored(el)) ?? null;
+    stack.find((el): el is HTMLElement => el instanceof HTMLElement && !ignored(el)) ?? null;
 
   if (top === null) return null;
 
@@ -63,14 +89,27 @@ function isIframeWrapperElement(parent: HTMLElement, child: HTMLElement): boolea
 }
 
 function hasNonZeroRect(el: HTMLElement): boolean {
-  const rect = el.getBoundingClientRect();
+  const rect = getPaintedRect(el);
   return rect.width > 0 && rect.height > 0;
 }
 
 function resolveSelectableTarget(element: HTMLElement): HTMLElement | null {
-  const unwrapped = unwrapTarget(element);
+  const unwrapped = unwrapTarget(element.closest<HTMLElement>("a, button") ?? element);
   if (isIgnorableEmptyElement(unwrapped)) return null;
   return elevateToCustomElementHost(unwrapped) ?? unwrapped;
+}
+
+export function resolveSelectionParent(
+  element: HTMLElement,
+  isIgnored: IsIgnored = () => false,
+): HTMLElement | null {
+  let parent = element.parentElement;
+  while (parent !== null && !isDocumentShell(parent)) {
+    if (!isIgnored(parent) && !isHideExcludedElement(parent) && hasNonZeroRect(parent))
+      return parent;
+    parent = parent.parentElement;
+  }
+  return null;
 }
 
 // Polymer/LitElement scoped-CSS pattern: inner elements carry the host's tag

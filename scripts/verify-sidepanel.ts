@@ -16,6 +16,7 @@ declare const chrome: typeof import("wxt/browser").browser;
 type DOMNode = {
   nodeName: string;
   backendNodeId: number;
+  attributes?: string[];
   children?: DOMNode[];
   shadowRoots?: DOMNode[];
 };
@@ -70,6 +71,13 @@ body{margin:20px;font:16px/1.5 sans-serif}#outer{border:2px solid;padding:14px}#
 #far-target{height:100px;background:#ddd}#fixed-target{position:fixed;right:20px;top:100px;width:200px;height:70px;background:#ddd}
 </style></head><body><h1>Selection and preview cases</h1>
 <div id="outer"><div id="middle"><p id="single">Chosen child</p></div></div>
+<div id="collapsed-region" role="region" aria-label="날씨" style="width:420px;max-width:100%;margin-top:16px;padding:0;border:0;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.04)"><div id="weather-content">Weather contents</div></div>
+<div style="height:20px;margin-top:16px"></div><div id="empty-region" style="width:420px;margin-top:16px"></div>
+<div style="height:20px;margin-top:16px"></div><div id="inset-region" style="width:420px;margin-top:16px;box-shadow:inset 0 0 0 1px black"></div>
+<div style="height:20px;margin-top:16px"></div><div id="transparent-region" style="width:420px;margin-top:16px;box-shadow:0 0 0 1px transparent"></div>
+<div style="position:relative;height:40px;margin-top:16px"><div id="covered-region" style="width:420px;box-shadow:0 0 0 1px black"></div><div style="position:absolute;inset:0;background:white"></div></div>
+<a id="mobile-main" href="https://m.naver.com/" style="display:flex;padding:22px;border:1px solid;border-radius:8px"><strong>모바일 네이버 메인</strong>&nbsp;열기</a>
+<a id="formatted-link" href="#" style="display:inline-block"><span>Formatted link</span></a>
 <div id="nested"><div style="height:260px"></div><p id="nested-target" style="opacity:0.65 !important;transition:opacity 2s linear">Nested target</p><div style="height:500px"></div></div>
 <p id="same-a">Same label</p><p id="same-b">Same label</p>
 <div style="height:1800px"></div><p id="far-target">Far target</p><div style="height:1200px"></div>
@@ -355,6 +363,25 @@ try {
         () => panel((d, t) => !d.innerText.includes(t), messages.panel_find),
         "preview layout settled",
       );
+  }
+  async function selectionSurface<T>(
+    attribute: string,
+    fn: (surface: HTMLElement) => T,
+  ): Promise<T> {
+    const { root } = await session.send("DOM.getDocument", { depth: -1, pierce: true });
+    const host = findNode(root, (n) => n.attributes?.includes(attribute) ?? false);
+    const surface = host?.shadowRoots?.[0]?.children?.find((n) => n.nodeName === "DIV");
+    assert(surface, `${attribute}: closed shadow surface exists`);
+    const { object } = await session.send("DOM.resolveNode", {
+      backendNodeId: surface.backendNodeId,
+    });
+    const result = await session.send("Runtime.callFunctionOn", {
+      objectId: object.objectId,
+      functionDeclaration: `function(){return (${fn.toString()})(this)}`,
+      returnByValue: true,
+    });
+    assert(!result.exceptionDetails, JSON.stringify(result.exceptionDetails));
+    return result.result.value;
   }
   async function textIncludes(text: string) {
     return panel((d, t) => d.innerText.includes(t), text);
@@ -1124,6 +1151,174 @@ try {
   // These cases exercise the built content script, real selection, DB and preload CSS.
   await site.goto(`${origin}/regressions`);
   await site.waitForTimeout(300);
+  await site.addStyleTag({
+    content:
+      "html{font-size:28px}*{font-family:serif!important}button{padding:60px!important;background:red!important;border:9px solid red!important}[data-less-ui],[data-less-highlight]{position:absolute!important;opacity:0!important;z-index:-1!important;pointer-events:auto!important}",
+  });
+  for (const width of [320, 375]) {
+    for (const colorScheme of ["light", "dark"] as const) {
+      await site.setViewportSize({ width, height: 720 });
+      await site.emulateMedia({ colorScheme });
+      await site.keyboard.press("Control+Shift+E");
+      await site.locator("#single").hover();
+      const highlight = await selectionSurface("data-less-highlight", (e) => {
+        const s = getComputedStyle(e);
+        return {
+          border: s.borderWidth,
+          style: s.borderStyle,
+          color: s.borderColor,
+          background: s.backgroundColor,
+        };
+      });
+      assert.equal(highlight.border, "2px");
+      assert.equal(highlight.style, "solid");
+      assert.notEqual(highlight.background, "rgba(0, 0, 0, 0)");
+      const toolbar = await selectionSurface("data-less-ui", (e) => {
+        const pill = e.firstElementChild!;
+        const s = getComputedStyle(pill),
+          r = e.getBoundingClientRect();
+        return {
+          background: s.backgroundColor,
+          border: s.borderWidth,
+          style: s.borderStyle,
+          padding: s.padding,
+          left: r.left,
+          right: r.right,
+          font: s.fontSize,
+          closeBorder: getComputedStyle(pill.querySelector("button")!).borderWidth,
+        };
+      });
+      assert.notEqual(toolbar.background, "rgba(0, 0, 0, 0)");
+      assert.equal(toolbar.border, "1px");
+      assert.equal(toolbar.style, "solid");
+      assert.equal(toolbar.padding, "8px 20px");
+      assert.equal(toolbar.font, "12px");
+      assert.equal(toolbar.closeBorder, "0px");
+      assert(toolbar.left >= 0 && toolbar.right <= width, "selection toolbar fits the viewport");
+      await site.keyboard.press("ArrowUp");
+      const parentRect = await site.locator("#middle").boundingBox();
+      const outlineRect = await site.locator("[data-less-highlight]").boundingBox();
+      assert.deepEqual(outlineRect, parentRect, "ArrowUp targets the existing parent");
+      await site.keyboard.press("ArrowDown");
+      assert.deepEqual(
+        await site.locator("[data-less-highlight]").boundingBox(),
+        await site.locator("#single").boundingBox(),
+        "ArrowDown returns to the original child",
+      );
+      for (let i = 0; i < 10; i++) await site.keyboard.press("ArrowUp");
+      assert.deepEqual(
+        await site.locator("[data-less-highlight]").boundingBox(),
+        await site.locator("#outer").boundingBox(),
+        "ancestor navigation stops before body/html",
+      );
+      await site.keyboard.press("Escape");
+    }
+  }
+  await site.setViewportSize({ width: 1100, height: 800 });
+  await site.emulateMedia({ colorScheme: "light" });
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#formatted-link span").hover();
+  assert.deepEqual(
+    await site.locator("[data-less-highlight]").boundingBox(),
+    await site.locator("#formatted-link").boundingBox(),
+    "interactive ancestors are not unwrapped into their only child",
+  );
+  await site.keyboard.press("Enter");
+  await hidden("#formatted-link");
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#formatted-link", false);
+  await waitFor(async () => (await count()) === 0, "formatted inline link restores its one record");
+  await site.keyboard.press("Escape");
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#mobile-main strong").click();
+  await site.keyboard.press("Escape");
+  await hidden("#mobile-main");
+  assert.equal(await count(), 1, "formatted link text saves exactly one link record");
+  await site.reload();
+  await hidden("#mobile-main");
+  await action();
+  await click(".restore-button");
+  await hidden("#mobile-main", false);
+  await waitFor(async () => (await count()) === 0, "formatted link restored");
+  await site.keyboard.press("Escape");
+  await hide("#weather-content");
+  const collapsed = await site.locator("#collapsed-region").evaluate((e) => {
+    const r = e.getBoundingClientRect(),
+      s = getComputedStyle(e);
+    return {
+      x: r.x,
+      y: r.y,
+      width: r.width,
+      height: r.height,
+      padding: s.padding,
+      border: s.borderWidth,
+      margin: s.marginTop,
+    };
+  });
+  assert.equal(collapsed.width, 420);
+  assert.equal(collapsed.height, 0);
+  assert.equal(collapsed.padding, "0px");
+  assert.equal(collapsed.border, "0px");
+  assert.equal(collapsed.margin, "16px");
+  assert.equal(await count(), 1, "collapsing a region never automatically saves the parent");
+  await site.keyboard.press("Control+Shift+E");
+  for (const selector of [
+    "#empty-region",
+    "#inset-region",
+    "#transparent-region",
+    "#covered-region",
+  ]) {
+    const r = await site.locator(selector).evaluate((e) => e.getBoundingClientRect().toJSON());
+    await site.mouse.move(r.x + 30, r.y + 1);
+    const outline = await site.locator("[data-less-highlight]").boundingBox();
+    assert(
+      !outline || outline.height > 8,
+      "invisible empty boxes are not painted selection candidates",
+    );
+  }
+  await site.mouse.move(collapsed.x + collapsed.width / 2, collapsed.y);
+  const painted = await site.locator("[data-less-highlight]").boundingBox();
+  assert(
+    painted && painted.height > 0 && painted.height <= 8,
+    "collapsed shadow has a visible selection outline",
+  );
+  assert.equal(
+    await site.locator("#collapsed-region").evaluate((e) => e.getBoundingClientRect().height),
+    0,
+    "selection does not change site layout",
+  );
+  await site.mouse.click(collapsed.x + collapsed.width / 2, collapsed.y);
+  await site.keyboard.press("Escape");
+  await hidden("#collapsed-region");
+  await waitFor(
+    async () => (await count()) === 2,
+    "explicit collapsed-region click saves exactly one additional record",
+  );
+  await site.reload();
+  await hidden("#collapsed-region");
+  await action();
+  await waitFor(() => textIncludes("날씨"), "collapsed region keeps its accessible name");
+  await click(".record:first-child .locate-button");
+  assert.equal(
+    await panel((d) => d.querySelector(".locate-button")!.getAttribute("aria-pressed")),
+    "true",
+    "collapsed region can be previewed without a hidden-parent error",
+  );
+  await site.keyboard.press("Escape");
+  await click(".record:first-child .restore-button");
+  await hidden("#collapsed-region", false);
+  await hidden("#weather-content");
+  assert.equal(await count(), 1, "restoring the collapsed parent preserves the chosen child rule");
+  await click(".restore-button");
+  await hidden("#weather-content", false);
+  await waitFor(
+    async () => (await count()) === 0,
+    "collapsed fixture cleaned through real restore",
+  );
+  await site.keyboard.press("Escape");
+  console.log(
+    "PASS collapsed 420x0 shadow region: explicit selection, no layout changes, one record, accessible name, preview, reload and independent restore",
+  );
   await hide("#single");
   await waitFor(async () => (await count()) >= 1, "selection saved");
   await site.waitForTimeout(450);
@@ -1159,7 +1354,12 @@ try {
     "PASS border-only fixture: selected child is hidden, enclosing border remains; one record, no automatic ancestor mutation",
   );
 
-  await hide("#outer", { position: { x: 2, y: 2 } });
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#middle").hover();
+  await site.keyboard.press("ArrowUp");
+  await site.keyboard.press("Enter");
+  await site.keyboard.press("Escape");
+  await hidden("#outer");
   await waitFor(
     async () => (await count()) === 2,
     "separately chosen parent preserves both records",

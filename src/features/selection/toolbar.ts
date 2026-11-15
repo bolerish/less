@@ -10,6 +10,7 @@ import { getPanelMessage as message } from "~features/record/management-messages
 import { createSelectionSurface } from "~features/selection/surface";
 import { setContentHostStyles } from "~shared/lib/content-host";
 import { isPageDark } from "~features/selection/theme";
+import { getPaintedRect } from "~shared/lib/painted-rect";
 
 export const HIGHLIGHT_ATTR = "data-less-highlight";
 export const STATUS_BAR_ATTR = "data-less-ui";
@@ -45,7 +46,7 @@ export function updateHighlight(target: HTMLElement | null): void {
     setContentHostStyles(_highlightEl, { display: "none" });
     return;
   }
-  const rect = target.getBoundingClientRect();
+  const rect = getPaintedRect(target);
   if (rect.width === 0 || rect.height === 0) {
     setContentHostStyles(_highlightEl, { display: "none" });
     return;
@@ -109,6 +110,8 @@ function buildStatusBar(
     alignItems: "center",
     pointerEvents: "none",
     whiteSpace: "nowrap",
+    width: "max-content",
+    maxWidth: "calc(100vw - 24px)",
     userSelect: "none",
     transition: "opacity 0.2s ease, transform 0.2s ease",
   });
@@ -167,7 +170,9 @@ function createSeparator(): HTMLSpanElement {
 const styles = stylex.create({
   highlight: {
     backgroundColor: `color-mix(in srgb, ${colorVars.fgFeedbackInfo} 15%, transparent)`,
-    border: `2px solid ${colorVars.fgFeedbackInfo}`,
+    borderWidth: 2,
+    borderStyle: "solid",
+    borderColor: colorVars.fgFeedbackInfo,
     borderRadius: radiusVars.sm,
   },
   toolbar: {
@@ -175,10 +180,11 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacingVars.space2,
     width: "auto",
+    minWidth: 0,
     height: "auto",
   },
   pill: {
-    background: colorVars.bgRaised,
+    backgroundColor: colorVars.bgRaised,
     color: colorVars.fgPrimary,
     borderRadius: radiusVars.full,
     padding: `${spacingVars.space2} ${spacingVars.space5}`,
@@ -186,20 +192,25 @@ const styles = stylex.create({
     fontFamily: typo.fontFamilyBody,
     fontWeight: typo.fontWeightRegular,
     lineHeight: typo.lineHeightNormal,
-    whiteSpace: "nowrap",
+    whiteSpace: "normal",
     boxShadow: shadowVars.overlay,
-    border: `1px solid ${colorVars.strokeControl}`,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: colorVars.strokeControl,
     display: "inline-flex",
     alignItems: "center",
     gap: spacingVars.space2,
   },
   infoPill: {
+    minWidth: 0,
     pointerEvents: "none",
   },
   closeButton: {
+    flexShrink: 0,
     appearance: "none",
-    background: "none",
-    border: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    borderStyle: "none",
     padding: 0,
     fontFamily: "inherit",
     fontSize: typo.fontSizeXs,
@@ -211,6 +222,7 @@ const styles = stylex.create({
     outlineOffset: 2,
   },
   restoreButton: {
+    flexShrink: 0,
     appearance: "none",
     padding: `${spacingVars.space2} ${spacingVars.space3}`,
     opacity: { default: 1, ":disabled": 0 },
@@ -230,7 +242,7 @@ const styles = stylex.create({
     display: "inline-block",
     width: 1,
     height: 12,
-    background: colorVars.strokeControl,
+    backgroundColor: colorVars.strokeControl,
     flexShrink: 0,
   },
 });

@@ -177,7 +177,7 @@
     "message": "v$1 · Unread update history"
   },
   "panel_selection_prompt": {
-    "message": "Select an item"
+    "message": "Select an item · ↑ Parent · ↓ Child"
   },
   "panel_selection_count_one": {
     "message": "$1 hidden"

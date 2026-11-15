@@ -177,7 +177,7 @@
     "message": "v$1 · Historial de actualizaciones sin leer"
   },
   "panel_selection_prompt": {
-    "message": "Elige un elemento"
+    "message": "Selecciona · ↑ Padre · ↓ Hijo"
   },
   "panel_selection_count_one": {
     "message": "$1 oculto"

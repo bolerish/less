@@ -177,7 +177,7 @@
     "message": "v$1 · 읽지 않은 업데이트 내역"
   },
   "panel_selection_prompt": {
-    "message": "숨길 항목 선택"
+    "message": "숨길 항목 선택 · ↑ 부모 · ↓ 자식"
   },
   "panel_selection_count_one": {
     "message": "$1개 숨김"

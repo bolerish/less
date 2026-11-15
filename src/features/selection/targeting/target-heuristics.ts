@@ -21,7 +21,7 @@ export function isLargeViewportWrapperElement(element: HTMLElement): boolean {
 }
 
 export function isMeaninglessWrapperElement(element: HTMLElement): boolean {
-  if (isIframeElement(element)) return false;
+  if (isIframeElement(element) || isInteractiveElement(element)) return false;
   if (hasVisibleBorder(element)) return false;
   if (hasMeaningfulOwnText(element) || hasMeaningfulSelectionAttributes(element)) return false;
   if (element.children.length !== 1) return false;

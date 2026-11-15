@@ -5,7 +5,10 @@ import {
   restoreHiddenElement,
 } from "~features/element-hiding";
 import { deriveHiddenElementRecord } from "~features/record/derivation/record-input-derivation";
-import { resolveSelectionTarget } from "~features/selection/targeting/target-resolver";
+import {
+  resolveSelectionTarget,
+  resolveSelectionParent,
+} from "~features/selection/targeting/target-resolver";
 import { invalidateRecordCache } from "~features/element-hiding/watcher";
 import {
   shieldIframes,
@@ -39,6 +42,7 @@ export function subscribeSelection(listener: (active: boolean) => void): () => v
 }
 
 let hoveredEl: HTMLElement | null = null;
+const ancestorTrail: HTMLElement[] = [];
 let sessionHiddenCount = 0;
 const undoStack: Array<{ element: HTMLElement; recordId: string }> = [];
 
@@ -68,6 +72,7 @@ export function stopSelectionMode(): void {
   if (!selectionActive) return;
   selectionActive = false;
   hoveredEl = null;
+  ancestorTrail.length = 0;
 
   document.removeEventListener("pointermove", handlePointerMove, true);
   document.removeEventListener("click", handleClick, true);
@@ -114,6 +119,7 @@ export async function restoreLastHidden(): Promise<void> {
 }
 
 function handlePointerMove(event: PointerEvent): void {
+  ancestorTrail.length = 0;
   const target = resolveTarget(event.clientX, event.clientY);
   hoveredEl = target;
   updateHighlight(target);
@@ -132,6 +138,7 @@ function handleClick(event: MouseEvent): void {
   if (target === null) return;
 
   hoveredEl = null;
+  ancestorTrail.length = 0;
   updateHighlight(null);
   void hideAndSave(target);
 }
@@ -140,7 +147,33 @@ function handleKeyDown(event: KeyboardEvent): void {
   if (event.key === "Escape") {
     event.preventDefault();
     stopSelectionMode();
+    return;
   }
+  if (hoveredEl === null || !hoveredEl.isConnected) return;
+  if (
+    event.target instanceof Element &&
+    event.target.closest(`[${STATUS_BAR_ATTR}],[${PANEL_HOST_ATTRIBUTE}]`)
+  )
+    return;
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    const parent = resolveSelectionParent(hoveredEl, isOverlayOrHidden);
+    if (parent !== null) {
+      ancestorTrail.push(hoveredEl);
+      hoveredEl = parent;
+    }
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    hoveredEl = ancestorTrail.pop() ?? hoveredEl;
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    const target = hoveredEl;
+    hoveredEl = null;
+    ancestorTrail.length = 0;
+    void hideAndSave(target);
+  } else return;
+  event.stopPropagation();
+  updateHighlight(hoveredEl);
 }
 
 function handleViewportChange(): void {

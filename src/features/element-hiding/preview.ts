@@ -6,6 +6,7 @@ import { portRequest } from "~features/record/content-port";
 import { finishHiddenElementAnimation } from "~features/element-hiding/element-hide";
 import { positionPreview } from "~features/element-hiding/preview-position";
 import { getPanelMessage as message } from "~features/record/management-messages";
+import { getPaintedRect } from "~shared/lib/painted-rect";
 
 export type PreviewState = { id: string | null; message: string };
 export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
@@ -142,7 +143,7 @@ export function createHiddenItemPreview() {
         element.style.setProperty("outline", `3px solid ${outline}`, "important");
         element.style.setProperty("outline-offset", "3px", "important");
 
-        const rect = element.getBoundingClientRect();
+        const rect = getPaintedRect(element);
         const visible = element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
         if (!rect.width || !rect.height || !visible) {
           clear();

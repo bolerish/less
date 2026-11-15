@@ -549,6 +549,15 @@ try {
     "switch reflects the saved paused state",
   );
   assert.equal(
+    await panel((d) => {
+      const label = d.querySelector<HTMLElement>(".preference")!;
+      const description = d.querySelector<HTMLElement>(".site-overview > .muted")!;
+      return getComputedStyle(label).paddingInline === getComputedStyle(description).paddingInline;
+    }),
+    true,
+    "paused description shares the switch row gutter",
+  );
+  assert.equal(
     await worker.evaluate(async (o) => {
       const key = `veil:hiding-enabled:${encodeURIComponent(o)}`;
       return (await chrome.storage.local.get(key))[key];
@@ -1733,6 +1742,14 @@ try {
     }),
     true,
     "row hover background resolves",
+  );
+  assert.equal(
+    await panel((d) => {
+      const s = getComputedStyle(d.querySelector<HTMLElement>(".record-row")!);
+      return s.outlineStyle === "solid" && s.outlineWidth === "2px";
+    }),
+    true,
+    "row hover has a blue outline",
   );
   await click(".record:first-child .restore-button");
   await hidden("#fixed-target", false);

@@ -116,7 +116,12 @@ export function SiteOverview({
         <CursorClickIcon {...stylex.props(styles.icon)} aria-hidden="true" />
         {selecting ? message("panel_starting") : message("panel_select")}
       </Button>
-      <label className={["preference", stylex.props(styles.preference).className].join(" ")}>
+      <label
+        className={[
+          "preference",
+          stylex.props(styles.preference, styles.preferenceGutter).className,
+        ].join(" ")}
+      >
         <span style={{ minWidth: 0 }}>{message("panel_enable_hiding")}</span>
         <Switch
           style={{ flexShrink: 0 }}
@@ -140,7 +145,11 @@ export function SiteOverview({
         </p>
       ) : null}
       {enabled === false ? (
-        <p className={["muted", stylex.props(styles.muted).className].join(" ")}>
+        <p
+          className={["muted", stylex.props(styles.muted, styles.preferenceGutter).className].join(
+            " ",
+          )}
+        >
           {message("panel_paused")}
         </p>
       ) : null}
@@ -237,6 +246,8 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacingVars.space2,
     marginBlock: `${spacingVars.space5} ${spacingVars.space3}`,
+  },
+  preferenceGutter: {
     // Match CardContent plus its one-pixel card border.
     paddingInline: `calc(${spacingVars.space3} + 1px)`,
   },

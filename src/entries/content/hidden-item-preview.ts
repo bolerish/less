@@ -42,13 +42,15 @@ export function createHiddenItemPreview() {
     if (current) {
       const target = current;
       current = null;
+      const opacity = getComputedStyle(target.element).opacity;
       target.animation?.cancel();
       if (animate && !reducedMotion.matches && target.element.isConnected) {
         outgoing.add(target);
-        target.animation = target.element.animate(
-          [{ opacity: getComputedStyle(target.element).opacity }, { opacity: 0 }],
-          { duration: 140, easing: "ease-in", fill: "forwards" },
-        );
+        target.animation = target.element.animate([{ opacity }, { opacity: 0 }], {
+          duration: 140,
+          easing: "ease-in",
+          fill: "forwards",
+        });
         void target.animation.finished
           .then(() => {
             if (outgoing.delete(target)) restore(target);

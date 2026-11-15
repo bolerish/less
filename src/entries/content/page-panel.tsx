@@ -51,7 +51,8 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const element = dialog;
     const style = getComputedStyle(element);
     const start = { opacity: style.opacity, transform: style.transform };
-    const duration = parseFloat(style.getPropertyValue("--veil-motion-duration-fast"));
+    const time = style.getPropertyValue("--veil-motion-duration-fast").trim();
+    const duration = parseFloat(time) * (time.endsWith("ms") ? 1 : 1000);
     transition?.cancel();
     transition = null;
     if (reducedMotion.matches) {

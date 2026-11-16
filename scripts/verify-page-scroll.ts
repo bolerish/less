@@ -17,6 +17,8 @@ const browser = await chromium.launch({
   executablePath: values.chromium,
   headless: true,
   ignoreDefaultArgs: ["--hide-scrollbars"],
+  // Exercise real classic gutters independently of the OS scrollbar preference.
+  args: ["--disable-features=OverlayScrollbar,MacOverlayScrollbars"],
 });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });

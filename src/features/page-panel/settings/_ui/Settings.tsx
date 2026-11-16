@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { spacingVars, sizeVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { spacingVars, sizeVars } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
 import { Banner, BannerContent, BannerDescription } from "@bolerish/ui/banner";
 import { Field, FieldLabel, FieldDescription } from "@bolerish/ui/field";
@@ -36,6 +36,7 @@ import {
 } from "~shared/motion/preference";
 import { useThemePreference } from "../_model/use-theme-preference";
 import { Shortcuts } from "./Shortcuts";
+import { SettingsSectionHeading } from "./SectionHeading";
 
 export type SettingsPage = "settings" | "language" | "theme" | "motion" | "shortcuts";
 
@@ -95,17 +96,7 @@ export function Settings({
             ] as const
           ).map(({ pages, title, icon: Icon }) => (
             <section key={title}>
-              <h2 {...stylex.props(styles.sectionHeading)}>
-                <Icon {...stylex.props(styles.sectionIcon)} aria-hidden="true" />
-                <span
-                  className={[
-                    "settings-section-label",
-                    stylex.props(styles.navigationLabel).className,
-                  ].join(" ")}
-                >
-                  {message(title)}
-                </span>
-              </h2>
+              <SettingsSectionHeading icon={Icon}>{message(title)}</SettingsSectionHeading>
               <div {...stylex.props(styles.navigationList)}>
                 {pages.map((page) => (
                   <Button
@@ -247,17 +238,6 @@ const styles = stylex.create({
     margin: `calc(${sizeVars.focusRing} * -2)`,
   },
   home: { display: "grid", gap: spacingVars.space6 },
-  sectionHeading: {
-    display: "flex",
-    alignItems: "center",
-    gap: spacingVars.space2,
-    color: colorVars.fgTertiary,
-    fontWeight: typo.fontWeightSemibold,
-    fontSize: typo.fontSizeSm,
-    margin: 0,
-    marginBottom: spacingVars.space2,
-  },
-  sectionIcon: { width: sizeVars.iconSm, height: sizeVars.iconSm, flexShrink: 0 },
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,

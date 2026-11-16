@@ -662,6 +662,25 @@ try {
             Array.from(row.querySelectorAll("kbd"), (key) => key.textContent),
           ),
           editing: list.querySelectorAll("input, select, textarea, button").length,
+          sections: Array.from(list.querySelectorAll("section"), (section) => {
+            const heading = section.querySelector("h2")!;
+            const icon = heading.querySelector("svg");
+            const label = heading.querySelector<HTMLElement>(".settings-section-label");
+            const firstRow = section.querySelector("dt")!;
+            return {
+              icon:
+                !!icon &&
+                icon.getAttribute("aria-hidden") === "true" &&
+                icon.getBoundingClientRect().width > 0,
+              text: label?.textContent,
+              offset: label
+                ? Math.abs(
+                    label.getBoundingClientRect().left - firstRow.getBoundingClientRect().left,
+                  )
+                : -1,
+              color: getComputedStyle(heading).color,
+            };
+          }),
           fits:
             list.scrollWidth <= list.clientWidth &&
             rect.left >= 0 &&
@@ -685,6 +704,24 @@ try {
         ["Esc"],
       ]);
       assert.equal(layout.editing, 0, "shortcut page is read-only");
+      assert.equal(layout.sections.length, 2, "two labeled shortcut sections");
+      for (const section of layout.sections) {
+        assert(section.icon, "section labels keep their decorative icons");
+        assert(
+          section.offset >= 0 && section.offset < 1,
+          "shortcut descriptions align with the section text",
+        );
+      }
+      assert.equal(
+        layout.sections[0].color,
+        layout.sections[1].color,
+        "section labels share their muted appearance",
+      );
+      if (locale === "ko")
+        assert.deepEqual(
+          layout.sections.map((section) => section.text),
+          ["기본 조작", "항목 선택"],
+        );
       assert(
         layout.fits,
         `${locale}/${width}/${factor}/${scheme}: shortcut list and native Kbd fit`,

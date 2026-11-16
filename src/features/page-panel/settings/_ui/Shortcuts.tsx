@@ -1,6 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, sizeVars } from "@bolerish/tokens/semantic.stylex";
 import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
+import { KeyboardIcon, SelectionIcon } from "@phosphor-icons/react";
+import { SettingsSectionHeading } from "./SectionHeading";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 export function Shortcuts() {
@@ -11,6 +13,7 @@ export function Shortcuts() {
         [
           {
             title: "panel_shortcuts_page",
+            icon: KeyboardIcon,
             rows: [
               { label: "panel_shortcut_selection", keys: ["Ctrl", "Shift", "E"] },
               { label: "panel_shortcut_undo", keys: ["Ctrl", "Shift", "Z"] },
@@ -18,6 +21,7 @@ export function Shortcuts() {
           },
           {
             title: "panel_shortcuts_selection",
+            icon: SelectionIcon,
             rows: [
               { label: "panel_shortcut_shift", keys: ["Shift"] },
               { label: "panel_shortcut_wider", keys: ["↑"] },
@@ -27,11 +31,11 @@ export function Shortcuts() {
             ],
           },
         ] as const
-      ).map(({ title, rows }) => (
+      ).map(({ title, rows, icon }) => (
         <section key={title} aria-labelledby={title}>
-          <h2 id={title} {...stylex.props(styles.heading)}>
+          <SettingsSectionHeading id={title} icon={icon}>
             {message(title)}
-          </h2>
+          </SettingsSectionHeading>
           {title === "panel_shortcuts_page" ? (
             <p {...stylex.props(styles.help)}>{message("panel_shortcuts_help")}</p>
           ) : null}
@@ -57,14 +61,19 @@ export function Shortcuts() {
 
 const styles = stylex.create({
   groups: { display: "grid", gap: spacingVars.space6 },
-  heading: {
-    fontSize: typo.fontSizeSm,
-    fontWeight: typo.fontWeightSemibold,
+  help: {
+    color: colorVars.fgSecondary,
+    overflowWrap: "anywhere",
     margin: 0,
     marginBottom: spacingVars.space3,
+    paddingInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
   },
-  help: { color: colorVars.fgSecondary, margin: 0, marginBottom: spacingVars.space3 },
-  list: { display: "grid", gap: spacingVars.space3, margin: 0 },
+  list: {
+    display: "grid",
+    gap: spacingVars.space3,
+    margin: 0,
+    paddingInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
+  },
   row: {
     display: "flex",
     justifyContent: "space-between",

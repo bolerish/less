@@ -247,7 +247,11 @@ try {
     headless: true,
     ignoreDefaultArgs: ["--disable-extensions", "--hide-scrollbars"],
     viewport: { width: 1100, height: 800 },
-    args: ["--enable-unsafe-extension-debugging"],
+    // CSS scrollbar width alone does not turn the browser's overlay mode into classic mode.
+    args: [
+      "--enable-unsafe-extension-debugging",
+      "--disable-features=OverlayScrollbar,MacOverlayScrollbars",
+    ],
   });
   context = activeContext;
   activeContext.setDefaultTimeout(7000);
@@ -583,6 +587,43 @@ try {
       "hidden item is saved and ready to undo",
     );
   }
+
+  await site.keyboard.down("Control");
+  await site.keyboard.down("Shift");
+  await site.keyboard.down("E");
+  await waitFor(
+    async () => (await site.locator("[data-less-ui]").count()) === 1,
+    "fresh selection shortcut enables selection",
+  );
+  for (let i = 0; i < 6; i++) {
+    await site.keyboard.down("E");
+    assert.equal(
+      await site.locator("[data-less-ui]").count(),
+      1,
+      "held Ctrl+Shift+E never toggles selection again",
+    );
+  }
+  await site.keyboard.up("E");
+  await site.keyboard.down("E");
+  await waitFor(
+    async () => (await site.locator("[data-less-ui]").count()) === 0,
+    "release and press toggles selection off once",
+  );
+  for (let i = 0; i < 6; i++) {
+    await site.keyboard.down("E");
+    assert.equal(
+      await site.locator("[data-less-ui]").count(),
+      0,
+      "holding the disabling shortcut never reopens selection",
+    );
+  }
+  await site.keyboard.up("E");
+  await site.keyboard.up("Shift");
+  await site.keyboard.up("Control");
+  assert.equal(await count(), 0, "holding the shortcut never creates records");
+  console.log(
+    "PASS selection shortcut toggles once per physical key press, including held enable/disable",
+  );
 
   await site.locator("#before").focus();
   const before = await site.locator("#one").boundingBox();
@@ -3820,7 +3861,13 @@ try {
     width: innerWidth - document.documentElement.clientWidth,
     x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
     scrolls: document.documentElement.scrollHeight > innerHeight,
+    style: document.documentElement.getAttribute("style"),
+    gutter: getComputedStyle(document.documentElement).scrollbarGutter,
+    overflow: getComputedStyle(document.documentElement).overflow,
+    hidden: Array.from(document.querySelectorAll("[data-veil-hidden]"), (element) => element.id),
   }));
+  if (gutterAfter.x !== gutterBefore.x)
+    console.log("GUTTER FAILURE", { gutterBefore, gutterAfter });
   assert.equal(gutterAfter.scrolls, false, "hiding removes the need for a scrollbar");
   assert.equal(
     gutterAfter.x,
@@ -3872,8 +3919,25 @@ try {
   assert.equal(modalBaseline.width, 1100, "initial cached hiding has no scrollbar gutter");
   await action();
   for (let cycle = 0; cycle < 3; cycle++) {
+    await waitFor(
+      () =>
+        panel(
+          (d) =>
+            d.querySelector('.preference [role="switch"]')?.getAttribute("aria-checked") === "true",
+        ),
+      "hiding switch finishes reflecting ON before the next toggle",
+    );
     await click('.preference [role="switch"]');
     await hidden("#gutter-target", false);
+    await waitFor(
+      () =>
+        panel(
+          (d) =>
+            d.querySelector('.preference [role="switch"]')?.getAttribute("aria-checked") ===
+            "false",
+        ),
+      "hiding switch finishes reflecting OFF before the next toggle",
+    );
     const beforeWheel = await site.evaluate(() => scrollY);
     await site.mouse.move(100, 100);
     await site.mouse.wheel(0, 400);

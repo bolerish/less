@@ -235,6 +235,7 @@ function handleGlobalKeyDown(event: KeyboardEvent): void {
   if (event.shiftKey && event.ctrlKey) {
     if (event.key === "E") {
       event.preventDefault();
+      if (event.repeat) return;
       if (!hidingEnabled) return;
       if (selectionActive) stopSelectionMode();
       else startSelectionMode();

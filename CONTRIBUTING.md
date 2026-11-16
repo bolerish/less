@@ -28,6 +28,8 @@ background API in a fixture; it does not run Firefox. PNGs are written to `/tmp`
 by default (`--screenshot /path/to/capture.png` changes their prefix). Chrome,
 profile and local fixture server are cleaned up afterward.
 
+The panel and page-scroll checks explicitly disable Chromium overlay scrollbars so classic-gutter fixtures do not depend on the OS scrollbar preference.
+
 The page-panel shell and shared header/body inset live in `src/features/page-panel/layout.tsx`.
 `view.tsx` owns the breadcrumb hierarchy and screen state; `mount.tsx` owns the native modal lifetime, backdrop dismissal and panel motion.
 Motion preferences live in `src/shared/motion/preference.ts`; the system setting is the default.

@@ -288,10 +288,10 @@
     "message": "Keyboard shortcuts"
   },
   "panel_shortcuts_page": {
-    "message": "On the web page"
+    "message": "General controls"
   },
   "panel_shortcuts_selection": {
-    "message": "In selection mode"
+    "message": "Selecting items"
   },
   "panel_shortcuts_help": {
     "message": "Available when the panel is closed."

@@ -288,10 +288,10 @@
     "message": "キーボードショートカット"
   },
   "panel_shortcuts_page": {
-    "message": "ウェブページ上"
+    "message": "基本操作"
   },
   "panel_shortcuts_selection": {
-    "message": "選択モード中"
+    "message": "項目の選択"
   },
   "panel_shortcuts_help": {
     "message": "パネルを閉じた状態で使えます。"

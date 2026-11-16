@@ -149,7 +149,7 @@ try {
     );
   layout = layout.replaceAll(
     "{{LOGO}}",
-    `data:image/svg+xml;base64,${(await readFile(resolve("src/assets/logo.svg"))).toString("base64")}`,
+    `data:image/png;base64,${(await readFile(resolve("src/assets/logo.png"))).toString("base64")}`,
   );
   const art = await context.newPage();
   await context.route("https://artwork.veil.test/**", (route) =>

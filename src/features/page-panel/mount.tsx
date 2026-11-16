@@ -183,9 +183,11 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
         ((event.shiftKey ? last : first) ?? scope).focus();
       }
     });
-    unsubscribePreview = preview.subscribe((state) => {
+    unsubscribePreview = preview.subscribe(() => {
       if (dialog) {
-        dialog.dataset.preview = String(state.id !== null);
+        dialog.dataset.preview = String(preview.hasNotice);
+        if (preview.hasNotice) dialog.dataset.previewLayout = "compact";
+        else delete dialog.dataset.previewLayout;
         syncTheme();
       }
     });
@@ -212,7 +214,10 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
         origin={location.origin}
         preview={preview}
         portalContainer={dialog}
-        onClose={() => close()}
+        onClose={() => {
+          if (preview.hasNotice) preview.clear(true);
+          else close();
+        }}
         onSelect={() => {
           // Unmount before selection starts so no Less UI can become a hiding target.
           close(false);
@@ -297,7 +302,6 @@ const styles = stylex.create({
     insetBlock: {
       default: "0",
       ":is([data-preview-layout='compact'] )": "auto 8px",
-      ":is([data-preview-layout='compact'][data-preview-edge='top'])": "8px auto",
     },
   },
   mount: {

@@ -37,12 +37,16 @@ export function RecordRow({
   const tooltipId = useId();
 
   return (
-    <TableRow className="record record-row" data-selected={selected ? "" : undefined}>
+    <TableRow
+      className="record record-row"
+      data-selected={selected ? "" : undefined}
+      xstyle={selected ? styles.selectedRow : undefined}
+    >
       <TableCell>
         <Button
           ref={locateButton}
           className={["locate-button", stylex.props(styles.locateButton).className].join(" ")}
-          variant={selected ? "secondary" : "ghost"}
+          variant="ghost"
           align="start"
           size="sm"
           xstyle={styles.previewWidth}
@@ -117,6 +121,12 @@ export function RecordRow({
 }
 
 const styles = stylex.create({
+  selectedRow: {
+    backgroundColor: {
+      default: colorVars.bgSelected,
+      ":hover": colorVars.bgSelected,
+    },
+  },
   previewWidth: { width: "100%", minWidth: 0 },
   locateButton: {
     // TableRow owns hover; the inner action retains the Button's keyboard focus.

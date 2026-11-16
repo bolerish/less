@@ -876,7 +876,6 @@ try {
   }
 
   const cssBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
-  const visibleScroll = await site.evaluate(() => scrollY);
   await click(".record:nth-child(3) .locate-button");
   assert.notEqual(
     await site.locator("#one").evaluate((e) => getComputedStyle(e).display),
@@ -901,8 +900,8 @@ try {
   );
   assert.equal(
     await site.evaluate(() => scrollY),
-    visibleScroll,
-    "onscreen target does not force scrolling",
+    0,
+    "near-start target clamps centering to the beginning of the page",
   );
   assert.equal(
     await site.locator("#one").evaluate((e) => getComputedStyle(e).outlineStyle),
@@ -925,13 +924,15 @@ try {
   assert.equal(
     await panel((d) => {
       const status = d.querySelector<HTMLElement>(".preview-status")!;
-      const heading = d.querySelector<HTMLElement>(".list-toolbar h2")!.getBoundingClientRect();
+      const body = d.querySelector<HTMLElement>(".panel-body")!.getBoundingClientRect();
       const list = d.querySelector<HTMLElement>(".records")!.getBoundingClientRect();
       return (
         !d.querySelector(".preview-notice") &&
         status.getBoundingClientRect().width === 1 &&
         getComputedStyle(status).clipPath === "inset(50%)" &&
-        heading.left === list.left
+        list.left >= body.left &&
+        list.right <= body.right &&
+        d.dataset.previewLayout === "compact"
       );
     }),
     true,
@@ -962,13 +963,13 @@ try {
   await waitFor(() => panel((d) => d.dataset.preview === "true"), "OFF items can be located");
   assert.equal(
     await panel((d) => d.dataset.previewEdge),
-    "top",
-    "preview can move above a middle-of-page target",
+    undefined,
+    "OFF preview keeps the same bottom placement",
   );
   assert.equal(
-    await panel((d) => d.getBoundingClientRect().top),
+    await panel((d) => Math.round(innerHeight - d.getBoundingClientRect().bottom)),
     8,
-    "top placement wins over compact bottom placement",
+    "all previews retain the fixed bottom inset",
   );
   assert.equal(
     await panel((d) => getComputedStyle(d, "::backdrop").backdropFilter),
@@ -1010,7 +1011,7 @@ try {
     () => textIncludes(messages.panel_hidden_parent),
     "hidden ancestor reported honestly",
   );
-  assert.equal(await panel((d) => d.dataset.preview), "false");
+  assert.equal(await panel((d) => d.dataset.preview), "true", "failure retains preview mode");
   await site.evaluate(() =>
     document
       .querySelector<HTMLElement>("#hidden-parent")!
@@ -2309,9 +2310,70 @@ try {
     scrollBefore,
     "visible preview does not scroll again",
   );
-  await click('.locate-button[aria-label*="Far targ"]');
+  const previewGeometry = await panel((d) => {
+    const r = d.getBoundingClientRect();
+    return {
+      x: r.x,
+      y: r.y,
+      width: r.width,
+      height: r.height,
+      scroll: d.querySelector(".records")!.scrollTop,
+    };
+  });
+  const switchingFrames = await panel(async (d) => {
+    d.querySelector<HTMLButtonElement>('.locate-button[aria-label*="Far targ"]')!.click();
+    const frames: {
+      active: string | undefined;
+      layout: string | undefined;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      scroll: number;
+    }[] = [];
+    for (let i = 0; i < 24; i++) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const r = d.getBoundingClientRect();
+      frames.push({
+        active: d.dataset.preview,
+        layout: d.dataset.previewLayout,
+        x: r.x,
+        y: r.y,
+        width: r.width,
+        height: r.height,
+        scroll: d.querySelector(".records")!.scrollTop,
+      });
+    }
+    return frames;
+  });
+  for (const frame of switchingFrames) {
+    assert.equal(frame.active, "true", "item switch never exits preview mode");
+    assert.equal(frame.layout, "compact", "item switch never resets panel layout");
+    for (const key of ["x", "y", "width", "height"] as const)
+      assert(Math.abs(frame[key] - previewGeometry[key]) < 1, `stable preview ${key}`);
+    assert.equal(frame.scroll, previewGeometry.scroll, "item switch preserves list scroll");
+  }
   await hidden("#nested-target");
   await hidden("#far-target", false);
+  assert.equal(
+    await panel((d) => d.querySelector(".record[data-selected] .record-kind")?.textContent),
+    messages.panel_kind_content,
+    "content item uses the same preview navigation",
+  );
+  const centeredContent = await panel((d) => {
+    const target = document.querySelector("#far-target")!.getBoundingClientRect();
+    return {
+      actual: (target.top + target.bottom) / 2,
+      expected: (d.getBoundingClientRect().top - 8) / 2,
+    };
+  });
+  assert(
+    Math.abs(centeredContent.actual - centeredContent.expected) < 2,
+    "content target centers in the page area above the preview pane",
+  );
+  const farPosition = await site.evaluate(() => scrollY);
+  await click('.locate-button[aria-label*="Far targ"]');
+  assert.equal(await site.evaluate(() => scrollY), farPosition, "repeat centering is stable");
   await waitFor(
     () =>
       site.locator("#far-target").evaluate((e) => {
@@ -2320,7 +2382,13 @@ try {
       }),
     "long page scroll",
   );
+  const beforeFixed = await site.evaluate(() => scrollY);
   await click('.locate-button[aria-label*="Covered"]');
+  assert.equal(
+    await site.evaluate(() => scrollY),
+    beforeFixed,
+    "fixed-position target does not scroll the page",
+  );
   await hidden("#far-target");
   await hidden("#fixed-target", false);
   await waitFor(
@@ -2342,6 +2410,18 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#fixed-target");
   assert.equal(await panel((d) => d.dataset.preview), "false", "Escape ends preview");
+  await click('.locate-button[aria-label*="Covered"]');
+  await click("header button");
+  assert.equal(
+    await panel((d) => d.dataset.preview),
+    "false",
+    "preview close returns to normal panel",
+  );
+  assert.equal(
+    await site.locator("[data-less-panel]").count(),
+    1,
+    "preview close retains the panel",
+  );
   async function assertMouseRowControls(state: string) {
     await site.evaluate(
       () =>
@@ -2471,7 +2551,7 @@ try {
           client: d.clientWidth,
           scroll: d.scrollWidth,
           rows: d.querySelectorAll(".record").length,
-          selected: getComputedStyle(row).backgroundColor,
+          selected: getComputedStyle(row.closest(".record-row")!).backgroundColor,
         };
       });
       assert(
@@ -2498,7 +2578,7 @@ try {
         const a = row.getBoundingClientRect(),
           b = item.getBoundingClientRect();
         return {
-          background: getComputedStyle(button).backgroundColor,
+          background: getComputedStyle(row).backgroundColor,
           inner: getComputedStyle(button).backgroundColor,
           overlay: getComputedStyle(button, "::after").backgroundColor,
           radius: getComputedStyle(row).borderRadius,
@@ -2512,10 +2592,10 @@ try {
         state.selected,
         "selection keeps one background while hovered",
       );
-      assert.notEqual(
+      assert.equal(
         paint.inner,
         "rgba(0, 0, 0, 0)",
-        "selected action keeps its official secondary fill",
+        "selected action stays transparent; selection belongs to the entire row",
       );
       assert.equal(
         paint.overlay,
@@ -2554,7 +2634,7 @@ try {
         focus.visible && focus.style === "solid" && parseFloat(focus.width) >= 2,
         "keyboard focus remains visible",
       );
-      assert.notEqual(focus.background, "rgba(0, 0, 0, 0)", "keyboard row focus has a background");
+      assert.equal(focus.background, "rgba(0, 0, 0, 0)", "keyboard action stays ghost");
       assert.equal(focus.rowOutline, "none", "keyboard ring belongs to the focused button");
       assert.equal(focus.rowShadow, "none", "keyboard selection has no extra row line");
       console.log("ROW FOCUS", width, colorScheme, JSON.stringify(focus));
@@ -2579,7 +2659,7 @@ try {
   }
   await site.setViewportSize({ width: 1100, height: 800 });
   await site.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
-  // The official ghost Button owns hover paint; Item owns selected grouping.
+  // TableRow owns hover and selection; the ghost action owns keyboard focus.
   const hoverPoint = await panel((d) => {
     const button = d.querySelector<HTMLElement>(".locate-button")!;
     const rect = button.getBoundingClientRect();

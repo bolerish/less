@@ -29,21 +29,15 @@ export function createHiddenItemPreview() {
   }
   let revision = 0;
   let cleanupPosition: (() => void) | undefined;
-  let previewPanel: HTMLDialogElement | null = null;
   const listeners = new Set<(state: PreviewState) => void>();
   function publish(next: PreviewState): void {
     state = next;
     for (const listener of listeners) listener(next);
   }
-  function clear(animate = false): void {
+  function clearTarget(animate = false): void {
     revision++;
     cleanupPosition?.();
     cleanupPosition = undefined;
-    if (previewPanel) {
-      delete previewPanel.dataset.previewLayout;
-      delete previewPanel.dataset.previewEdge;
-      previewPanel = null;
-    }
     for (const target of outgoing) restore(target);
     outgoing.clear();
     if (current) {
@@ -65,6 +59,9 @@ export function createHiddenItemPreview() {
           .catch(() => {});
       } else restore(target);
     }
+  }
+  function clear(animate = false): void {
+    clearTarget(animate);
     publish({ id: null, message: "" });
   }
   return {
@@ -80,7 +77,7 @@ export function createHiddenItemPreview() {
       };
     },
     async show(id: string, panel: HTMLDialogElement | null = null): Promise<void> {
-      clear(true);
+      clearTarget();
       const pending = revision;
       const { origin, pathname: path, search } = location;
       publish({ id: null, message: "panel_find" });
@@ -110,15 +107,9 @@ export function createHiddenItemPreview() {
           return;
         }
         const element = match.matchedElement;
-        for (const target of outgoing) {
-          if (target.element !== element) continue;
-          outgoing.delete(target);
-          restore(target);
-        }
         finishHiddenElementAnimation(element);
         const wasHidden = isHiddenElement(element);
         current = { element, style: element.getAttribute("style"), wasHidden };
-        previewPanel = panel;
         const savedStyle = wasHidden
           ? element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE)
           : element.getAttribute("style");
@@ -150,7 +141,7 @@ export function createHiddenItemPreview() {
         const rect = getPaintedRect(element);
         const visible = element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
         if (!rect.width || !rect.height || !visible) {
-          clear();
+          clearTarget();
           publish({
             id: null,
             message: "panel_hidden_parent",
@@ -169,7 +160,7 @@ export function createHiddenItemPreview() {
         );
         if (pending !== revision) return;
         if (!positionPreview(element, panel)) {
-          clear();
+          clearTarget();
           publish({
             id: null,
             message: "panel_covered",
@@ -184,7 +175,7 @@ export function createHiddenItemPreview() {
         const reposition = (): void => {
           cancelAnimationFrame(frame);
           frame = requestAnimationFrame(() => {
-            if (pending === revision) positionPreview(element, panel);
+            if (pending === revision) positionPreview(element, panel, false);
           });
         };
         const observer = new ResizeObserver(reposition);
@@ -200,7 +191,7 @@ export function createHiddenItemPreview() {
         };
       } catch {
         if (pending !== revision) return;
-        clear();
+        clearTarget();
         publish({
           id: null,
           message: "panel_preview_error",

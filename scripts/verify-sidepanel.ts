@@ -103,6 +103,12 @@ let siteOwnsInert = false;
 let siteAria: string | null = null;
 const server = createServer((_req, res) => {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  if ((_req.url ?? "").startsWith("/scrollbar")) {
+    res.end(
+      `<!doctype html><style>html{scrollbar-gutter:auto}::-webkit-scrollbar{width:16px}body{margin:0}#gutter-reference{width:200px;margin:auto}#gutter-target{height:${(_req.url ?? "").includes("short") ? "100" : "1400"}px;background:#ccc}</style><div id="gutter-reference">Keep this centered</div><section id="gutter-target">Tall removable block</section>`,
+    );
+    return;
+  }
   res.end(
     (_req.url ?? "").startsWith("/accessibility")
       ? accessibilityFixture.replace(
@@ -238,7 +244,7 @@ try {
   const activeContext = await chromium.launchPersistentContext(join(directory, "profile"), {
     executablePath: values.chromium,
     headless: true,
-    ignoreDefaultArgs: ["--disable-extensions"],
+    ignoreDefaultArgs: ["--disable-extensions", "--hide-scrollbars"],
     viewport: { width: 1100, height: 800 },
     args: ["--enable-unsafe-extension-debugging"],
   });
@@ -3515,6 +3521,59 @@ try {
   }, origin);
   assert(iframeAuthority, "iframe returned an authority response");
   assert.equal(iframeAuthority.ok, false, "iframe management rejected despite matching origin");
+  await site.setViewportSize({ width: 1100, height: 800 });
+  await site.emulateMedia({ reducedMotion: "reduce" });
+  await site.goto(`${origin}/scrollbar-tall`);
+  await action();
+  await waitFor(
+    () => panel((d) => !!d.querySelector(".select-button:not([disabled])")),
+    "scrollbar fixture ready",
+  );
+  await click(".panel-header button:last-child");
+  const gutterBefore = await site.evaluate(() => ({
+    width: innerWidth - document.documentElement.clientWidth,
+    x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+    style: document.documentElement.getAttribute("style"),
+  }));
+  assert(gutterBefore.width > 0, "fixture exercises a real classic scrollbar");
+  await hide("#gutter-target", { position: { x: 30, y: 30 } });
+  const gutterAfter = await site.evaluate(() => ({
+    width: innerWidth - document.documentElement.clientWidth,
+    x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+    scrolls: document.documentElement.scrollHeight > innerHeight,
+  }));
+  assert.equal(gutterAfter.scrolls, false, "hiding removes the need for a scrollbar");
+  assert.equal(
+    gutterAfter.x,
+    gutterBefore.x,
+    `remaining content stays at x=${gutterBefore.x} after hiding (actual ${gutterAfter.x})`,
+  );
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#gutter-target", false);
+  assert.equal(
+    await site.evaluate(() => document.documentElement.getAttribute("style")),
+    gutterBefore.style,
+    "last restoration releases the temporary gutter exactly",
+  );
+  await site.goto(`${origin}/scrollbar-short`);
+  const shortBefore = await site.evaluate(() => ({
+    x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+    style: document.documentElement.getAttribute("style"),
+  }));
+  await hide("#gutter-target");
+  assert.deepEqual(
+    await site.evaluate(() => ({
+      x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+      style: document.documentElement.getAttribute("style"),
+    })),
+    shortBefore,
+    "a page without a scrollbar gains no gutter or layout shift",
+  );
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#gutter-target", false);
+  console.log(
+    "PASS disappearing classic scrollbar preserves content position, exact gutter cleanup and no added space on short pages",
+  );
   const unsupported = await context.newPage();
   await unsupported.goto("chrome://version");
   await action(unsupported);

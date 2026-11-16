@@ -4,6 +4,7 @@ import { initializeMotionPreference } from "~shared/motion/preference";
 import "@bolerish/ui/global.css";
 import { loadContentStyles } from "~shared/styles/content-styles";
 import { restoreAllHiddenElements } from "~features/element-hiding";
+import { releasePageScrollbar } from "~features/element-hiding/element-hide";
 import { getSiteHidingEnabled } from "~features/hiding-preference";
 import type { ContentScriptContext } from "wxt/utils/content-script-context";
 import { createPagePanel } from "~features/page-panel/mount";
@@ -45,6 +46,7 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   const hidingKey = `${HIDING_KEY_PREFIX}${encodeURIComponent(origin)}`;
 
   ctx.onInvalidated(() => {
+    releasePageScrollbar(document);
     stopReapplyWatcher();
     invalidateRecordCache();
     stopSelectionMode();

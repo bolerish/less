@@ -52,7 +52,7 @@ Background code owns IndexedDB access. Keep records, CSS caches, and live DOM sy
 ## Preserve approved requirements and corrections
 
 Before editing, identify this assignment's approved requirements and relevant
-previous corrections. Use the [verification map](README.md#verify-previously-corrected-behavior)
+previous corrections. Use the [verification map](CONTRIBUTING.md#verify-previously-corrected-behavior)
 to select existing checks; add a regression only for a demonstrated gap. Preserve
 correct behavior across rewrites. Reuse official components rather than equating
 token use with design-system adoption, and inspect actual responsibility

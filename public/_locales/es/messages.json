@@ -177,10 +177,10 @@
     "message": "v$1 · Historial de actualizaciones sin leer"
   },
   "panel_selection_prompt": {
-    "message": "Seleccionando"
+    "message": "Clic: ocultar · Mantén pulsada Mayús: seleccionar el elemento padre"
   },
   "panel_selection_keys": {
-    "message": "Mantén Shift para ampliar el área. ↑/↓: ajustar área · Enter: ocultar"
+    "message": "Mayús: seleccionar el elemento padre · ↑/↓: padre/hijo · Intro: ocultar"
   },
   "panel_selection_count_one": {
     "message": "$1 oculto"
@@ -189,7 +189,7 @@
     "message": "$1 ocultos"
   },
   "panel_selection_close": {
-    "message": "Salir del modo de selección"
+    "message": "Salir de la selección"
   },
   "panel_selection_undo": {
     "message": "Deshacer la última ocultación"
@@ -228,7 +228,7 @@
     "message": "Idioma"
   },
   "panel_language_auto": {
-    "message": "Usar el idioma del navegador"
+    "message": "Idioma del navegador"
   },
   "panel_language_error": {
     "message": "No se pudo guardar el idioma. Inténtalo de nuevo."
@@ -255,24 +255,9 @@
     "message": "Oscuro"
   },
   "panel_theme_help": {
-    "message": "El tema se aplica a Less en todos los sitios."
+    "message": "Elige el tema de Less para todos los sitios. Si no se puede detectar el tema de la página, se usa la configuración del sistema."
   },
   "panel_theme_error": {
     "message": "No se pudo guardar el tema. Inténtalo de nuevo."
-  },
-  "panel_selection_wider": {
-    "message": "Área mayor"
-  },
-  "panel_theme_fallback": {
-    "message": "Si no se detecta el tema de la página, se usa el del sistema."
-  },
-  "panel_theme_info": {
-    "message": "Acerca del tema"
-  },
-  "panel_item": {
-    "message": "Elemento"
-  },
-  "panel_restore": {
-    "message": "Restaurar"
   }
 }

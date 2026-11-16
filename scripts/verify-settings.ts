@@ -55,15 +55,6 @@ function contrast(foreground: string, background: string): number {
 }
 assert.equal(contrast("rgb(0, 0, 0)", "rgb(255, 255, 255)"), 21);
 assert.equal(contrast("rgba(0, 0, 0, 0)", "rgb(255, 255, 255)"), 1);
-function composite(foreground: string, background: string): string {
-  const fg = foreground.match(/[\d.]+/g)!.map(Number);
-  const bg = background.match(/[\d.]+/g)!.map(Number);
-  const alpha = fg[3] ?? 1;
-  return `rgb(${fg
-    .slice(0, 3)
-    .map((value, index) => value * alpha + bg[index] * (1 - alpha))
-    .join(", ")})`;
-}
 async function waitFor(check: () => Promise<unknown>, label: string) {
   const until = Date.now() + 7000;
   while (Date.now() < until) {
@@ -145,147 +136,6 @@ try {
     }, selector);
     await site.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
   }
-  async function commonPadding() {
-    const layout = await panel((dialog) => {
-      const header = dialog.querySelector<HTMLElement>(".panel-header")!;
-      const body = dialog.querySelector<HTMLElement>(".panel-body")!;
-      const read = (element: HTMLElement) => {
-        const style = getComputedStyle(element);
-        return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
-      };
-      const bodyRect = body.getBoundingClientRect();
-      const back = header.querySelector("button svg");
-      return {
-        header: read(header),
-        body: read(body),
-        back: header.querySelector("h1")
-          ? back!.getBoundingClientRect().left
-          : header.querySelector(".brand")!.getBoundingClientRect().left,
-        start: bodyRect.left + 16,
-        close: header.querySelector("button:last-child svg")!.getBoundingClientRect().right,
-        end: bodyRect.right - 16,
-      };
-    });
-    assert.deepEqual(
-      layout.header,
-      ["16px", "16px", "16px", "16px"],
-      "common header owns 16px padding",
-    );
-    assert.deepEqual(
-      layout.body,
-      ["24px", "24px", "24px", "24px"],
-      "common body has more inset than the header",
-    );
-    assert(
-      Math.abs(layout.back - layout.start) <= 1,
-      `brand/back icon keeps the header inset: ${JSON.stringify(layout)}`,
-    );
-    assert(
-      Math.abs(layout.close - layout.end) <= 1,
-      `close icon keeps the header inset: ${JSON.stringify(layout)}`,
-    );
-  }
-  async function themeHelp(catalog: Record<string, { message: string }>) {
-    const selector = `[aria-label="${catalog.panel_theme_info.message}"]`;
-    const trigger = await panel(
-      (dialog, selector) =>
-        dialog.querySelector<HTMLElement>(selector)!.getBoundingClientRect().toJSON(),
-      selector,
-    );
-    const visibleHelp = () =>
-      panel(
-        (dialog, text) =>
-          Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]')).some(
-            (tooltip) =>
-              tooltip.textContent?.includes(text) &&
-              tooltip.getBoundingClientRect().width > 0 &&
-              tooltip.getBoundingClientRect().left >= 0 &&
-              tooltip.getBoundingClientRect().right <= innerWidth,
-          ),
-        catalog.panel_theme_help.message,
-      );
-    await site.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
-    await waitFor(visibleHelp, "theme help opens on hover");
-    const tooltipStyle = await panel((dialog, text) => {
-      const tooltip = Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]')).find(
-        (element) => element.textContent?.includes(text),
-      )!;
-      const style = getComputedStyle(tooltip);
-      return {
-        border: style.borderTopWidth,
-        borderStyle: style.borderTopStyle,
-        arrow: !!tooltip.querySelector(':scope > [aria-hidden="true"][data-side]'),
-        shadow: style.boxShadow,
-        font: parseFloat(style.fontSize),
-      };
-    }, catalog.panel_theme_help.message);
-    assert(
-      tooltipStyle.border === "1px" &&
-        tooltipStyle.borderStyle === "solid" &&
-        tooltipStyle.arrow &&
-        tooltipStyle.shadow !== "none" &&
-        tooltipStyle.font >= 12,
-      "official TooltipContent border, arrow, elevation and type render inside the modal",
-    );
-    assert.equal(
-      await site.locator("[data-base-ui-portal]").count(),
-      0,
-      "Tooltip stays in the closed shadow modal",
-    );
-    const popup = await panel(
-      (dialog, text) =>
-        Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]'))
-          .find((tooltip) => tooltip.textContent?.includes(text))!
-          .getBoundingClientRect()
-          .toJSON(),
-      catalog.panel_theme_help.message,
-    );
-    await site.mouse.move(popup.x + popup.width / 2, popup.y + popup.height / 2);
-    await site.waitForTimeout(250);
-    assert(await visibleHelp(), "theme help stays readable when pointer enters it");
-    await panel(
-      (dialog, selector) => dialog.querySelector<HTMLElement>(selector)!.focus(),
-      selector,
-    );
-    await waitFor(visibleHelp, "theme help opens on focus");
-    await site.keyboard.press("Escape");
-    assert(
-      await panel(
-        (dialog, selector) =>
-          (dialog.getRootNode() as ShadowRoot).activeElement === dialog.querySelector(selector) &&
-          !dialog.querySelector(selector)?.hasAttribute("aria-describedby") &&
-          !!dialog.querySelector('[data-preference-value="page"]'),
-        selector,
-      ),
-      "Escape dismisses only theme help and preserves focus",
-    );
-    await waitFor(async () => !(await visibleHelp()), "theme help dismisses on Escape");
-    await click(selector);
-    await waitFor(visibleHelp, "theme help opens on click");
-    assert(
-      await panel(
-        (dialog, text) =>
-          Array.from(dialog.querySelectorAll('[role="tooltip"]')).some((tooltip) =>
-            tooltip.textContent?.includes(text),
-          ),
-        catalog.panel_theme_fallback.message,
-      ),
-      "fallback guidance is in the same tooltip",
-    );
-    await site.keyboard.press("Escape");
-    await site.mouse.move(0, 0);
-    await waitFor(async () => !(await visibleHelp()), "theme help closes before touch");
-    const session = sessions.get(site)!;
-    await session.send("Emulation.setTouchEmulationEnabled", { enabled: true });
-    await session.send("Input.dispatchTouchEvent", {
-      type: "touchStart",
-      touchPoints: [{ x: trigger.x + trigger.width / 2, y: trigger.y + trigger.height / 2 }],
-    });
-    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-    await waitFor(visibleHelp, "theme help opens on touch");
-    await site.keyboard.press("Escape");
-    await session.send("Emulation.setTouchEmulationEnabled", { enabled: false });
-  }
   async function theme(expected: string, page = site) {
     await waitFor(
       () => page.locator("[data-less-panel]").count(),
@@ -297,18 +147,6 @@ try {
           (actual) => actual === expected,
         ),
       `theme ${expected}`,
-    );
-    await waitFor(
-      () =>
-        panel(
-          (dialog) =>
-            dialog
-              .getAnimations({ subtree: true })
-              .every((animation) => animation.playState !== "running"),
-          undefined,
-          page,
-        ),
-      "theme transitions settle before measuring controls",
     );
     assert.equal(
       await panel((dialog) => getComputedStyle(dialog).backgroundColor, undefined, page),
@@ -345,11 +183,6 @@ try {
   }
   await site.bringToFront();
   await theme("light");
-  await commonPadding();
-  await click(".updates-button");
-  await waitFor(() => panel((dialog) => !!dialog.querySelector(".updates")), "updates body");
-  await commonPadding();
-  await site.keyboard.press("Escape");
   const before = await site.evaluate(() => ({
     root: document.documentElement.getAttribute("style"),
     body: document.body.getAttribute("style"),
@@ -362,13 +195,13 @@ try {
   );
   await click('[data-settings-page="theme"]');
   await waitFor(
-    () => panel((dialog) => dialog.querySelectorAll("[data-preference-value]").length === 4),
+    () => panel((dialog) => dialog.querySelectorAll('[role="radio"]').length === 4),
     "four theme options",
   );
   assert.equal(
     await panel((dialog) =>
       dialog
-        .querySelector('[data-preference-value][aria-pressed="true"]')
+        .querySelector('[role="radio"][aria-checked="true"]')
         ?.getAttribute("data-preference-value"),
     ),
     "page",
@@ -383,7 +216,7 @@ try {
   });
   await theme("light");
   for (const value of ["dark", "light", "system", "page"]) {
-    await click(`[data-preference-value="${value}"]`);
+    await click(`[role="radio"][data-preference-value="${value}"]`);
     await waitFor(
       async () =>
         (await worker.evaluate(() => chrome.storage.local.get("less:theme")))["less:theme"] ===
@@ -547,231 +380,16 @@ try {
     ),
     "light",
   );
-  const toolbar = <T>(fn: (element: HTMLElement) => T) =>
-    evaluateNode(
-      sessions.get(site)!,
-      (node) => node.attributes?.includes("data-selection-toolbar") === true,
-      fn,
-      undefined,
-    );
-  await waitFor(
-    () => toolbar((element) => element.querySelectorAll("button").length === 2),
-    "toolbar actions",
-  );
-  assert.equal(
-    await toolbar(
-      (element) => element.querySelector("[data-selection-mode]")!.querySelectorAll("svg").length,
-    ),
-    0,
-    "selection Badge has no leading icon",
-  );
-  await waitFor(
-    () => toolbar((element) => !element.querySelector<HTMLButtonElement>("button")!.disabled),
-    "undo becomes available",
-  );
-  await waitFor(
-    () =>
-      site
-        .locator("[data-less-ui]")
-        .evaluate((element) => getComputedStyle(element).opacity === "1"),
-    "toolbar entrance settles before pointer actions",
-  );
-  const undo = await toolbar((element) =>
-    element.querySelector("button")!.getBoundingClientRect().toJSON(),
-  );
-  await site.mouse.click(undo.x + undo.width / 2, undo.y + undo.height / 2);
-  await waitFor(
-    () =>
-      site.locator("#target").evaluate((element) => getComputedStyle(element).display !== "none"),
-    "toolbar undo restores target",
-  );
-  await waitFor(
-    () =>
-      toolbar((element) => {
-        const undo = element.querySelector<HTMLButtonElement>("button")!;
-        return (
-          undo.disabled &&
-          undo.getBoundingClientRect().width > 0 &&
-          getComputedStyle(undo).opacity !== "0"
-        );
-      }),
-    "unavailable undo stays visible after persistence completes",
-  );
-  const close = await toolbar((element) =>
-    element.querySelectorAll("button")[1].getBoundingClientRect().toJSON(),
-  );
-  await site.mouse.click(close.x + close.width / 2, close.y + close.height / 2);
+  await site.keyboard.press("Escape");
   await waitFor(
     async () => (await site.locator("[data-less-ui]").count()) === 0,
-    "toolbar close exits selection",
+    "toolbar cleanup",
   );
   console.log(
     "PASS real Chrome: welcome/failure fallback and sync, selection toolbar and feedback use shared theme",
   );
-  await site.emulateMedia({ reducedMotion: "no-preference" });
   await action();
   await theme("light");
-  await click(".settings-button");
-  await click('[data-settings-page="language"]');
-  await waitFor(
-    () => panel((dialog) => !!dialog.querySelector('[role="combobox"]')),
-    "language motion check",
-  );
-  const originalLocale = await worker.evaluate(
-    async () => (await chrome.storage.local.get("less:locale"))["less:locale"],
-  );
-  const pageBeforeSelect = await site.evaluate(() => ({
-    html: document.documentElement.getAttribute("style"),
-    body: document.body.getAttribute("style"),
-    x: scrollX,
-    y: scrollY,
-  }));
-  await panel((dialog) => {
-    dialog.dataset.motionProbe = "stable";
-    const initial = dialog.getBoundingClientRect();
-    const header = dialog.querySelector("header")!;
-    const initialHeader = header.getBoundingClientRect();
-    let moved = false;
-    let frame = 0;
-    const sample = () => {
-      const style = getComputedStyle(dialog);
-      const rect = dialog.getBoundingClientRect();
-      moved ||=
-        dialog.getAnimations().some((animation) => animation.playState === "running") ||
-        style.transform !== "none" ||
-        dialog.scrollLeft !== 0 ||
-        Math.abs(header.getBoundingClientRect().left - initialHeader.left) > 0.5 ||
-        Math.abs(header.getBoundingClientRect().top - initialHeader.top) > 0.5 ||
-        Math.abs(rect.left - initial.left) > 0.5 ||
-        Math.abs(rect.top - initial.top) > 0.5;
-      frame = requestAnimationFrame(sample);
-    };
-    sample();
-    (dialog as HTMLElement & { stopMotionProbe: () => boolean }).stopMotionProbe = () => {
-      cancelAnimationFrame(frame);
-      return moved;
-    };
-  });
-  await click('[role="combobox"]');
-  await waitFor(
-    () =>
-      panel((dialog) => {
-        const option = dialog.querySelector<HTMLElement>(
-          '[role="option"][data-preference-value="ja"]',
-        );
-        const rect = option?.getBoundingClientRect();
-        return (
-          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
-          !!rect &&
-          rect.width > 0 &&
-          rect.left >= 0 &&
-          rect.right <= innerWidth
-        );
-      }),
-    "language Select is positioned before the next click",
-  );
-  assert.deepEqual(
-    await site.evaluate(() => ({
-      html: document.documentElement.getAttribute("style"),
-      body: document.body.getAttribute("style"),
-      x: scrollX,
-      y: scrollY,
-    })),
-    pageBeforeSelect,
-    "nested Select leaves page styles and scroll unchanged",
-  );
-  assert(
-    await panel((dialog) => dialog.matches(":modal")),
-    "outer panel keeps background interactions blocked",
-  );
-  await click('[role="option"][data-preference-value="ja"]');
-  await waitFor(
-    () =>
-      panel(
-        (dialog) =>
-          dialog.lang === "ja" &&
-          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "false",
-      ),
-    "language updates in the same panel",
-  );
-  for (const locale of ["ko", "auto", "en"]) {
-    await click('[role="combobox"]');
-    await waitFor(
-      () =>
-        panel((dialog) => {
-          const option = dialog.querySelector<HTMLElement>('[role="option"]');
-          return (
-            dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
-            (option?.getBoundingClientRect().width ?? 0) > 0
-          );
-        }),
-      "reopened language options are visible",
-    );
-    await site.waitForTimeout(200);
-    await click(`[role="option"][data-preference-value="${locale}"]`);
-    await site.waitForTimeout(200);
-    await waitFor(
-      () =>
-        panel(
-          (dialog, locale) =>
-            dialog.querySelector('[role="combobox"]')?.getAttribute("data-preference-value") ===
-              locale &&
-            dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "false",
-          locale,
-        ),
-      `repeated language selection ${locale} settles`,
-    );
-  }
-  await click('[role="combobox"]');
-  await waitFor(
-    () =>
-      panel(
-        (dialog) =>
-          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true",
-      ),
-    "reopen after locale changes",
-  );
-  await site.waitForTimeout(200);
-  await site.keyboard.press("Escape");
-  assert.equal(
-    await panel((dialog) => dialog.dataset.motionProbe),
-    "stable",
-    "language change preserves the mounted panel",
-  );
-  assert.equal(
-    await panel((dialog) => {
-      const element = dialog as HTMLElement & { stopMotionProbe?: () => boolean };
-      const moved = element.stopMotionProbe!();
-      delete element.stopMotionProbe;
-      delete dialog.dataset.motionProbe;
-      return moved;
-    }),
-    false,
-    "Select and language changes never replay panel entry animation",
-  );
-  await worker.evaluate(async (value) => {
-    if (value === undefined) await chrome.storage.local.remove("less:locale");
-    else await chrome.storage.local.set({ "less:locale": value });
-  }, originalLocale);
-  await site.keyboard.press("Escape");
-  await waitFor(
-    () => panel((dialog) => !!dialog.querySelector('[data-settings-page="language"]')),
-    "back from language motion check",
-  );
-  await site.keyboard.press("Escape");
-  await waitFor(
-    () =>
-      panel(
-        (dialog) =>
-          (dialog.getRootNode() as ShadowRoot).activeElement ===
-          dialog.querySelector(".settings-button"),
-      ),
-    "motion check returns to hidden items",
-  );
-  await site.emulateMedia({ reducedMotion: "reduce" });
-  console.log(
-    "PASS normal motion: Select and locale keep the same stationary modal panel and preserve page styles/scroll",
-  );
   async function zoom(factor: number) {
     await worker.evaluate(
       async ({ url, factor }) => {
@@ -798,15 +416,13 @@ try {
           ),
         "settings navigation theme transitions finish",
       );
-      await commonPadding();
       const layout = await panel((dialog) => {
-        const settings = dialog.querySelector<HTMLElement>(".panel-body > section")!;
-        const body = dialog.querySelector<HTMLElement>(".panel-body")!;
-        const bounds = body.getBoundingClientRect();
+        const settings = dialog.querySelector<HTMLElement>("main > section")!;
+        const bounds = settings.getBoundingClientRect();
         return {
-          width: body.clientWidth,
-          scroll: body.scrollWidth,
-          overflow: getComputedStyle(body).overflowX,
+          width: settings.clientWidth,
+          scroll: settings.scrollWidth,
+          overflow: getComputedStyle(settings).overflowX,
           background: getComputedStyle(dialog).backgroundColor,
           headings: Array.from(settings.querySelectorAll("h2")).map((heading) => ({
             color: getComputedStyle(heading).color,
@@ -883,10 +499,13 @@ try {
             ),
           "localized preference title",
         );
-        const control = page === "language" ? '[role="combobox"]' : "[data-preference-value]";
         await waitFor(
-          () => panel((dialog, selector) => !!dialog.querySelector(selector), control),
+          () => panel((dialog) => !!dialog.querySelector('[role="radiogroup"]')),
           "preferences",
+        );
+        assert.equal(
+          await panel((dialog) => dialog.querySelectorAll('[role="radio"]').length),
+          page === "language" ? 6 : 4,
         );
         assert.equal(
           await panel(
@@ -895,116 +514,77 @@ try {
           ),
           true,
         );
-        await commonPadding();
         for (const scheme of ["light", "dark"]) {
           await store("less:theme", scheme);
           await theme(scheme);
-          if (page === "language") {
-            await click(control);
-            await waitFor(
-              () =>
-                panel(
-                  (dialog) =>
-                    dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") ===
-                      "true" &&
-                    dialog.querySelectorAll('[role="option"]').length === 6 &&
-                    dialog.querySelector<HTMLElement>('[role="option"]')!.getBoundingClientRect()
-                      .width > 0,
-                ),
-              "six language options",
-            );
-          }
-          const layout = await panel(
-            (dialog, selector) => ({
-              width: dialog.clientWidth,
-              scroll: dialog.scrollWidth,
-              background: getComputedStyle(dialog).backgroundColor,
-              rows: Array.from(dialog.querySelectorAll<HTMLElement>(selector)).map((element) => ({
-                left: element.getBoundingClientRect().left,
-                right: element.getBoundingClientRect().right,
-                top: element.getBoundingClientRect().top,
-                text: element.textContent,
-                font: parseFloat(getComputedStyle(element).fontSize),
-                color: getComputedStyle(element).color,
-                background: getComputedStyle(element).backgroundColor,
-              })),
-            }),
-            page === "language" ? '[role="option"]' : control,
-          );
+          const layout = await panel((dialog) => ({
+            width: dialog.clientWidth,
+            scroll: dialog.scrollWidth,
+            background: getComputedStyle(dialog).backgroundColor,
+            description: dialog.querySelector("main > section p")
+              ? getComputedStyle(dialog.querySelector("main > section p")!).color
+              : null,
+            radioBorder: getComputedStyle(dialog.querySelector('[role="radio"]')!).borderColor,
+            rows: Array.from(dialog.querySelectorAll("label")).map((label) => ({
+              left: label.getBoundingClientRect().left,
+              right: label.getBoundingClientRect().right,
+              font: parseFloat(getComputedStyle(label).fontSize),
+              color: getComputedStyle(label).color,
+            })),
+          }));
           assert(
-            layout.rows.every(
-              (row) => contrast(row.color, composite(row.background, layout.background)) >= 4.5,
-            ),
+            layout.rows.every((row) => contrast(row.color, layout.background) >= 4.5),
             "readable option contrast",
+          );
+          if (layout.description)
+            assert(
+              contrast(layout.description, layout.background) >= 4.5,
+              "readable help contrast",
+            );
+          assert(
+            contrast(layout.radioBorder, layout.background) >= 3,
+            "visible radio control boundary",
           );
           assert(
             layout.scroll <= layout.width &&
               layout.rows.every((row) => row.left >= 0 && row.right <= width && row.font >= 14),
             `${locale}/${width}/${page}/${scheme}: readable, no clipping`,
           );
-          if (page === "theme") {
-            assert.equal(layout.rows.length, 4);
-            assert.deepEqual(
-              await panel((dialog) =>
-                Array.from(dialog.querySelectorAll("[data-preference-value]")).map((button) =>
-                  button.getAttribute("aria-label"),
-                ),
-              ),
-              ["page", "system", "light", "dark"].map(
-                (value) => catalog[`panel_theme_${value}`].message,
-              ),
-              "theme accessible names match localized tooltips",
-            );
-            if (locale === "ko" && width === 375 && scheme === "dark") await themeHelp(catalog);
-            assert.equal(
-              new Set(layout.rows.map((row) => row.top)).size,
-              1,
-              "theme icons stay in one row",
-            );
-            assert(
-              layout.rows.every((row) => row.text === ""),
-              "theme buttons use icons only",
-            );
-          } else {
-            await site.keyboard.press("Escape");
-            await waitFor(async () => {
-              const { nodes } = await sessions.get(site)!.send("Accessibility.getFullAXTree");
-              return (
-                !nodes.some((node) => !node.ignored && node.role?.value === "listbox") &&
-                (await panel(
-                  (dialog) =>
-                    dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") ===
-                    "false",
-                ))
-              );
-            }, "Escape closes language list only");
-            assert(
-              await panel((dialog) => !!dialog.querySelector('[role="combobox"]')),
-              "preference page remains open",
-            );
-          }
         }
-        if (locale === "ko" && width === 375)
-          await site.screenshot({ path: `/tmp/less-settings-ko-${page}.png` });
+        if (locale === "ko" && width === 375 && page === "theme")
+          await site.screenshot({ path: "/tmp/less-settings-ko-theme.png" });
+        if (page === "language") {
+          await click('[role="radio"][data-preference-value="auto"]');
+          await waitFor(
+            async () =>
+              (await worker.evaluate(() => chrome.storage.local.get("less:locale")))[
+                "less:locale"
+              ] === "auto",
+            "auto language",
+          );
+          await store("less:locale", locale);
+        }
         await panel((dialog) => dialog.querySelector<HTMLElement>("h1")!.focus());
-        for (let step = 0; step < 6; step++) {
+        for (let step = 0; step < 5; step++) {
           await site.keyboard.press("Tab");
           if (
             await panel(
-              (dialog, selector) =>
-                (dialog.getRootNode() as ShadowRoot).activeElement?.matches(selector),
-              control,
+              (dialog) =>
+                (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute("role") ===
+                "radio",
             )
           )
             break;
         }
-        assert(
-          await panel(
-            (dialog, selector) =>
-              (dialog.getRootNode() as ShadowRoot).activeElement?.matches(selector),
-            control,
+        assert.equal(
+          await panel((dialog) =>
+            (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute("role"),
           ),
-          "keyboard reaches preference control",
+          "radio",
+          "keyboard reaches radio group",
+        );
+        const previous = await panel((dialog) =>
+          (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute("data-preference-value"),
         );
         const focus = await panel((dialog) => {
           const style = getComputedStyle((dialog.getRootNode() as ShadowRoot).activeElement!);
@@ -1021,95 +601,18 @@ try {
             contrast(focus.outline, focus.background) >= 3,
           "visible keyboard focus contrast",
         );
-        if (page === "language") {
-          await site.keyboard.press("Enter");
-          await waitFor(
-            () =>
-              panel(
-                (dialog) =>
-                  dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") ===
-                    "true" &&
-                  dialog.querySelectorAll('[role="option"]').length === 6 &&
-                  dialog.querySelector<HTMLElement>('[role="option"]')!.getBoundingClientRect()
-                    .width > 0,
-              ),
-            "keyboard opens language Select",
-          );
-          await waitFor(
-            () =>
-              panel(
-                (dialog) =>
-                  !!(dialog.getRootNode() as ShadowRoot).activeElement?.closest('[role="listbox"]'),
-              ),
-            "focus enters language list",
-          );
-          await site.keyboard.press("Home");
-          await waitFor(
-            () =>
-              panel(
-                (dialog) =>
-                  (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute(
-                    "data-preference-value",
-                  ) === "auto",
-              ),
-            "Home reaches browser language",
-          );
-          await site.keyboard.press("Enter");
-          await waitFor(
-            async () =>
-              (await worker.evaluate(() => chrome.storage.local.get("less:locale")))[
-                "less:locale"
-              ] === "auto",
-            "keyboard saves browser language",
-          );
-          await store("less:locale", locale);
-          await waitFor(
-            () =>
-              panel(
-                (dialog) =>
-                  (dialog.getRootNode() as ShadowRoot).activeElement ===
-                  dialog.querySelector('[role="combobox"]'),
-              ),
-            "language selection returns focus to trigger",
-          );
-        } else {
-          const tooltip = await panel((dialog) =>
-            (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute("aria-label"),
-          );
-          await waitFor(
-            () =>
-              panel(
-                (dialog, label) =>
-                  Array.from(dialog.querySelectorAll('[role="tooltip"]')).some(
-                    (el) => el.textContent === label,
-                  ),
-                tooltip,
-              ),
-            "focus shows theme tooltip inside shadow dialog",
-          );
-          await site.keyboard.press("Escape");
-          assert(
-            await panel((dialog) => !!dialog.querySelector("[data-preference-value]")),
-            "tooltip Escape retains theme page",
-          );
-          await site.keyboard.press("ArrowRight");
-          await site.keyboard.press("Space");
-          await waitFor(
-            () =>
-              panel(
-                (dialog) =>
-                  (dialog.getRootNode() as ShadowRoot).activeElement?.getAttribute(
-                    "aria-pressed",
-                  ) === "true",
-              ),
-            "keyboard selects a theme",
-          );
-          await panel((dialog) => dialog.querySelector<HTMLElement>("h1")!.focus());
-          await waitFor(async () => {
-            const { nodes } = await sessions.get(site)!.send("Accessibility.getFullAXTree");
-            return !nodes.some((node) => !node.ignored && node.role?.value === "tooltip");
-          }, "blur dismisses theme tooltip");
-        }
+        await site.keyboard.press("ArrowDown");
+        await waitFor(
+          () =>
+            panel((dialog, previous) => {
+              const active = (dialog.getRootNode() as ShadowRoot).activeElement;
+              return (
+                active?.getAttribute("data-preference-value") !== previous &&
+                active?.getAttribute("aria-checked") === "true"
+              );
+            }, previous),
+          "arrow moves focus and selects the focused option",
+        );
         await site.keyboard.press("Escape");
         await waitFor(
           () =>
@@ -1150,7 +653,6 @@ try {
             ),
           "zoom locale title",
         );
-        await commonPadding();
         for (const scheme of ["light", "dark"]) {
           await store("less:theme", scheme);
           await theme(scheme);
@@ -1158,9 +660,9 @@ try {
             await panel(
               (dialog) =>
                 dialog.scrollWidth <= dialog.clientWidth &&
-                Array.from(
-                  dialog.querySelectorAll('[role="combobox"], [data-preference-value]'),
-                ).every((label) => label.getBoundingClientRect().right <= innerWidth),
+                Array.from(dialog.querySelectorAll("label")).every(
+                  (label) => label.getBoundingClientRect().right <= innerWidth,
+                ),
             ),
             `${locale}/${width}/${page}/${scheme}: 200% browser zoom without clipping`,
           );
@@ -1201,10 +703,7 @@ try {
           },
           windows: { onFocusChanged: event("focus") },
           storage: { onChanged: event("storage") },
-          webNavigation: {
-            onCommitted: event("committed"),
-            onHistoryStateUpdated: event("navigation"),
-          },
+          webNavigation: { onHistoryStateUpdated: event("navigation") },
         },
         console,
         URL,

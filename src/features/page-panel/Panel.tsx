@@ -2,12 +2,13 @@ import { PanelFooter } from "./_ui/PanelFooter";
 import { Settings, type SettingsPage } from "./settings/_ui/Settings";
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, sizeVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { TooltipProvider } from "@bolerish/ui/tooltip";
 import { Button } from "@bolerish/ui/button";
 import { Heading } from "@bolerish/ui/heading";
 import { CaretLeftIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
+import logo from "~assets/logo.png";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { useUpdateNotice } from "~features/updates/use-update-notice";
@@ -76,7 +77,6 @@ export default function Panel({
       lang={language}
       className={["panel", stylex.props(styles.panel).className].join(" ")}
       onKeyDown={(event) => {
-        if (event.defaultPrevented) return;
         if (event.key === "Escape" && view !== "hidden") {
           event.preventDefault();
           event.stopPropagation();
@@ -87,14 +87,21 @@ export default function Panel({
       <header className={["panel-header", stylex.props(styles.panelHeader).className].join(" ")}>
         {view === "hidden" ? (
           <div className={["brand", stylex.props(styles.brand).className].join(" ")}>
-            <span className="brand-name">Less</span>
+            <img src={logo} alt="" width="22" height="22" />
+            <span className={["brand-name", stylex.props(styles.brandName).className].join(" ")}>
+              Less
+            </span>
+            <span
+              className={["preview-label", stylex.props(styles.previewLabel).className].join(" ")}
+            >
+              {message("panel_preview_title")}
+            </span>
           </div>
         ) : (
           <>
             <Button
               variant="ghost"
               size="sm"
-              xstyle={styles.back}
               onClick={back}
               className={["less-control", stylex.props(styles.controlFocus).className].join(" ")}
             >
@@ -116,7 +123,6 @@ export default function Panel({
           ref={closeButton}
           variant="ghost"
           size="icon"
-          xstyle={styles.close}
           aria-label={message("panel_close")}
           onClick={onClose}
           className={["less-control", stylex.props(styles.controlFocus).className].join(" ")}
@@ -124,47 +130,42 @@ export default function Panel({
           <XIcon {...stylex.props(styles.icon)} aria-hidden="true" />
         </Button>
       </header>
-      <div
-        className={[
-          "panel-body",
-          stylex.props(styles.body, view === "hidden" && styles.hiddenBody).className,
-        ].join(" ")}
-      >
-        <div hidden={view !== "hidden"} {...stylex.props(styles.content)}>
-          <TooltipProvider>
-            <HiddenItems
-              origin={origin}
-              onSelect={onSelect}
-              preview={preview}
-              portalContainer={portalContainer}
-            />
-            <PanelFooter
-              settingsButton={settingsButton}
-              onSettings={() => {
-                preview?.clear();
-                setView("settings");
-              }}
-              hasUnreadUpdates={hasUnreadUpdates}
-              updatesButton={updatesButton}
-              onUpdates={() => {
-                preview?.clear();
-                setView("updates");
-              }}
-              portalContainer={portalContainer}
-            />
-          </TooltipProvider>
-        </div>
-        {view === "updates" ? <Updates /> : null}
-        {view === "settings" || view === "language" || view === "theme" ? (
-          <Settings page={view} onNavigate={setView} portalContainer={portalContainer} />
-        ) : null}
+      <div hidden={view !== "hidden"} {...stylex.props(styles.content)}>
+        <TooltipProvider>
+          <HiddenItems
+            origin={origin}
+            onSelect={onSelect}
+            preview={preview}
+            portalContainer={portalContainer}
+          />
+          <PanelFooter
+            settingsButton={settingsButton}
+            onSettings={() => {
+              preview?.clear();
+              setView("settings");
+            }}
+            hasUnreadUpdates={hasUnreadUpdates}
+            updatesButton={updatesButton}
+            onUpdates={() => {
+              preview?.clear();
+              setView("updates");
+            }}
+            portalContainer={portalContainer}
+          />
+        </TooltipProvider>
       </div>
+      {view === "updates" ? <Updates /> : null}
+      {view === "settings" || view === "language" || view === "theme" ? (
+        <Settings page={view} onNavigate={setView} />
+      ) : null}
     </main>
   );
 }
 
 const styles = stylex.create({
   panel: {
+    paddingInline: spacingVars.space4,
+    paddingBottom: `max(${spacingVars.space4}, env(safe-area-inset-bottom))`,
     boxSizing: "border-box",
     height: "100%",
     minHeight: "0",
@@ -180,22 +181,9 @@ const styles = stylex.create({
     justifyContent: "space-between",
     flexWrap: "wrap",
     gap: spacingVars.space2,
-    padding: spacingVars.space4,
+    paddingBlock: spacingVars.space3,
     background: "var(--less-app-background)",
   },
-  back: { marginInlineStart: `calc((${spacingVars.space3} + ${sizeVars.stroke}) * -1)` },
-  close: {
-    marginInlineStart: "auto",
-    marginInlineEnd: `calc((${sizeVars.controlMd} - ${sizeVars.iconMd}) / -2)`,
-  },
-  body: {
-    flex: 1,
-    minHeight: 0,
-    padding: spacingVars.space6,
-    paddingBottom: `max(${spacingVars.space6}, env(safe-area-inset-bottom))`,
-    overflow: "auto",
-  },
-  hiddenBody: { display: "flex", flexDirection: "column", overflow: "hidden" },
   brand: {
     flexShrink: "0",
     display: "flex",
@@ -203,9 +191,15 @@ const styles = stylex.create({
     gap: spacingVars.space2,
     fontWeight: typo.fontWeightSemibold,
   },
+  brandName: {
+    display: { default: "inline", ":is([data-preview='true'] *)": "none" },
+  },
+  previewLabel: {
+    display: { default: "none", ":is([data-preview='true'] *)": "inline" },
+  },
   icon: {
-    width: sizeVars.iconMd,
-    height: sizeVars.iconMd,
+    width: 16,
+    height: 16,
     flexShrink: 0,
   },
   viewHeading: {

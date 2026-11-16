@@ -37,7 +37,7 @@ submission. A passing build does not establish the behavior below.
 | User requirement                                                                                 | Existing verification                                                 | Remaining judgment                                                                            |
 | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Shift previews the parent; click hides that exact target once                                    | `pnpm verify:panel`                                                   | Exercise any reported site-specific DOM case separately                                       |
-| Hidden-item controls retain official component appearance, single-line badges and keyboard focus | `pnpm verify:panel`                                                   | Compare the rendered controls with the default Button and Badge                               |
+| Hidden-item hover changes only the row background; keyboard focus remains visible                | `pnpm verify:panel`                                                   | Inspect the generated hover/selected screenshots                                              |
 | Version/update entry, settings/language selection, panel layout and persistence remain available | `pnpm verify:panel`, `pnpm verify:locale`, `pnpm verify:updates`      | Compare the approved layout with the rendered result                                          |
 | Hiding is applied before reveal and remains correct on navigation/cache changes                  | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |
 | Five languages retain keys/placeholders and supported product claims                             | `pnpm verify:copy`, `pnpm verify:locale`                              | Review natural wording in each changed language; key parity does not prove fluency            |
@@ -92,8 +92,4 @@ pnpm verify:settings --chromium "/path/to/Google Chrome" --firefox-build dist/fi
 
 This check covers saved choices, page changes, isolated toolbar/feedback surfaces,
 five languages, keyboard focus, contrast, 320/375px and 200% browser zoom.
-It also checks body padding at least as large as the header, theme-help hover/focus/click/touch and
-Escape, and stable header coordinates while repeatedly changing languages and
-reopening Select with normal motion enabled. Panel checks cover the hidden-item
-table column headers, preview/restore actions, and the update-history separator.
 Firefox coverage is an API fixture; it does not establish Firefox runtime behavior.

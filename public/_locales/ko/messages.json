@@ -177,10 +177,10 @@
     "message": "v$1 · 읽지 않은 업데이트 기록"
   },
   "panel_selection_prompt": {
-    "message": "선택 중"
+    "message": "클릭: 숨기기 · Shift 누르기: 부모 선택"
   },
   "panel_selection_keys": {
-    "message": "Shift를 누르는 동안 더 넓은 영역을 선택해요. ↑/↓: 범위 조절 · Enter: 숨기기"
+    "message": "Shift 누르기: 부모 선택 · ↑/↓: 부모/자식 · Enter: 숨기기"
   },
   "panel_selection_count_one": {
     "message": "$1개 숨김"
@@ -189,10 +189,10 @@
     "message": "$1개 숨김"
   },
   "panel_selection_close": {
-    "message": "선택 모드 종료"
+    "message": "선택 종료"
   },
   "panel_selection_undo": {
-    "message": "마지막 숨김 되돌리기"
+    "message": "마지막 숨김 취소"
   },
   "panel_selection_restore_error": {
     "message": "숨김을 해제하지 못했습니다. 다시 시도해 주세요."
@@ -228,7 +228,7 @@
     "message": "언어"
   },
   "panel_language_auto": {
-    "message": "브라우저 언어에 맞추기"
+    "message": "브라우저 언어"
   },
   "panel_language_error": {
     "message": "언어를 저장하지 못했어요. 다시 시도해 주세요."
@@ -243,7 +243,7 @@
     "message": "테마"
   },
   "panel_theme_page": {
-    "message": "웹 페이지 설정"
+    "message": "웹페이지 설정"
   },
   "panel_theme_system": {
     "message": "시스템 설정"
@@ -255,24 +255,9 @@
     "message": "다크"
   },
   "panel_theme_help": {
-    "message": "선택한 테마는 모든 사이트의 Less에 적용돼요."
+    "message": "모든 사이트에서 사용할 Less의 테마를 선택해요. 웹페이지 테마를 알 수 없으면 시스템 설정을 따라요."
   },
   "panel_theme_error": {
     "message": "테마를 저장하지 못했어요. 다시 시도해 주세요."
-  },
-  "panel_selection_wider": {
-    "message": "더 넓게"
-  },
-  "panel_theme_fallback": {
-    "message": "웹페이지 테마를 알 수 없으면 시스템 설정을 따라요."
-  },
-  "panel_theme_info": {
-    "message": "테마 안내"
-  },
-  "panel_item": {
-    "message": "항목"
-  },
-  "panel_restore": {
-    "message": "복원"
   }
 }

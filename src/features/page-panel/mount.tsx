@@ -224,8 +224,7 @@ const styles = stylex.create({
     height: { default: "100dvh", ":is([data-preview-layout='compact'] )": "min(45dvh, 340px)" },
     maxWidth: "none",
     maxHeight: "none",
-    // Popup focus must not scroll the outer dialog; the panel body owns scrolling.
-    overflow: "clip",
+    overflow: "hidden",
     overscrollBehavior: "contain",
     pointerEvents: "auto",
     borderBlockWidth: { default: 0, ":is([data-preview-layout='compact'] )": 1 },

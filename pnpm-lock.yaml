@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@bolerish/ui@0.18.1': ebdd8365c77e118c13e310be365925fa7e753f18fd206a6951ed32d5a2721e0f
-
 importers:
 
   .:
@@ -16,7 +13,7 @@ importers:
         version: 0.18.1(@stylexjs/stylex@0.19.0)
       '@bolerish/ui':
         specifier: 0.18.1
-        version: 0.18.1(patch_hash=ebdd8365c77e118c13e310be365925fa7e753f18fd206a6951ed32d5a2721e0f)(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 0.18.1(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -2998,7 +2995,7 @@ snapshots:
     dependencies:
       '@stylexjs/stylex': 0.19.0
 
-  '@bolerish/ui@0.18.1(patch_hash=ebdd8365c77e118c13e310be365925fa7e753f18fd206a6951ed32d5a2721e0f)(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@bolerish/ui@0.18.1(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@base-ui/react': 1.9.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@bolerish/tokens': 0.18.1(@stylexjs/stylex@0.19.0)

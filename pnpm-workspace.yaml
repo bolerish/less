@@ -1,2 +1,0 @@
-patchedDependencies:
-  '@bolerish/ui@0.18.1': patches/@bolerish__ui@0.18.1.patch

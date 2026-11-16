@@ -1,28 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
-import {
-  spacingVars,
-  sizeVars,
-  colorVars,
-  radiusVars,
-  shadowVars,
-  typo,
-} from "@bolerish/tokens/semantic.stylex";
+import { spacingVars, sizeVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
-import { Select, SelectValue, SelectTrigger, SelectList, SelectItem } from "@bolerish/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@bolerish/ui/toggle-group";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@bolerish/ui/tooltip";
-import { Select as SelectPrimitive } from "@bolerish/ui/primitives";
-import {
-  BrowserIcon,
-  DesktopIcon,
-  SunIcon,
-  MoonIcon,
-  InfoIcon,
-  CaretRightIcon,
-  PaintBrushIcon,
-  SlidersHorizontalIcon,
-} from "@phosphor-icons/react";
-import { useId, useRef, useState } from "react";
+import { Label } from "@bolerish/ui/label";
+import { RadioGroup, RadioGroupItem } from "@bolerish/ui/radio-group";
+import { CaretRightIcon, PaintBrushIcon, SlidersHorizontalIcon } from "@phosphor-icons/react";
+import { useId, useState } from "react";
 import { LOCALES, parseLocalePreference } from "~shared/locale/locales";
 import { setLocalePreference } from "~shared/locale/preference";
 import { useLocalePreference } from "~shared/locale/use-locale";
@@ -35,14 +17,13 @@ export type SettingsPage = "settings" | "language" | "theme";
 export function Settings({
   page,
   onNavigate,
-  portalContainer,
 }: {
   page: SettingsPage;
   onNavigate: (page: SettingsPage) => void;
-  portalContainer?: HTMLElement;
 }) {
   const message = usePanelMessage();
-
+  const language = useLocalePreference();
+  const theme = useThemePreference();
   return (
     <section {...stylex.props(styles.settings)} aria-label={message("panel_settings")}>
       {page === "settings" ? (
@@ -71,7 +52,6 @@ export function Settings({
               <div {...stylex.props(styles.navigationList)}>
                 <Button
                   variant="ghost"
-                  size="sm"
                   align="space-between"
                   xstyle={styles.navigation}
                   data-settings-page={page}
@@ -85,234 +65,91 @@ export function Settings({
           ))}
         </div>
       ) : page === "language" ? (
-        <LanguageField portalContainer={portalContainer} />
+        <PreferenceField
+          key={page}
+          label={message("panel_language")}
+          value={language}
+          options={[{ value: "auto", label: message("panel_language_auto") }, ...LOCALES]}
+          onChange={(value) => setLocalePreference(parseLocalePreference(value))}
+          errorMessage={message("panel_language_error")}
+        />
       ) : (
-        <ThemeField portalContainer={portalContainer} />
+        <PreferenceField
+          key={page}
+          label={message("panel_theme")}
+          description={message("panel_theme_help")}
+          value={theme}
+          options={themePreferenceSchema.options.map((value) => ({
+            value,
+            label: message(`panel_theme_${value}`),
+          }))}
+          onChange={(value) => setThemePreference(themePreferenceSchema.parse(value))}
+          errorMessage={message("panel_theme_error")}
+        />
       )}
     </section>
   );
 }
 
-function LanguageField({ portalContainer }: { portalContainer?: HTMLElement }) {
-  const message = usePanelMessage();
-  const value = useLocalePreference();
+function PreferenceField({
+  label,
+  description,
+  value,
+  options,
+  onChange,
+  errorMessage,
+}: {
+  label: string;
+  description?: string;
+  value: string;
+  options: readonly { value: string; label: string }[];
+  onChange: (value: string) => Promise<void>;
+  errorMessage: string;
+}) {
   const id = useId();
-  const trigger = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState(false);
-  const [open, setOpen] = useState(false);
-  const options = [{ value: "auto", label: message("panel_language_auto") }, ...LOCALES];
   return (
-    <div
-      {...stylex.props(styles.field)}
-      onKeyDownCapture={(event) => {
-        if (event.key !== "Escape" || !open) return;
-        event.preventDefault();
-        event.stopPropagation();
-        setOpen(false);
-      }}
-    >
+    <div {...stylex.props(styles.field)}>
       <span id={id} {...stylex.props(styles.fieldLabel)}>
-        {message("panel_language")}
+        {label}
       </span>
-      {/* The native panel is already modal; avoid locking the host page a second time. */}
-      <Select
-        modal={false}
-        open={open}
-        onOpenChange={setOpen}
+      {description ? (
+        <p id={`${id}-description`} {...stylex.props(styles.description)}>
+          {description}
+        </p>
+      ) : null}
+      <RadioGroup
         value={value}
-        items={options}
+        aria-labelledby={id}
+        aria-describedby={description ? `${id}-description` : undefined}
         onValueChange={(next) => {
-          if (next === null) return;
+          if (typeof next !== "string") return;
           setError(false);
-          void setLocalePreference(parseLocalePreference(next)).catch(() => setError(true));
+          void onChange(next).catch(() => setError(true));
         }}
       >
-        <SelectTrigger
-          ref={trigger}
-          aria-labelledby={id}
-          xstyle={styles.select}
-          className={["less-control", stylex.props(styles.focus).className].join(" ")}
-          data-preference-value={value}
-        >
-          <SelectValue />
-        </SelectTrigger>
-        {/* The packaged popup portals to body; scope its primitives to this shadow modal. */}
-        <SelectPrimitive.Portal container={portalContainer}>
-          <SelectPrimitive.Positioner alignItemWithTrigger={false} sideOffset={4}>
-            <SelectPrimitive.Popup finalFocus={trigger} {...stylex.props(styles.languagePopup)}>
-              <SelectList>
-                {options.map((option) => (
-                  <SelectItem
-                    key={option.value}
-                    value={option.value}
-                    data-preference-value={option.value}
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectList>
-            </SelectPrimitive.Popup>
-          </SelectPrimitive.Positioner>
-        </SelectPrimitive.Portal>
-      </Select>
+        {options.map((option) => (
+          <Label key={option.value} className={stylex.props(styles.option).className}>
+            <RadioGroupItem
+              value={option.value}
+              data-preference-value={option.value}
+              className={["less-preference-radio", stylex.props(styles.focus).className].join(" ")}
+            />
+            <span {...stylex.props(styles.optionText)}>{option.label}</span>
+          </Label>
+        ))}
+      </RadioGroup>
       {error ? (
         <p role="alert" {...stylex.props(styles.error)}>
-          {message("panel_language_error")}
+          {errorMessage}
         </p>
       ) : null}
     </div>
   );
 }
 
-function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
-  const message = usePanelMessage();
-  const value = useThemePreference();
-  const id = useId();
-  const helpTrigger = useRef<HTMLButtonElement>(null);
-  const helpPopup = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState(false);
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-  const icons = { page: BrowserIcon, system: DesktopIcon, light: SunIcon, dark: MoonIcon };
-  return (
-    <TooltipProvider>
-      <div
-        {...stylex.props(styles.field)}
-        onKeyDownCapture={(event) => {
-          if (event.key !== "Escape" || activeTooltip === null) return;
-          event.preventDefault();
-          event.stopPropagation();
-          setActiveTooltip(null);
-        }}
-      >
-        <div {...stylex.props(styles.fieldTitle)}>
-          <span id={id} {...stylex.props(styles.fieldLabel)}>
-            {message("panel_theme")}
-          </span>
-          <Tooltip
-            open={activeTooltip === "help"}
-            onOpenChange={(open, details) => {
-              // Document-level hover detection cannot see this closed shadow tree.
-              if (
-                !open &&
-                details.reason === "trigger-hover" &&
-                helpPopup.current?.matches(":hover")
-              )
-                return;
-              setActiveTooltip((current) => (open ? "help" : current === "help" ? null : current));
-            }}
-          >
-            <TooltipTrigger
-              closeDelay={150}
-              closeOnClick={false}
-              render={
-                <Button
-                  ref={helpTrigger}
-                  variant="ghost"
-                  size="icon"
-                  aria-label={message("panel_theme_info")}
-                  aria-describedby={activeTooltip === "help" ? `${id}-help` : undefined}
-                  className={["less-control", stylex.props(styles.focus).className].join(" ")}
-                  onFocus={() => setActiveTooltip("help")}
-                  onBlur={() => setActiveTooltip(null)}
-                  onPointerEnter={() => setActiveTooltip("help")}
-                  onClick={() => setActiveTooltip("help")}
-                >
-                  <InfoIcon size={18} aria-hidden="true" />
-                </Button>
-              }
-            />
-            <TooltipContent
-              ref={helpPopup}
-              portalContainer={portalContainer}
-              side="bottom"
-              align="start"
-              role="tooltip"
-              id={`${id}-help`}
-              onPointerEnter={() => setActiveTooltip("help")}
-              onPointerLeave={() => {
-                if (!helpTrigger.current?.matches(":focus-visible")) setActiveTooltip(null);
-              }}
-              xstyle={styles.helpTooltip}
-            >
-              <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_help")}</p>
-              <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_fallback")}</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        <ToggleGroup
-          variant="soft"
-          size="lg"
-          value={[value]}
-          xstyle={styles.themes}
-          style={{ flexWrap: "wrap" }}
-          aria-labelledby={id}
-          onValueChange={(values) => {
-            if (!values[0]) return;
-            setError(false);
-            void setThemePreference(themePreferenceSchema.parse(values[0])).catch(() =>
-              setError(true),
-            );
-          }}
-        >
-          {themePreferenceSchema.options.map((option) => {
-            const Icon = icons[option];
-            const label = message(`panel_theme_${option}`);
-            return (
-              <Tooltip
-                key={option}
-                open={activeTooltip === option}
-                onOpenChange={(open) =>
-                  setActiveTooltip((current) =>
-                    open ? option : current === option ? null : current,
-                  )
-                }
-              >
-                <TooltipTrigger
-                  render={
-                    <ToggleGroupItem
-                      value={option}
-                      xstyle={styles.themeOption}
-                      className={["less-control", stylex.props(styles.focus).className].join(" ")}
-                      aria-label={label}
-                      aria-describedby={
-                        activeTooltip === option ? `${id}-${option}-tooltip` : undefined
-                      }
-                      data-preference-value={option}
-                      onFocus={() => setActiveTooltip(option)}
-                      onBlur={() => setActiveTooltip(null)}
-                      onPointerEnter={() => setActiveTooltip(option)}
-                      onPointerLeave={(event) => {
-                        if (!event.currentTarget.matches(":focus-visible")) setActiveTooltip(null);
-                      }}
-                    />
-                  }
-                >
-                  <Icon size={20} aria-hidden="true" />
-                </TooltipTrigger>
-                <TooltipContent
-                  portalContainer={portalContainer}
-                  side="bottom"
-                  role="tooltip"
-                  id={`${id}-${option}-tooltip`}
-                >
-                  {label}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </ToggleGroup>
-        {error ? (
-          <p role="alert" {...stylex.props(styles.error)}>
-            {message("panel_theme_error")}
-          </p>
-        ) : null}
-      </div>
-    </TooltipProvider>
-  );
-}
-
 const styles = stylex.create({
-  settings: { minWidth: 0 },
+  settings: { paddingBlock: spacingVars.space4, overflow: "auto", minHeight: 0 },
   home: { display: "grid", gap: spacingVars.space6 },
   sectionHeading: {
     display: "flex",
@@ -328,44 +165,20 @@ const styles = stylex.create({
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
-    marginInlineStart: {
-      default: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
-      "@media (max-width: 240px)": 0,
-    },
+    marginInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
   },
-  navigation: {
-    marginInlineStart: `calc((${spacingVars.space3} + ${sizeVars.stroke}) * -1)`,
-    minWidth: 0,
-  },
+  navigation: { marginInlineStart: `calc(${spacingVars.space3} * -1)`, minWidth: 0 },
   field: { display: "grid", gap: spacingVars.space3 },
   fieldLabel: { fontWeight: typo.fontWeightSemibold },
-  fieldTitle: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
-  helpTooltip: {
-    maxWidth: "min(260px, calc(100vw - 48px))",
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
-  },
-  tooltipText: { margin: 0, lineHeight: typo.lineHeightNormal },
-  select: { width: "100%", minWidth: 0 },
-  themes: { width: "100%" },
-  themeOption: { flexGrow: 1 },
-  languagePopup: {
-    backgroundColor: colorVars.bgRaised,
-    color: colorVars.fgPrimary,
-    borderColor: colorVars.strokeDefault,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderRadius: radiusVars.sm,
-    boxShadow: shadowVars.overlay,
-    width: "var(--anchor-width)",
-    maxWidth: "calc(100vw - 32px)",
-    maxHeight: "var(--available-height)",
-    overflow: "auto",
-    padding: spacingVars.space1,
-  },
+  description: { margin: 0, color: colorVars.fgSecondary, overflowWrap: "anywhere" },
+  option: { minHeight: 44, gap: spacingVars.space3, alignItems: "center" },
+  optionText: { minWidth: 0, overflowWrap: "anywhere" },
   focus: {
-    outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":is(.less-control):focus-visible": 3 },
+    borderColor: { ":is(.less-preference-radio)": colorVars.strokeControl },
+    outline: {
+      ":is(.less-preference-radio):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}`,
+    },
+    outlineOffset: { ":is(.less-preference-radio):focus-visible": 3 },
   },
   error: { color: colorVars.fgFeedbackError, margin: 0, overflowWrap: "anywhere" },
 });

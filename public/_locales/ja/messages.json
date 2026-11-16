@@ -177,10 +177,10 @@
     "message": "v$1 · 未読の更新履歴"
   },
   "panel_selection_prompt": {
-    "message": "選択中"
+    "message": "クリックで非表示 · Shiftを押して親を選択"
   },
   "panel_selection_keys": {
-    "message": "Shiftを押している間、選択範囲が広がります。↑/↓: 範囲を調整 · Enter: 非表示"
+    "message": "Shift: 親を選択 · ↑/↓: 親/子 · Enter: 非表示"
   },
   "panel_selection_count_one": {
     "message": "$1件を非表示"
@@ -189,10 +189,10 @@
     "message": "$1件を非表示"
   },
   "panel_selection_close": {
-    "message": "選択モードを終了"
+    "message": "選択を終了"
   },
   "panel_selection_undo": {
-    "message": "最後の非表示を元に戻す"
+    "message": "直前の非表示を取り消す"
   },
   "panel_selection_restore_error": {
     "message": "項目を再表示できませんでした。もう一度お試しください。"
@@ -228,7 +228,7 @@
     "message": "言語"
   },
   "panel_language_auto": {
-    "message": "ブラウザーの言語に合わせる"
+    "message": "ブラウザーの言語"
   },
   "panel_language_error": {
     "message": "言語を保存できませんでした。もう一度お試しください。"
@@ -243,7 +243,7 @@
     "message": "テーマ"
   },
   "panel_theme_page": {
-    "message": "ウェブページの設定"
+    "message": "ウェブページ設定"
   },
   "panel_theme_system": {
     "message": "システム設定"
@@ -255,24 +255,9 @@
     "message": "ダーク"
   },
   "panel_theme_help": {
-    "message": "選んだテーマは、すべてのサイトのLessに適用されます。"
+    "message": "すべてのサイトで使うLessのテーマを選べます。ページのテーマを判別できない場合は、システム設定に従います。"
   },
   "panel_theme_error": {
     "message": "テーマを保存できませんでした。もう一度お試しください。"
-  },
-  "panel_selection_wider": {
-    "message": "範囲を広げる"
-  },
-  "panel_theme_fallback": {
-    "message": "ページのテーマを検出できない場合は、システム設定に合わせます。"
-  },
-  "panel_theme_info": {
-    "message": "テーマについて"
-  },
-  "panel_item": {
-    "message": "項目"
-  },
-  "panel_restore": {
-    "message": "復元"
   }
 }

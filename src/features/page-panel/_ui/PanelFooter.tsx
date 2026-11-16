@@ -1,8 +1,9 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, sizeVars, radiusVars } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
 import { Badge } from "@bolerish/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@bolerish/ui/tooltip";
+import { Tooltip, TooltipTrigger } from "@bolerish/ui/tooltip";
+import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
 import { GearSixIcon } from "@phosphor-icons/react";
 import { useId, useState, type RefObject } from "react";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
@@ -86,14 +87,17 @@ export function PanelFooter({
             </Button>
           }
         />
-        <TooltipContent
-          portalContainer={portalContainer}
-          side="top"
-          role="tooltip"
-          id={settingsTooltipId}
-        >
-          {message("panel_settings")}
-        </TooltipContent>
+        <TooltipPrimitive.Portal container={portalContainer}>
+          <TooltipPrimitive.Positioner side="top" sideOffset={6}>
+            <TooltipPrimitive.Popup
+              {...stylex.props(styles.settingsTooltip)}
+              role="tooltip"
+              id={settingsTooltipId}
+            >
+              {message("panel_settings")}
+            </TooltipPrimitive.Popup>
+          </TooltipPrimitive.Positioner>
+        </TooltipPrimitive.Portal>
       </Tooltip>
     </footer>
   );
@@ -105,11 +109,18 @@ const styles = stylex.create({
     alignItems: "center",
     marginTop: "auto",
     paddingTop: spacingVars.space3,
-    borderTopColor: colorVars.strokeDefault,
-    borderTopStyle: "solid",
-    borderTopWidth: sizeVars.stroke,
+    borderTop: `1px solid ${colorVars.strokeDefault}`,
     display: { default: "flex", ":is([data-preview-layout='compact'] *)": "none" },
     flexShrink: 0,
+  },
+  settingsTooltip: {
+    pointerEvents: "none",
+    border: `1px solid ${colorVars.strokeDefault}`,
+    background: colorVars.bgRaised,
+    color: colorVars.fgPrimary,
+    padding: spacingVars.space2,
+    borderRadius: radiusVars.sm,
+    fontSize: typo.fontSizeXs,
   },
   updatesButton: {
     flexShrink: "0",

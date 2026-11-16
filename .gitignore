@@ -182,3 +182,8 @@ docs/
 .DS_Store
 
 .research/
+
+# Generated store artwork; retain originals and generator sources.
+/store-assets/png/
+/store-assets/source/promo-less-440x280.html
+/store-assets/source/marquee-less-1400x560.html

@@ -1,10 +1,38 @@
-# Veil — Chrome Web Store artwork
+# Less — Chrome Web Store artwork
 
-Five English store images made from live Wikipedia and the actual Veil extension.
-No fictional website or generated screenshot is used. The side-panel feature in
-`370ec62` must be present in the store build that uses these images.
+`originals/` contains archived Wikipedia captures made with Veil, the former app
+name. The repository README uses the original before/after pair; keep these
+captures and their attribution tracked.
 
-## Upload files
+Track the generator scripts and editable templates. Generated files in `png/`
+and the self-contained `source/promo-less-440x280.html` and
+`source/marquee-less-1400x560.html` are local outputs ignored by Git. Existing
+local outputs are preserved.
+
+## Less promotional tiles
+
+`source/promo-tiles.mjs` combines the current PNG logo with the archived actual
+before/after captures. From the repository root, with Google Chrome installed at
+its standard macOS path, run:
+
+```sh
+node store-assets/source/promo-tiles.mjs
+```
+
+It writes `png/promo-less-440x280.png` (440 × 280) and
+`png/marquee-less-1400x560.png` (1400 × 560), checks their PNG dimensions and RGB
+format, and writes the self-contained HTML alongside the script. Review the
+images before uploading; the archived screenshots do not depict the current
+panel UI.
+
+## Archived capture workflow
+
+The workflow below documents the Veil side-panel build at `370ec62`. It requires
+that historical build and is not a regeneration check for the current in-page
+panel. The archived imagery uses actual Wikipedia and extension captures rather
+than a fictional website or generated screenshot.
+
+### Archived exports (local outputs)
 
 | File                             | Size       | Content                                                                    |
 | -------------------------------- | ---------- | -------------------------------------------------------------------------- |

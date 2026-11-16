@@ -8,7 +8,6 @@ import { Button } from "@bolerish/ui/button";
 import { Heading } from "@bolerish/ui/heading";
 import { CaretLeftIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
-import logo from "~assets/logo.png";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { useUpdateNotice } from "~features/updates/use-update-notice";
@@ -77,6 +76,7 @@ export default function Panel({
       lang={language}
       className={["panel", stylex.props(styles.panel).className].join(" ")}
       onKeyDown={(event) => {
+        if (event.defaultPrevented) return;
         if (event.key === "Escape" && view !== "hidden") {
           event.preventDefault();
           event.stopPropagation();
@@ -87,15 +87,7 @@ export default function Panel({
       <header className={["panel-header", stylex.props(styles.panelHeader).className].join(" ")}>
         {view === "hidden" ? (
           <div className={["brand", stylex.props(styles.brand).className].join(" ")}>
-            <img src={logo} alt="" width="22" height="22" />
-            <span className={["brand-name", stylex.props(styles.brandName).className].join(" ")}>
-              Less
-            </span>
-            <span
-              className={["preview-label", stylex.props(styles.previewLabel).className].join(" ")}
-            >
-              {message("panel_preview_title")}
-            </span>
+            <span className="brand-name">Less</span>
           </div>
         ) : (
           <>
@@ -156,7 +148,7 @@ export default function Panel({
       </div>
       {view === "updates" ? <Updates /> : null}
       {view === "settings" || view === "language" || view === "theme" ? (
-        <Settings page={view} onNavigate={setView} />
+        <Settings page={view} onNavigate={setView} portalContainer={portalContainer} />
       ) : null}
     </main>
   );
@@ -190,12 +182,6 @@ const styles = stylex.create({
     alignItems: "center",
     gap: spacingVars.space2,
     fontWeight: typo.fontWeightSemibold,
-  },
-  brandName: {
-    display: { default: "inline", ":is([data-preview='true'] *)": "none" },
-  },
-  previewLabel: {
-    display: { default: "none", ":is([data-preview='true'] *)": "inline" },
   },
   icon: {
     width: 16,

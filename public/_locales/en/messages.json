@@ -177,10 +177,10 @@
     "message": "v$1 · Unread update history"
   },
   "panel_selection_prompt": {
-    "message": "Click to hide · Hold Shift to select the parent"
+    "message": "Selecting"
   },
   "panel_selection_keys": {
-    "message": "Hold Shift: select parent · ↑/↓: parent/child · Enter: hide"
+    "message": "Hold Shift to select a wider area. ↑/↓: adjust area · Enter: hide"
   },
   "panel_selection_count_one": {
     "message": "$1 hidden"
@@ -189,10 +189,10 @@
     "message": "$1 hidden"
   },
   "panel_selection_close": {
-    "message": "Exit selection"
+    "message": "Exit selection mode"
   },
   "panel_selection_undo": {
-    "message": "Undo the last hide"
+    "message": "Undo last hide"
   },
   "panel_selection_restore_error": {
     "message": "Could not unhide this item. Try again."
@@ -228,7 +228,7 @@
     "message": "Language"
   },
   "panel_language_auto": {
-    "message": "Browser language"
+    "message": "Match browser language"
   },
   "panel_language_error": {
     "message": "Could not save the language. Try again."
@@ -243,10 +243,10 @@
     "message": "Theme"
   },
   "panel_theme_page": {
-    "message": "Web page setting"
+    "message": "Match web page"
   },
   "panel_theme_system": {
-    "message": "System setting"
+    "message": "Match system"
   },
   "panel_theme_light": {
     "message": "Light"
@@ -255,9 +255,15 @@
     "message": "Dark"
   },
   "panel_theme_help": {
-    "message": "Choose how Less looks on all sites. When the page theme is unavailable, Less follows your system setting."
+    "message": "Your theme applies to Less on every site."
   },
   "panel_theme_error": {
     "message": "Couldn’t save the theme. Try again."
+  },
+  "panel_selection_wider": {
+    "message": "Wider area"
+  },
+  "panel_theme_fallback": {
+    "message": "If the page theme is unavailable, Less follows your system setting."
   }
 }

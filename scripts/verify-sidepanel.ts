@@ -1740,9 +1740,9 @@ try {
       assert.notEqual(toolbar.background, "rgba(0, 0, 0, 0)");
       assert.equal(toolbar.border, "1px");
       assert.equal(toolbar.style, "solid");
-      assert.equal(toolbar.padding, "8px 20px");
+      assert.equal(toolbar.padding, width <= 375 ? "8px 12px" : "8px 20px");
       assert.equal(toolbar.font, "12px");
-      assert.equal(toolbar.closeBorder, "0px");
+      assert.equal(toolbar.closeBorder, "1px", "official ghost button keeps its border geometry");
       assert(toolbar.left >= 0 && toolbar.right <= width, "selection toolbar fits the viewport");
       await site.keyboard.press("ArrowUp");
       const parentRect = await site.locator("#middle").boundingBox();
@@ -2571,19 +2571,28 @@ try {
   await click(".settings-button");
   await click('[data-settings-page="language"]');
   assert.equal(
-    await panel((d) =>
-      d.querySelector('[role="radio"][aria-checked="true"]')!.getAttribute("data-preference-value"),
-    ),
+    await panel((d) => d.querySelector('[role="combobox"]')!.getAttribute("data-preference-value")),
     "auto",
     "browser language is the default",
   );
-  await click('[role="radio"][data-preference-value="es"]');
+  await click('[role="combobox"]');
   await waitFor(
     () =>
       panel(
         (d) =>
-          d.querySelector('[data-preference-value="es"]')?.getAttribute("aria-checked") ===
-            "true" && d.lang === "es",
+          d.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
+          d.querySelectorAll('[role="option"]').length === 6 &&
+          d.querySelector<HTMLElement>('[role="option"]')!.getBoundingClientRect().width > 0,
+      ),
+    "language list opens",
+  );
+  await click('[role="option"][data-preference-value="es"]');
+  await waitFor(
+    () =>
+      panel(
+        (d) =>
+          d.querySelector('[role="combobox"]')?.getAttribute("data-preference-value") === "es" &&
+          d.lang === "es",
       ),
     "language change updates mounted settings",
   );
@@ -2603,8 +2612,8 @@ try {
     () =>
       panel(
         (d) =>
-          d.querySelector('[data-preference-value="ja"]')?.getAttribute("aria-checked") ===
-            "true" && d.lang === "ja",
+          d.querySelector('[role="combobox"]')?.getAttribute("data-preference-value") === "ja" &&
+          d.lang === "ja",
       ),
     "welcome selection synchronizes mounted panel",
   );
@@ -2621,9 +2630,9 @@ try {
     const toolbar = await selectionSurface(
       "data-less-ui",
       (surface) => ({
-        text: surface.querySelector("span")!.textContent,
-        keys: surface.querySelector("span")!.title,
-        close: surface.querySelector("button")!.getAttribute("aria-label"),
+        text: surface.querySelector("[data-selection-mode]")!.textContent,
+        keys: surface.querySelector<HTMLElement>("[title]")!.title,
+        close: surface.querySelectorAll("button")[1].getAttribute("aria-label"),
       }),
       siblingSession,
     );
@@ -2638,6 +2647,10 @@ try {
   await siblingSession.detach();
   await site.bringToFront();
   await site.keyboard.press("Escape");
+  await waitFor(
+    () => panel((d) => !!d.querySelector('[data-settings-page="language"]')),
+    "language back returns to settings",
+  );
   await site.keyboard.press("Escape");
   await waitFor(
     () => panel((d) => d.querySelector(".settings-button")!.getClientRects().length > 0),
@@ -2662,9 +2675,14 @@ try {
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
       const instruction = await selectionSurface("data-less-ui", (e) => {
-        const info = e.querySelector("span")!;
+        const info = e.querySelector<HTMLElement>("[data-selection-mode]")!;
         const r = info.getBoundingClientRect();
-        return { text: info.textContent, title: info.title, left: r.left, right: r.right };
+        return {
+          text: info.textContent,
+          title: e.querySelector<HTMLElement>("[title]")!.title,
+          left: r.left,
+          right: r.right,
+        };
       });
       assert.equal(instruction.text, catalog.panel_selection_prompt.message);
       assert.equal(instruction.title, catalog.panel_selection_keys.message);
@@ -2936,24 +2954,34 @@ try {
       await site.keyboard.press("Tab");
       assert.equal(
         await panel(
-          (d) => (d.getRootNode() as ShadowRoot).activeElement?.getAttribute("role") === "radio",
+          (d) => (d.getRootNode() as ShadowRoot).activeElement?.getAttribute("role") === "combobox",
         ),
         true,
         "language control is keyboard reachable",
       );
       assert.equal(
         await panel((d) =>
-          d
-            .querySelector('[role="radio"][aria-checked="true"]')!
-            .getAttribute("data-preference-value"),
+          d.querySelector('[role="combobox"]')!.getAttribute("data-preference-value"),
         ),
         locale,
       );
+      await site.keyboard.press("Enter");
+      await waitFor(
+        () =>
+          panel(
+            (d) =>
+              d.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
+              d.querySelectorAll('[role="option"]').length === 6 &&
+              d.querySelector<HTMLElement>('[role="option"]')!.getBoundingClientRect().width > 0,
+          ),
+        "keyboard opens language list",
+      );
       assert.equal(
-        await panel((d) => d.querySelectorAll('[role="radio"]').length),
+        await panel((d) => d.querySelectorAll('[role="option"]').length),
         6,
         "only auto and five supported locales",
       );
+      await site.keyboard.press("Escape");
       for (const theme of ["light", "dark"] as const) {
         await site.emulateMedia({ colorScheme: theme });
         await waitFor(
@@ -2961,7 +2989,7 @@ try {
           "settings theme transition settled",
         );
         const layout = await panel((d) => {
-          const select = d.querySelector('[role="radiogroup"]')!;
+          const select = d.querySelector('[role="combobox"]')!;
           const rect = select.getBoundingClientRect();
           return {
             left: rect.left,
@@ -3004,6 +3032,15 @@ try {
         await waitFor(
           () => panel((d) => !!d.querySelector('[role="alertdialog"]')),
           "localized confirmation opens",
+        );
+        await waitFor(
+          () =>
+            panel((d) =>
+              d
+                .querySelector('[role="alertdialog"]')
+                ?.contains((d.getRootNode() as ShadowRoot).activeElement),
+            ),
+          "confirmation receives focus",
         );
         const confirmation = await panel((d) => {
           const popup = d.querySelector<HTMLElement>('[role="alertdialog"]')!;
@@ -3337,7 +3374,7 @@ try {
   await click(".settings-button");
   await click('[data-settings-page="language"]');
   const settingsZoom = await panel((d) => {
-    const select = d.querySelector('[role="radiogroup"]')!;
+    const select = d.querySelector('[role="combobox"]')!;
     return {
       right: select.getBoundingClientRect().right,
       viewport: innerWidth,

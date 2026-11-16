@@ -52,12 +52,13 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
   const preferencePromise = getSiteHidingEnabled(origin).then((enabled) => {
     if (!ctx.isInvalid && preferenceRevision === 0) hidingEnabled = enabled;
   });
-  void (async () => {
+  const panelReady = (async () => {
     const disposeLocale = await initializeLocale();
     ctx.onInvalidated(disposeLocale);
     const disposeTheme = await initializeTheme(true);
     ctx.onInvalidated(disposeTheme);
     await loadContentStyles();
+    await preferencePromise;
     if (ctx.isInvalid) return;
     panel = createPagePanel(() => {
       if (!hidingEnabled) throw new Error("Hiding is paused for this site.");
@@ -74,7 +75,7 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
       stopReapplyWatcher();
       invalidateRecordCache();
     });
-  })();
+  })().catch((error) => console.warn("[Less] panel initialization failed", error));
 
   setupNavigationListener(onSpaNavigation);
   ctx.addEventListener(document, "keydown", handleGlobalKeyDown, { capture: true });
@@ -113,8 +114,14 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
       (message.type === "TOGGLE_PAGE_PANEL" || message.type === "SET_SELECTION_ENABLED") &&
       !panel
     ) {
-      sendResponse({ ok: false });
-      return;
+      void panelReady.then(() => {
+        if (ctx.isInvalid || !panel) {
+          sendResponse({ ok: false });
+          return;
+        }
+        onMessage(message, sender, sendResponse);
+      });
+      return true;
     }
 
     if (message.type === "TOGGLE_PAGE_PANEL") {

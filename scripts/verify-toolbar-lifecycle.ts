@@ -79,6 +79,7 @@ for (const [engine, bundle] of [
     i18n: { getUILanguage: () => "en-US" },
     storage: { local: { get: async () => ({}) }, onChanged: event("storage") },
     webNavigation: {
+      onCommitted: { addListener() {} },
       onHistoryStateUpdated: event("history"),
       getFrame: async ({ tabId }: { tabId: number }) => ({ url: tabs.get(tabId)!.url }),
     },

@@ -182,6 +182,26 @@ try {
     if (path === "/ui-delay") {
       await page.waitForFunction(() => document.getElementById("target")?.style.display === "none");
       assert.equal(await page.getAttribute("html", "data-ui-pending"), "true");
+      const response = await worker.evaluate(async () => {
+        for (const tab of await chrome.tabs.query({})) {
+          try {
+            return await chrome.tabs.sendMessage(
+              tab.id!,
+              { type: "TOGGLE_PAGE_PANEL" },
+              { frameId: 0 },
+            );
+          } catch {
+            /* Welcome tabs have no content receiver. */
+          }
+        }
+        throw new Error("No fixture content receiver");
+      });
+      assert.equal(response.ok, true, "First panel request waits for UI readiness");
+      await page.locator("[data-less-panel]").waitFor({ state: "attached" });
+      await assertEventually(async () => {
+        const { nodes } = await cdp.send("Accessibility.getFullAXTree");
+        assert(nodes.some((node) => !node.ignored && node.role?.value === "dialog"));
+      });
     } else {
       await page.waitForFunction(() => document.documentElement.dataset.readPending === "true");
       if (path === "/startup-off") {

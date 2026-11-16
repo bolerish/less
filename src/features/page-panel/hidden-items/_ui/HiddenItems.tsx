@@ -165,7 +165,7 @@ export function HiddenItems({
             aria-label={message("panel_hidden_items")}
           >
             <ScrollAreaContent>
-              <Table aria-label={message("panel_hidden_items")} xstyle={styles.table}>
+              <Table aria-label={message("panel_hidden_items")} xstyle={styles.tableLayout}>
                 <TableHeader>
                   <TableRow>
                     <TableHead scope="col">{message("panel_item")}</TableHead>
@@ -267,13 +267,9 @@ const styles = stylex.create({
     margin: "0",
     height: "100%",
   },
-  table: { tableLayout: "fixed" },
-  restoreColumn: {
-    width: `calc(${sizeVars.controlMd} + ${spacingVars.space3} * 2)`,
-    textAlign: "end",
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
-  },
+  // Reserve the action column so long item names cannot push Restore out of view.
+  tableLayout: { tableLayout: "fixed" },
+  restoreColumn: { width: `calc(${sizeVars.controlMd} + ${spacingVars.space3} * 2)` },
   controlFocus: {
     outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
     outlineOffset: { ":is(.less-control):focus-visible": 3 },

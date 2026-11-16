@@ -361,7 +361,6 @@ const styles = stylex.create({
     maxWidth: "calc(100vw - 32px)",
     maxHeight: "var(--available-height)",
     overflow: "auto",
-    outline: "none",
     padding: spacingVars.space1,
   },
   focus: {

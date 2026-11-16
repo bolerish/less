@@ -696,7 +696,10 @@ try {
     };
   });
   assert(
-    icon?.path && icon.width === 16 && icon.height === 16 && icon.fill !== "rgba(0, 0, 0, 0)",
+    icon?.path &&
+      icon.width >= 12 &&
+      icon.height === icon.width &&
+      icon.fill !== "rgba(0, 0, 0, 0)",
     "restore SVG rendered at visible size",
   );
   await site.screenshot({ path: values.screenshot.replace(/\.png$/, "-restore-icon.png") });
@@ -2177,63 +2180,58 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#fixed-target");
   assert.equal(await panel((d) => d.dataset.preview), "false", "Escape ends preview");
-  async function assertMouseRowBackgroundOnly(state: string) {
+  async function assertDefaultRecordControls(state: string) {
     await waitFor(
       () =>
-        panel((dialog) => {
-          const row = dialog
+        panel((dialog) =>
+          dialog
             .querySelector('.locate-button[aria-label*="Nested"]')!
-            .closest(".record-row")!;
-          return (
-            getComputedStyle(row).backgroundColor !== "rgba(0, 0, 0, 0)" &&
-            row.getAnimations().every((animation) => animation.playState !== "running")
-          );
-        }),
-      "official table row transition settles",
+            .getAnimations()
+            .every((animation) => animation.playState !== "running"),
+        ),
+      "official button transition settles",
     );
-    const paint = await panel((d) => {
-      const button = d.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
-      const row = button.closest<HTMLElement>(".record-row")!;
+    const paint = await panel((dialog) => {
+      const button = dialog.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
+      const row = button.closest(".record-row")!;
+      const badge = button.querySelector<HTMLElement>(".record-kind")!;
+      const read = (element: Element) => {
+        const style = getComputedStyle(element);
+        return {
+          verticalSize: element.tagName === "BUTTON" ? style.height : style.minHeight,
+          padding: style.padding,
+          borderRadius: style.borderRadius,
+          fontSize: style.fontSize,
+          fontWeight: style.fontWeight,
+          lineHeight: style.lineHeight,
+          whiteSpace: style.whiteSpace,
+        };
+      };
       return {
         hovered: row.matches(":hover"),
         pressed: button.matches(":active"),
         focusVisible: button.matches(":focus-visible"),
-        background: getComputedStyle(row).backgroundColor,
-        inner: getComputedStyle(button).backgroundColor,
-        layers: [row, button].flatMap((element) =>
-          [null, "::before", "::after"].map((pseudo) => {
-            const style = getComputedStyle(element, pseudo);
-            return {
-              outline: style.outlineStyle,
-              outlineWidth: style.outlineWidth,
-              borders: [
-                [style.borderTopWidth, style.borderTopStyle, style.borderTopColor],
-                [style.borderRightWidth, style.borderRightStyle, style.borderRightColor],
-                [style.borderBottomWidth, style.borderBottomStyle, style.borderBottomColor],
-                [style.borderLeftWidth, style.borderLeftStyle, style.borderLeftColor],
-              ],
-              shadow: style.boxShadow,
-            };
-          }),
-        ),
+        button: read(button),
+        defaultButton: read(dialog.querySelector(".updates-button")!),
+        badge: read(badge),
+        defaultBadge: read(dialog.querySelector(".updates-button span")!),
+        badgeFits: badge.scrollWidth <= badge.clientWidth + 1,
       };
     });
-    console.log("ROW PAINT", state, JSON.stringify(paint));
-    assert.equal(paint.focusVisible, false, `${state}: mouse focus is not keyboard focus`);
-    assert.notEqual(paint.background, "rgba(0, 0, 0, 0)", `${state}: semantic row background`);
-    assert.equal(paint.inner, "rgba(0, 0, 0, 0)", `${state}: no nested button background`);
-    for (const layer of paint.layers) {
-      assert.equal(layer.outline, "none", `${state}: no row/button/pseudo outline`);
-      for (const [index, [width, style, color]] of layer.borders.entries())
-        assert(
-          (layer === paint.layers[0] && index === 2 && width === "1px" && style === "solid") ||
-            width === "0px" ||
-            style === "none" ||
-            color === "rgba(0, 0, 0, 0)",
-          `${state}: only the permanent table row separator is visible`,
-        );
-      assert.equal(layer.shadow, "none", `${state}: no row/button/pseudo shadow`);
-    }
+    assert.deepEqual(
+      paint.button,
+      paint.defaultButton,
+      `${state}: preview button keeps official size, spacing and type`,
+    );
+    assert.deepEqual(
+      paint.badge,
+      paint.defaultBadge,
+      `${state}: category badge keeps official appearance`,
+    );
+    assert(
+      paint.badgeFits && paint.badge.whiteSpace === "nowrap",
+      `${state}: category stays readable on one line`,
+    );
     return paint;
   }
   for (const width of [320, 375]) {
@@ -2248,23 +2246,14 @@ try {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       });
       await site.mouse.move(hoveredRow.x, hoveredRow.y);
-      await waitFor(
-        () =>
-          panel(
-            (d) =>
-              getComputedStyle(d.querySelector('.locate-button[aria-label*="Nested"]')!, "::after")
-                .backgroundColor === "rgba(0, 0, 0, 0)",
-          ),
-        "text button has no nested hover layer",
-      );
-      const hover = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/hover`);
+      const hover = await assertDefaultRecordControls(`${width}/${colorScheme}/hover`);
       assert(hover.hovered && !hover.pressed, "real mouse hover without pressing");
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-row-hover-${width}-${colorScheme}.png`),
       });
       await site.mouse.down();
-      const pressed = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/pressed`);
-      assert(pressed.pressed, "real mouse press changes only the background");
+      const pressed = await assertDefaultRecordControls(`${width}/${colorScheme}/pressed`);
+      assert(pressed.pressed, "official button receives the real mouse press");
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-row-pressed-${width}-${colorScheme}.png`),
       });
@@ -2283,7 +2272,7 @@ try {
         () => panel((d) => d.dataset.previewLayout === "compact"),
         "narrow compact preview",
       );
-      await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/click-selected`);
+      await assertDefaultRecordControls(`${width}/${colorScheme}/click-selected`);
       const state = await panel((d) => {
         const row = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
         row.focus();
@@ -2292,7 +2281,7 @@ try {
           client: d.clientWidth,
           scroll: d.scrollWidth,
           rows: d.querySelectorAll(".record").length,
-          selected: getComputedStyle(row.closest(".record-row")!).backgroundColor,
+          selected: getComputedStyle(row).backgroundColor,
         };
       });
       assert(
@@ -2310,42 +2299,18 @@ try {
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       });
       await site.mouse.move(selectedPoint.x, selectedPoint.y);
-      const selectedHover = await assertMouseRowBackgroundOnly(
+      const selectedHover = await assertDefaultRecordControls(
         `${width}/${colorScheme}/selected-hover`,
       );
       assert(selectedHover.hovered, "selected row is really hovered");
-      const paint = await panel((d) => {
-        const button = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
-        const row = button.closest<HTMLElement>(".record-row")!;
-        const item = row.closest<HTMLElement>(".record")!;
-        const a = row.getBoundingClientRect(),
-          b = item.getBoundingClientRect();
-        return {
-          background: getComputedStyle(row).backgroundColor,
-          inner: getComputedStyle(button).backgroundColor,
-          overlay: getComputedStyle(button, "::after").backgroundColor,
-          radius: getComputedStyle(row).borderRadius,
-          outline: getComputedStyle(row).outlineStyle,
-          shadow: getComputedStyle(row).boxShadow,
-          fullWidth: a.left === b.left && a.right === b.right,
-        };
-      });
       assert.equal(
-        paint.background,
+        await panel(
+          (dialog) =>
+            getComputedStyle(dialog.querySelector('.locate-button[aria-pressed="true"]')!)
+              .backgroundColor,
+        ),
         state.selected,
-        "selection keeps one background while hovered",
-      );
-      assert.equal(paint.inner, "rgba(0, 0, 0, 0)");
-      assert.equal(paint.overlay, "rgba(0, 0, 0, 0)");
-      assert.equal(
-        paint.outline,
-        "none",
-        "selected/hovered row uses background without an outline",
-      );
-      assert.equal(paint.shadow, "none", "selected row has no inset blue edge");
-      assert(
-        paint.fullWidth && paint.radius === "0px",
-        "hover and selected paint fill the collapsed table row",
+        "selected preview keeps its official secondary variant on hover",
       );
       await site.screenshot({
         path: values.screenshot.replace(
@@ -2372,15 +2337,9 @@ try {
         focus.visible && focus.style === "solid" && focus.width === "2px",
         "keyboard focus remains visible",
       );
-      assert.notEqual(focus.background, "rgba(0, 0, 0, 0)", "keyboard row focus has a background");
       assert.equal(focus.rowOutline, "none", "keyboard ring belongs to the focused button");
       assert.equal(focus.rowShadow, "none", "keyboard selection has no extra row line");
       console.log("ROW FOCUS", width, colorScheme, JSON.stringify(focus));
-      assert.equal(
-        focus.color,
-        await site.locator("#nested-target").evaluate((e) => getComputedStyle(e).outlineColor),
-        "keyboard row focus and preview use the same blue color",
-      );
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-preview-${width}-${colorScheme}.png`),
       });
@@ -2397,13 +2356,17 @@ try {
     return { x: r.left + 2, y: r.top + 2 };
   });
   await site.mouse.move(hoverPoint.x, hoverPoint.y);
-  assert.equal(
-    await panel((d) => {
-      const e = d.querySelector<HTMLElement>(".record-row")!;
-      return e.matches(":hover") && getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)";
-    }),
-    true,
-    "row hover background resolves",
+  await waitFor(
+    () =>
+      panel((dialog) => {
+        const row = dialog.querySelector<HTMLElement>(".record-row")!;
+        return (
+          row.matches(":hover") &&
+          getComputedStyle(row).backgroundColor !== "rgba(0, 0, 0, 0)" &&
+          row.getAnimations().every((animation) => animation.playState !== "running")
+        );
+      }),
+    "official table hover transition finishes",
   );
   assert.equal(
     await panel((d) => getComputedStyle(d.querySelector(".record-row")!).outlineStyle),
@@ -2765,7 +2728,9 @@ try {
               label: button.getAttribute("aria-label"),
               fits:
                 badge.scrollWidth <= badge.clientWidth + 1 &&
-                (!text || text.scrollWidth <= text.clientWidth + 1) &&
+                (!text ||
+                  (text.getBoundingClientRect().right <= button.getBoundingClientRect().right &&
+                    getComputedStyle(text).textOverflow === "ellipsis")) &&
                 button.scrollWidth <= button.clientWidth + 1,
             };
           }),

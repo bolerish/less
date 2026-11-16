@@ -1,7 +1,6 @@
 import { getRecordLabel } from "../_lib/record-label";
 import { usePreviewFocus } from "./usePreviewFocus";
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Badge } from "@bolerish/ui/badge";
 import { Button } from "@bolerish/ui/button";
 import { TableRow, TableCell } from "@bolerish/ui/table";
@@ -37,27 +36,21 @@ export function RecordRow({
   const tooltipId = useId();
 
   return (
-    <TableRow
-      className="record record-row"
-      xstyle={styles.recordRow}
-      data-selected={selected ? "" : undefined}
-    >
-      <TableCell xstyle={styles.itemCell}>
+    <TableRow className="record record-row" data-selected={selected ? "" : undefined}>
+      <TableCell>
         <Button
           ref={locateButton}
-          className={["locate-button", stylex.props(styles.locateButton).className].join(" ")}
-          variant="ghost"
+          className="locate-button"
+          xstyle={styles.locatePlacement}
+          align="start"
+          variant={selected ? "secondary" : "ghost"}
           size="sm"
           disabled={busy || !preview}
           aria-label={message("panel_locate_label", [String(index + 1), label])}
           aria-pressed={selected}
           onClick={(event) => void preview?.show(record.id, event.currentTarget.closest("dialog"))}
         >
-          <Badge
-            className={["record-kind", stylex.props(styles.recordKind).className].join(" ")}
-            variant="outline"
-            aria-hidden="true"
-          >
+          <Badge className="record-kind" variant="outline" aria-hidden="true">
             {category}
           </Badge>
           {text ? (
@@ -69,14 +62,12 @@ export function RecordRow({
           ) : null}
         </Button>
       </TableCell>
-      <TableCell xstyle={styles.restoreCell}>
+      <TableCell>
         <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
           <TooltipTrigger
             render={
               <Button
-                className={["restore-button", stylex.props(styles.restoreButton).className].join(
-                  " ",
-                )}
+                className="restore-button"
                 variant="ghost"
                 size="icon"
                 disabled={busy}
@@ -95,7 +86,7 @@ export function RecordRow({
                   }
                 }}
               >
-                <XIcon {...stylex.props(styles.icon)} aria-hidden="true" />
+                <XIcon aria-hidden="true" />
               </Button>
             }
           />
@@ -115,63 +106,6 @@ export function RecordRow({
 }
 
 const styles = stylex.create({
-  recordRow: {
-    backgroundColor: {
-      default: "transparent",
-      ":hover": colorVars.interactionHover,
-      ":focus-within": colorVars.interactionHover,
-      ":has(button:active)": colorVars.interactionPressed,
-      ":is([data-selected])": colorVars.bgSelected,
-    },
-  },
-  itemCell: { minWidth: 0, whiteSpace: "normal" },
-  restoreCell: { textAlign: "end" },
-  locateButton: {
-    ":is(.locate-button)": {
-      display: "flex",
-      width: "100%",
-      minWidth: "0",
-      justifyContent: "flex-start",
-      height: "auto",
-      minHeight: "40px",
-      padding: 0,
-      textAlign: "start",
-      whiteSpace: "normal",
-      overflowWrap: "anywhere",
-      backgroundColor: {
-        default: "transparent",
-        ":hover": "transparent",
-        ":active": "transparent",
-      },
-      outline: { default: "none", ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-      outlineOffset: -2,
-      scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
-      "::after": { backgroundColor: "transparent" },
-    },
-  },
-  recordLabel: {
-    flex: "1",
-    minWidth: "0",
-    fontWeight: typo.fontWeightMedium,
-  },
-  recordKind: {
-    ":is(.record-kind)": {
-      flexShrink: "0",
-      whiteSpace: "normal",
-      overflowWrap: "anywhere",
-      maxWidth: "50%",
-      color: colorVars.fgSecondary,
-      fontWeight: typo.fontWeightRegular,
-    },
-  },
-  icon: {
-    width: 16,
-    height: 16,
-    flexShrink: 0,
-  },
-  restoreButton: {
-    outline: { ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":focus-visible": 3 },
-    scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
-  },
+  locatePlacement: { width: "100%", minWidth: 0 },
+  recordLabel: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" },
 });

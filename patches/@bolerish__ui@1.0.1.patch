@@ -1,0 +1,95 @@
+diff --git a/dist/select.d.ts b/dist/select.d.ts
+index d66622f19944f3b7bce65d5462186307485566a6..25f5b1088febb34b151bbdf302b31323adb03520 100644
+--- a/dist/select.d.ts
++++ b/dist/select.d.ts
+@@ -16,9 +16,10 @@ export declare function SelectTrigger({ className, style, xstyle, children, ...p
+ type SelectPopupProps = StyledProps<ComponentProps<typeof SelectPrimitive.Popup>> & Pick<ComponentProps<typeof SelectPrimitive.Positioner>, "align" | "alignItemWithTrigger" | "side" | "sideOffset"> & {
+     children: ReactNode;
+ } & {
++    portalContainer?: ComponentProps<typeof SelectPrimitive.Portal>["container"];
+     xstyle?: stylex.StyleXStyles;
+ };
+-export declare function SelectPopup({ className, style, xstyle, align, alignItemWithTrigger, children, side, sideOffset, ...props }: SelectPopupProps): import("react").JSX.Element;
++export declare function SelectPopup({ portalContainer, className, style, xstyle, align, alignItemWithTrigger, children, side, sideOffset, ...props }: SelectPopupProps): import("react").JSX.Element;
+ export declare function SelectItem({ className, style, xstyle, children, ...props }: StyledProps<ComponentProps<typeof SelectPrimitive.Item>> & {
+     xstyle?: ControlLayoutStyles;
+ }): import("react").JSX.Element;
+diff --git a/dist/select.js b/dist/select.js
+index 36774a7a2c6f91719fe1a692ea051cc0ec529a26..21061fa0f3a180d07a93a2b852f9fa51936387ab 100644
+--- a/dist/select.js
++++ b/dist/select.js
+@@ -359,8 +359,8 @@ function SelectTrigger(t0) {
+   }
+   return t5;
+ }
+-function SelectPopup(t0) {
+-  const $ = _c(29);
++function SelectPopup({ portalContainer, ...t0 }) {
++  const $ = _c(30);
+   let children;
+   let className;
+   let props2;
+@@ -453,14 +453,15 @@ function SelectPopup(t0) {
+     t9 = $[22];
+   }
+   let t10;
+-  if ($[23] !== align || $[24] !== alignItemWithTrigger || $[25] !== side || $[26] !== sideOffset || $[27] !== t9) {
+-    t10 = /* @__PURE__ */ jsx(SelectPrimitive.Portal, { children: /* @__PURE__ */ jsx(SelectPrimitive.Positioner, { align, alignItemWithTrigger, side, sideOffset, ...t6, children: t9 }) });
++  if ($[29] !== portalContainer || $[23] !== align || $[24] !== alignItemWithTrigger || $[25] !== side || $[26] !== sideOffset || $[27] !== t9) {
++    t10 = /* @__PURE__ */ jsx(SelectPrimitive.Portal, { container: portalContainer, children: /* @__PURE__ */ jsx(SelectPrimitive.Positioner, { align, alignItemWithTrigger, side, sideOffset, ...t6, children: t9 }) });
+     $[23] = align;
+     $[24] = alignItemWithTrigger;
+     $[25] = side;
+     $[26] = sideOffset;
+     $[27] = t9;
+     $[28] = t10;
++    $[29] = portalContainer;
+   } else {
+     t10 = $[28];
+   }
+diff --git a/dist/tooltip.d.ts b/dist/tooltip.d.ts
+index e1d95c3e91e2ae261b2a44784811cb009e2eec2d..1dbbd6bb3dd53eee77c0407144e6f09559635b53 100644
+--- a/dist/tooltip.d.ts
++++ b/dist/tooltip.d.ts
+@@ -8,7 +8,8 @@ export declare function TooltipTrigger({ delay, className, style, xstyle, ...pro
+     xstyle?: stylex.StyleXStyles;
+ }): import("react").JSX.Element;
+ type TooltipContentProps = StyledProps<ComponentProps<typeof TooltipPrimitive.Popup>> & Pick<ComponentProps<typeof TooltipPrimitive.Positioner>, "align" | "side" | "sideOffset"> & {
++    portalContainer?: ComponentProps<typeof TooltipPrimitive.Portal>["container"];
+     xstyle?: stylex.StyleXStyles;
+ };
+-export declare function TooltipContent({ className, style, align, side, sideOffset, xstyle, ...props }: TooltipContentProps): import("react").JSX.Element;
++export declare function TooltipContent({ portalContainer, className, style, align, side, sideOffset, xstyle, ...props }: TooltipContentProps): import("react").JSX.Element;
+ export {};
+diff --git a/dist/tooltip.js b/dist/tooltip.js
+index 9e05d23b984761be8b25606132bcd430aa3add22..c846f56e915f366842b48fce021482f6d858ae19 100644
+--- a/dist/tooltip.js
++++ b/dist/tooltip.js
+@@ -190,8 +190,8 @@ function TooltipTrigger(t0) {
+   }
+   return t3;
+ }
+-function TooltipContent(t0) {
+-  const $ = _c(26);
++function TooltipContent({ portalContainer, ...t0 }) {
++  const $ = _c(27);
+   let className;
+   let props2;
+   let style;
+@@ -284,13 +284,14 @@ function TooltipContent(t0) {
+     t9 = $[20];
+   }
+   let t10;
+-  if ($[21] !== align || $[22] !== side || $[23] !== sideOffset || $[24] !== t9) {
+-    t10 = /* @__PURE__ */ jsx(TooltipPrimitive.Portal, { children: /* @__PURE__ */ jsx(TooltipPrimitive.Positioner, { align, side, sideOffset, ...t5, children: t9 }) });
++  if ($[26] !== portalContainer || $[21] !== align || $[22] !== side || $[23] !== sideOffset || $[24] !== t9) {
++    t10 = /* @__PURE__ */ jsx(TooltipPrimitive.Portal, { container: portalContainer, children: /* @__PURE__ */ jsx(TooltipPrimitive.Positioner, { align, side, sideOffset, ...t5, children: t9 }) });
+     $[21] = align;
+     $[22] = side;
+     $[23] = sideOffset;
+     $[24] = t9;
+     $[25] = t10;
++    $[26] = portalContainer;
+   } else {
+     t10 = $[25];
+   }

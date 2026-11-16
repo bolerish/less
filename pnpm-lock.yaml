@@ -4,16 +4,19 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@bolerish/ui@1.0.1': e5ce3751fdfe81059a7696627cd7da0aa531dd9cfd41fe0b07d9f5675690e755
+
 importers:
 
   .:
     dependencies:
       '@bolerish/tokens':
-        specifier: 0.18.1
-        version: 0.18.1(@stylexjs/stylex@0.19.0)
+        specifier: 1.0.1
+        version: 1.0.1(@stylexjs/stylex@0.19.0)
       '@bolerish/ui':
-        specifier: 0.18.1
-        version: 0.18.1(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: 1.0.1
+        version: 1.0.1(patch_hash=e5ce3751fdfe81059a7696627cd7da0aa531dd9cfd41fe0b07d9f5675690e755)(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -231,13 +234,13 @@ packages:
       '@types/react':
         optional: true
 
-  '@bolerish/tokens@0.18.1':
-    resolution: {integrity: sha512-AhYcEsfk1o6eLezhgkBwHa5EP/m/gnVZigvV7jiqFj4uJBlqRpxMPE7215eZuwync2hRpAJ1sSu0LTWrLp07VA==}
+  '@bolerish/tokens@1.0.1':
+    resolution: {integrity: sha512-oj6ho4dgK+ZBGrWEWNjgF4Ti5RBoXtGXEc5FnqdM6aEYS66XTzR1hPWAuO8A0giWhUH5ZdPt3oezvOGkjnymvQ==}
     peerDependencies:
       '@stylexjs/stylex': ^0.19.0
 
-  '@bolerish/ui@0.18.1':
-    resolution: {integrity: sha512-ks9J2ia1IXDDzIjGSXwSimoHqe2E1SneywOwfV7OqpX2lL/Pr1AmuKexv523KaTbhIKjrV+loAkPcCb28GuK8g==}
+  '@bolerish/ui@1.0.1':
+    resolution: {integrity: sha512-hRvjZYzVkr22LFPukVGgIGLjh29TD6G6sjh28Gcu0WhSd726qOmsWz8d8HUiQzKO/CQ/L6IMZJ24CZLjh/3ssA==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2991,14 +2994,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  '@bolerish/tokens@0.18.1(@stylexjs/stylex@0.19.0)':
+  '@bolerish/tokens@1.0.1(@stylexjs/stylex@0.19.0)':
     dependencies:
       '@stylexjs/stylex': 0.19.0
 
-  '@bolerish/ui@0.18.1(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@bolerish/ui@1.0.1(patch_hash=e5ce3751fdfe81059a7696627cd7da0aa531dd9cfd41fe0b07d9f5675690e755)(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@base-ui/react': 1.9.0(@date-fns/tz@1.5.0)(@types/react@19.3.0)(date-fns@4.4.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@bolerish/tokens': 0.18.1(@stylexjs/stylex@0.19.0)
+      '@bolerish/tokens': 1.0.1(@stylexjs/stylex@0.19.0)
       '@daypicker/react': 10.0.2(@types/react@19.3.0)(react@19.3.1)
       '@phosphor-icons/react': 2.1.10(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@stylexjs/stylex': 0.19.0

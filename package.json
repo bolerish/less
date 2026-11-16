@@ -29,8 +29,8 @@
     "verify:failure": "node scripts/verify-failure-popup.ts"
   },
   "dependencies": {
-    "@bolerish/tokens": "0.18.1",
-    "@bolerish/ui": "0.18.1",
+    "@bolerish/tokens": "1.0.1",
+    "@bolerish/ui": "1.0.1",
     "@phosphor-icons/react": "^2.1.10",
     "@stylexjs/stylex": "0.19.0",
     "dexie": "^4.4.4",

@@ -20,6 +20,8 @@ import {
   SunIcon,
   MoonIcon,
   InfoIcon,
+  SlidersHorizontalIcon,
+  PaintBrushIcon,
 } from "@phosphor-icons/react";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { LOCALES, parseLocalePreference } from "~shared/locale/locales";
@@ -84,12 +86,22 @@ export function Settings({
         <div {...stylex.props(styles.home)}>
           {(
             [
-              { title: "panel_general", pages: ["language"] },
-              { title: "panel_appearance", pages: ["theme", "motion"] },
+              { title: "panel_general", pages: ["language"], icon: SlidersHorizontalIcon },
+              { title: "panel_appearance", pages: ["theme", "motion"], icon: PaintBrushIcon },
             ] as const
-          ).map(({ pages, title }) => (
+          ).map(({ pages, title, icon: Icon }) => (
             <section key={title}>
-              <h2 {...stylex.props(styles.sectionHeading)}>{message(title)}</h2>
+              <h2 {...stylex.props(styles.sectionHeading)}>
+                <Icon {...stylex.props(styles.sectionIcon)} aria-hidden="true" />
+                <span
+                  className={[
+                    "settings-section-label",
+                    stylex.props(styles.navigationLabel).className,
+                  ].join(" ")}
+                >
+                  {message(title)}
+                </span>
+              </h2>
               <div {...stylex.props(styles.navigationList)}>
                 {pages.map((page) => (
                   <Button
@@ -97,10 +109,13 @@ export function Settings({
                     variant="ghost"
                     align="space-between"
                     xstyle={styles.navigation}
+                    style={{ height: "auto", minHeight: sizeVars.controlMd, whiteSpace: "normal" }}
                     data-settings-page={page}
                     onClick={() => onNavigate(page)}
                   >
-                    {message(`panel_${page}`)}
+                    <span {...stylex.props(styles.navigationLabel)}>
+                      {message(`panel_${page}`)}
+                    </span>
                     <CaretRightIcon aria-hidden="true" />
                   </Button>
                 ))}
@@ -240,13 +255,16 @@ const styles = stylex.create({
     fontSize: typo.fontSizeSm,
     margin: 0,
     marginBottom: spacingVars.space2,
-    paddingInline: `calc(${spacingVars.space4} + ${sizeVars.stroke})`,
+    paddingInlineStart: "var(--less-control-inset)",
   },
+  sectionIcon: { width: sizeVars.iconSm, height: sizeVars.iconSm, flexShrink: 0 },
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
+    paddingInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
   },
   navigation: { minWidth: 0 },
+  navigationLabel: { minWidth: 0, overflowWrap: "anywhere" },
   fieldHeading: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
   themeGroup: { width: "100%" },
   themeChoice: {

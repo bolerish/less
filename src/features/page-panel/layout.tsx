@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, sizeVars } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
 import {
   Breadcrumb,
@@ -126,6 +126,7 @@ export function PanelLayout({
 const styles = stylex.create({
   panel: {
     "--less-panel-inset": spacingVars.space4,
+    "--less-control-inset": `calc(${spacingVars.space4} + ${sizeVars.stroke})`,
     container: "less-panel / inline-size",
     boxSizing: "border-box",
     height: "100%",
@@ -143,7 +144,7 @@ const styles = stylex.create({
     flexWrap: "wrap",
     gap: spacingVars.space2,
     paddingBlock: spacingVars.space3,
-    paddingInline: "var(--less-panel-inset)",
+    paddingInline: "calc(var(--less-panel-inset) + var(--less-control-inset))",
     background: "var(--less-app-background)",
   },
   body: {

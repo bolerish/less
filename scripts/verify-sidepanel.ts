@@ -2594,10 +2594,14 @@ try {
           x.width -
           parseFloat(getComputedStyle(row.lastElementChild!).paddingInlineStart) -
           parseFloat(getComputedStyle(row.lastElementChild!).paddingInlineEnd),
-        edgeDifference:
-          tag.left -
+        actionPadding: Array.from(
+          row.querySelectorAll<HTMLElement>("button"),
+          (e) => getComputedStyle(e).padding,
+        ),
+        actionEdges:
+          row.querySelector(".locate-button")!.getBoundingClientRect().left -
           b.left -
-          (b.right - button.querySelector("path")!.getBoundingClientRect().right),
+          (b.right - x.right),
         width: d.clientWidth,
         overflow: d.scrollWidth,
       };
@@ -2618,9 +2622,10 @@ try {
       "action column contains only the native Button and cell padding",
     );
     assert(
-      Math.abs(after.edgeDifference) < 1,
-      "badge and restore icon have the same visible outer inset",
+      after.actionPadding.every((padding) => padding === "0px"),
+      "TableCell owns spacing and both row Buttons have zero padding",
     );
+    assert(Math.abs(after.actionEdges) < 1, "row action boxes share the same outer cell inset");
     assert.equal(after.row.left, after.row.hoverLeft);
     assert.equal(after.row.right, after.row.hoverRight);
     assert(

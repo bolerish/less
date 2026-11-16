@@ -560,9 +560,12 @@ try {
           headings: Array.from(settings.querySelectorAll("h2")).map((heading) => ({
             color: getComputedStyle(heading).color,
             font: parseFloat(getComputedStyle(heading).fontSize),
+            iconOffset:
+              heading.querySelector("svg")!.getBoundingClientRect().left -
+              dialog.querySelector("header nav")!.getBoundingClientRect().left,
             textOffset: (() => {
               const label = document.createRange();
-              label.selectNodeContents(heading);
+              label.selectNodeContents(heading.querySelector(".settings-section-label")!);
               const link = document.createRange();
               link.selectNodeContents(heading.closest("section")!.querySelector("button")!);
               return label.getBoundingClientRect().left - link.getBoundingClientRect().left;
@@ -598,6 +601,7 @@ try {
               async (heading) =>
                 heading.font >= 14 &&
                 Math.abs(heading.textOffset) < 0.5 &&
+                Math.abs(heading.iconOffset) < 0.5 &&
                 heading.color !== layout.rows[0].color &&
                 (await contrast(heading.color, layout.background)) >= 4.5,
             ),
@@ -702,9 +706,9 @@ try {
             `${locale}/${width}/${page}/${scheme}: controls fit`,
           );
           assert.equal(
-            layout.headerPadding,
-            layout.bodyPadding,
-            "all screens share the header/body gutter",
+            parseFloat(layout.headerPadding) - parseFloat(layout.bodyPadding),
+            17,
+            "header adds the native medium Button's 16px inset and 1px border",
           );
           assert((await contrast(layout.color, layout.background)) >= 4.5, "readable controls");
           if (page === "theme") {
@@ -723,6 +727,26 @@ try {
         if (locale === "ko" && width === 375)
           await site.screenshot({ path: `/tmp/less-settings-ko-${page}.png` });
         if (page === "motion") {
+          // Reference: computed styles of the public 1.0.1 Field preview.
+          assert.deepEqual(
+            await panel((d) => {
+              const control = d.querySelector<HTMLElement>(".motion-select")!;
+              const field = control.closest<HTMLElement>('[data-orientation="vertical"]')!;
+              const label = field.querySelector("label")!;
+              const help = field.querySelector('[id$="-help"]')!;
+              const metrics = (e: Element) => {
+                const s = getComputedStyle(e);
+                return [s.fontSize, s.fontWeight, s.lineHeight];
+              };
+              return {
+                label: metrics(label),
+                description: metrics(help),
+                gap: getComputedStyle(field).gap,
+              };
+            }),
+            { label: ["14px", "500", "21px"], description: ["14px", "400", "21px"], gap: "8px" },
+            "Field label, description and spacing match the public component preview",
+          );
           assert(
             await panel((d) => {
               const trigger = d.querySelector(".motion-select")!;

@@ -46,8 +46,9 @@ export function RecordRow({
           align="start"
           size="sm"
           xstyle={styles.previewWidth}
-          // Saved page labels need multiline height; the Button keeps its default appearance.
+          // TableCell owns insets; saved labels need multiline height.
           style={{
+            padding: 0,
             height: "auto",
             minHeight: sizeVars.controlSm,
             whiteSpace: "normal",
@@ -75,6 +76,7 @@ export function RecordRow({
           <TooltipTrigger
             render={
               <Button
+                style={{ padding: 0 }}
                 className={["restore-button", stylex.props(styles.restoreButton).className].join(
                   " ",
                 )}

@@ -54,10 +54,10 @@
     "message": "Volver"
   },
   "panel_close": {
-    "message": "Cerrar Less"
+    "message": "Cerrar"
   },
   "panel_preview_title": {
-    "message": "Less · Vista previa"
+    "message": "Vista previa"
   },
   "panel_hidden_items": {
     "message": "Elementos ocultos"
@@ -72,7 +72,7 @@
     "message": "Preparando…"
   },
   "panel_paused": {
-    "message": "La ocultación está desactivada en este sitio. Actívala para ocultar un elemento."
+    "message": "La ocultación está desactivada. Actívala para volver a ocultar los elementos guardados."
   },
   "panel_retry_load": {
     "message": "Reintentar"
@@ -81,7 +81,7 @@
     "message": "Guardando…"
   },
   "panel_saved": {
-    "message": "Se ha actualizado la configuración de ocultación."
+    "message": "Cambios guardados."
   },
   "panel_reset_done": {
     "message": "Todos los elementos ocultos en este sitio vuelven a mostrarse."
@@ -150,7 +150,7 @@
     "message": "Vista previa del elemento $1: $2"
   },
   "panel_dialog": {
-    "message": "Less — sitio actual"
+    "message": "Gestionar elementos ocultos"
   },
   "panel_reset_group": {
     "message": "¿Restablecer los ajustes de visibilidad?"
@@ -168,16 +168,16 @@
     "message": "Más reciente"
   },
   "panel_version_updates": {
-    "message": "v$1 · Historial de actualizaciones"
+    "message": "Historial de actualizaciones $1"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · Historial de actualizaciones sin leer"
+    "message": "Historial de actualizaciones $1 · Sin leer"
   },
   "panel_selection_prompt": {
-    "message": "Clic: ocultar · Mantén pulsada Mayús: seleccionar el elemento padre"
+    "message": "Seleccionando · Shift: ampliar"
   },
   "panel_selection_keys": {
-    "message": "Mayús: seleccionar el elemento padre · ↑/↓: padre/hijo · Intro: ocultar"
+    "message": "Shift: ampliar · ↑: ampliar selección · ↓: selección anterior · Enter: ocultar"
   },
   "panel_selection_count_one": {
     "message": "$1 oculto"
@@ -210,13 +210,13 @@
     "message": "Vuelve a mostrar los elementos ocultos uno a uno o todos a la vez."
   },
   "panel_failure_protected": {
-    "message": "No se puede usar Less en esta página."
+    "message": "No está disponible en esta página."
   },
   "panel_failure_reload": {
     "message": "Recarga la página e inténtalo de nuevo."
   },
   "panel_failure_generic": {
-    "message": "No se pudo abrir Less. Inténtalo de nuevo."
+    "message": "No se pudo abrir el panel. Inténtalo de nuevo."
   },
   "panel_settings": {
     "message": "Ajustes"
@@ -252,7 +252,7 @@
     "message": "Oscuro"
   },
   "panel_theme_help": {
-    "message": "Elige el tema de Less para todos los sitios. Si no se puede detectar el tema de la página, se usa la configuración del sistema."
+    "message": "Se aplica a todos los sitios. Con la opción de página web, se usa la configuración del sistema si no se puede detectar el tema."
   },
   "panel_theme_error": {
     "message": "No se pudo guardar el tema. Inténtalo de nuevo."
@@ -294,7 +294,7 @@
     "message": "En el modo de selección"
   },
   "panel_shortcuts_help": {
-    "message": "Disponibles cuando el panel de Less está cerrado."
+    "message": "Disponibles cuando el panel está cerrado."
   },
   "panel_shortcut_selection": {
     "message": "Activar o salir del modo de selección"

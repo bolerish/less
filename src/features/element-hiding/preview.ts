@@ -14,7 +14,12 @@ export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
 
 export function createHiddenItemPreview() {
   let state: PreviewState = { id: null, message: "" };
-  type Target = { element: HTMLElement; style: string | null; animation?: Animation };
+  type Target = {
+    element: HTMLElement;
+    style: string | null;
+    wasHidden: boolean;
+    animation?: Animation;
+  };
   let current: Target | null = null;
   const outgoing = new Set<Target>();
   function restore(target: Target): void {
@@ -46,7 +51,7 @@ export function createHiddenItemPreview() {
       current = null;
       const opacity = getComputedStyle(target.element).opacity;
       target.animation?.cancel();
-      if (animate && !isMotionReduced() && target.element.isConnected) {
+      if (animate && target.wasHidden && !isMotionReduced() && target.element.isConnected) {
         outgoing.add(target);
         target.animation = target.element.animate([{ opacity }, { opacity: 0 }], {
           duration: 140,
@@ -97,11 +102,7 @@ export function createHiddenItemPreview() {
           return;
         }
         const match = resolveMatchedElement(document, record);
-        if (
-          match.status !== "matched" ||
-          isHideExcludedElement(match.matchedElement) ||
-          !isHiddenElement(match.matchedElement)
-        ) {
+        if (match.status !== "matched" || isHideExcludedElement(match.matchedElement)) {
           publish({
             id: null,
             message: "panel_unavailable",
@@ -115,9 +116,12 @@ export function createHiddenItemPreview() {
           restore(target);
         }
         finishHiddenElementAnimation(element);
-        current = { element, style: element.getAttribute("style") };
+        const wasHidden = isHiddenElement(element);
+        current = { element, style: element.getAttribute("style"), wasHidden };
         previewPanel = panel;
-        const savedStyle = element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE);
+        const savedStyle = wasHidden
+          ? element.getAttribute(HIDDEN_INLINE_STYLE_ATTRIBUTE)
+          : element.getAttribute("style");
         if (savedStyle === null) element.removeAttribute("style");
         else element.setAttribute("style", savedStyle);
         // Read its original layout without the preload rule, synchronously before any paint.
@@ -153,7 +157,7 @@ export function createHiddenItemPreview() {
           });
           return;
         }
-        if (!isMotionReduced()) {
+        if (wasHidden && !isMotionReduced()) {
           current.animation = element.animate([{ opacity: 0 }, { opacity }], {
             duration: 140,
             easing: "ease-out",

@@ -54,10 +54,10 @@
     "message": "뒤로"
   },
   "panel_close": {
-    "message": "Less 닫기"
+    "message": "닫기"
   },
   "panel_preview_title": {
-    "message": "Less · 미리보기"
+    "message": "미리보기"
   },
   "panel_hidden_items": {
     "message": "숨긴 항목"
@@ -72,7 +72,7 @@
     "message": "준비 중…"
   },
   "panel_paused": {
-    "message": "이 사이트의 숨김이 꺼져 있습니다. 숨김을 켜면 항목을 숨길 수 있습니다."
+    "message": "숨김 적용이 꺼져 있어요. 다시 켜면 저장한 항목이 숨겨져요."
   },
   "panel_retry_load": {
     "message": "다시 시도"
@@ -81,7 +81,7 @@
     "message": "저장 중…"
   },
   "panel_saved": {
-    "message": "숨김 설정을 바꿨어요."
+    "message": "변경 사항을 저장했어요."
   },
   "panel_reset_done": {
     "message": "이 사이트에서 숨긴 항목이 모두 다시 보여요."
@@ -105,7 +105,7 @@
     "message": "취소"
   },
   "panel_sync_notice": {
-    "message": "열린 페이지 $1개에 변경이 반영되지 않았습니다. 페이지를 새로고침하거나 다시 동기화하세요."
+    "message": "열린 페이지 $1개에 변경이 반영되지 않았어요. 페이지를 새로고침하거나 다시 동기화해 주세요."
   },
   "panel_retry_sync": {
     "message": "다시 동기화"
@@ -117,10 +117,10 @@
     "message": "변경을 저장하지 못했어요. 다시 시도해 주세요."
   },
   "panel_selection_error": {
-    "message": "선택을 시작하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
+    "message": "선택을 시작하지 못했어요. 페이지를 새로고침하고 다시 시도해 주세요."
   },
   "panel_preference_error": {
-    "message": "숨김 설정을 변경하지 못했습니다. 다시 시도하세요."
+    "message": "숨김 설정을 바꾸지 못했어요. 다시 시도해 주세요."
   },
   "panel_unreleased": {
     "message": "아직 출시되지 않음"
@@ -132,25 +132,25 @@
     "message": "항목 찾는 중…"
   },
   "panel_other_page": {
-    "message": "다른 페이지에 있는 항목입니다. 저장한 페이지에서 미리 보세요."
+    "message": "다른 페이지에 저장한 항목이에요. 해당 페이지에서 확인해 주세요."
   },
   "panel_unavailable": {
-    "message": "이 페이지에서 항목을 찾지 못했습니다. 숨김 규칙은 유지됩니다."
+    "message": "이 페이지에서 항목을 찾지 못했어요. 숨김 설정은 그대로예요."
   },
   "panel_hidden_parent": {
-    "message": "다른 숨긴 영역 안에 있는 항목입니다. 숨김 규칙은 유지됩니다."
+    "message": "상위 영역이 숨겨져 있어 미리 볼 수 없어요."
   },
   "panel_covered": {
-    "message": "페이지 레이아웃에 가려진 항목입니다. 숨김 규칙은 유지됩니다."
+    "message": "다른 요소에 가려져 미리 볼 수 없어요."
   },
   "panel_preview_error": {
-    "message": "항목을 표시하지 못했습니다. 페이지를 새로고침하고 다시 시도하세요."
+    "message": "미리보기를 열지 못했어요. 페이지를 새로고침하고 다시 시도해 주세요."
   },
   "panel_locate_label": {
     "message": "항목 $1 미리보기: $2"
   },
   "panel_dialog": {
-    "message": "Less — 현재 사이트"
+    "message": "숨긴 항목 관리"
   },
   "panel_reset_group": {
     "message": "숨김 설정을 초기화할까요?"
@@ -168,16 +168,16 @@
     "message": "최신"
   },
   "panel_version_updates": {
-    "message": "v$1 · 업데이트 기록"
+    "message": "업데이트 기록 $1"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 읽지 않은 업데이트 기록"
+    "message": "업데이트 기록 $1 · 읽지 않은 소식"
   },
   "panel_selection_prompt": {
-    "message": "클릭: 숨기기 · Shift 누르기: 부모 선택"
+    "message": "선택 중 · Shift 더 넓게"
   },
   "panel_selection_keys": {
-    "message": "Shift 누르기: 부모 선택 · ↑/↓: 부모/자식 · Enter: 숨기기"
+    "message": "Shift: 더 넓게 · ↑: 범위 넓히기 · ↓: 이전 범위 · Enter: 숨기기"
   },
   "panel_selection_count_one": {
     "message": "$1개 숨김"
@@ -192,10 +192,10 @@
     "message": "마지막 숨김 취소"
   },
   "panel_selection_restore_error": {
-    "message": "숨김을 해제하지 못했습니다. 다시 시도해 주세요."
+    "message": "숨김을 해제하지 못했어요. 다시 시도해 주세요."
   },
   "panel_selection_save_error": {
-    "message": "숨김 설정을 저장하지 못했습니다. 다시 시도해 주세요."
+    "message": "숨김 설정을 저장하지 못했어요. 다시 시도해 주세요."
   },
   "panel_release_1_2_0_title": {
     "message": "Less로 이름이 바뀌었어요"
@@ -210,13 +210,13 @@
     "message": "숨긴 항목을 하나씩 또는 한꺼번에 다시 표시할 수 있어요."
   },
   "panel_failure_protected": {
-    "message": "이 페이지에서는 Less를 사용할 수 없어요."
+    "message": "이 페이지에서는 사용할 수 없어요."
   },
   "panel_failure_reload": {
-    "message": "페이지를 새로고침한 뒤 다시 시도하세요."
+    "message": "페이지를 새로고침한 뒤 다시 시도해 주세요."
   },
   "panel_failure_generic": {
-    "message": "Less를 열지 못했어요. 다시 시도하세요."
+    "message": "패널을 열지 못했어요. 다시 시도해 주세요."
   },
   "panel_settings": {
     "message": "설정"
@@ -252,7 +252,7 @@
     "message": "다크"
   },
   "panel_theme_help": {
-    "message": "모든 사이트에서 사용할 Less의 테마를 선택해요. 웹페이지 테마를 알 수 없으면 시스템 설정을 따라요."
+    "message": "모든 사이트에 적용돼요. 웹페이지 설정을 사용할 때 테마를 알 수 없으면 시스템 설정을 따라요."
   },
   "panel_theme_error": {
     "message": "테마를 저장하지 못했어요. 다시 시도해 주세요."
@@ -294,7 +294,7 @@
     "message": "선택 모드에서"
   },
   "panel_shortcuts_help": {
-    "message": "Less 패널을 닫은 상태에서 사용할 수 있어요."
+    "message": "패널이 닫혀 있을 때 사용할 수 있어요."
   },
   "panel_shortcut_selection": {
     "message": "선택 모드 켜기·끄기"

@@ -5,13 +5,11 @@ import {
   isHideExcludedElement,
 } from "./hide-policy";
 import { isMotionReduced } from "~shared/motion/preference";
+import { preservePageScrollbar, releasePageScrollbar } from "~shared/lib/page-scroll";
+export { releasePageScrollbar } from "~shared/lib/page-scroll";
 
 const pendingAnimations = new WeakMap<HTMLElement, () => void>();
 const ADDED_INERT_ATTRIBUTE = "data-veil-inert-added";
-const pageGutters = new WeakMap<
-  Document,
-  { root: HTMLElement; value: string; priority: string; hadStyle: boolean }
->();
 
 export function finishHiddenElementAnimation(element: HTMLElement): void {
   pendingAnimations.get(element)?.();
@@ -102,40 +100,4 @@ export function restoreAllHiddenElements(documentRef: Document): void {
     .querySelectorAll<HTMLElement>(`[${HIDDEN_ELEMENT_ATTRIBUTE}="true"]`)
     .forEach(restoreHiddenElement);
   releasePageScrollbar(documentRef);
-}
-
-function preservePageScrollbar(documentRef: Document): void {
-  const root = documentRef.documentElement;
-  const view = documentRef.defaultView;
-  // Keep an existing classic scrollbar track, including browsers with overlay scrollbar defaults.
-  if (
-    !view ||
-    pageGutters.has(documentRef) ||
-    view.innerWidth <= root.clientWidth ||
-    view.getComputedStyle(root).overflowY === "scroll"
-  )
-    return;
-  pageGutters.set(documentRef, {
-    root,
-    value: root.style.getPropertyValue("overflow-y"),
-    priority: root.style.getPropertyPriority("overflow-y"),
-    hadStyle: root.hasAttribute("style"),
-  });
-  root.style.setProperty("overflow-y", "scroll", "important");
-}
-
-export function releasePageScrollbar(documentRef: Document): void {
-  const previous = pageGutters.get(documentRef);
-  if (!previous) return;
-  pageGutters.delete(documentRef);
-  const root = previous.root;
-  // Preserve a page's own later change instead of restoring over it.
-  if (
-    root.style.getPropertyValue("overflow-y") !== "scroll" ||
-    root.style.getPropertyPriority("overflow-y") !== "important"
-  )
-    return;
-  if (previous.value) root.style.setProperty("overflow-y", previous.value, previous.priority);
-  else root.style.removeProperty("overflow-y");
-  if (!previous.hadStyle && root.getAttribute("style") === "") root.removeAttribute("style");
 }

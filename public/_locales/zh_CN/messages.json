@@ -54,10 +54,10 @@
     "message": "返回"
   },
   "panel_close": {
-    "message": "关闭 Less"
+    "message": "关闭"
   },
   "panel_preview_title": {
-    "message": "Less · 预览"
+    "message": "预览"
   },
   "panel_hidden_items": {
     "message": "隐藏项目"
@@ -72,7 +72,7 @@
     "message": "准备中…"
   },
   "panel_paused": {
-    "message": "此网站的隐藏功能已关闭。开启后即可隐藏项目。"
+    "message": "隐藏功能已关闭。重新开启后，保存的内容将再次隐藏。"
   },
   "panel_retry_load": {
     "message": "重试"
@@ -81,7 +81,7 @@
     "message": "保存中…"
   },
   "panel_saved": {
-    "message": "已更新隐藏设置。"
+    "message": "更改已保存。"
   },
   "panel_reset_done": {
     "message": "此网站上隐藏的所有项目已重新显示。"
@@ -150,7 +150,7 @@
     "message": "预览项目 $1：$2"
   },
   "panel_dialog": {
-    "message": "Less — 当前网站"
+    "message": "管理隐藏内容"
   },
   "panel_reset_group": {
     "message": "要重置隐藏设置吗？"
@@ -168,16 +168,16 @@
     "message": "最新"
   },
   "panel_version_updates": {
-    "message": "v$1 · 更新记录"
+    "message": "更新记录 $1"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 未读更新记录"
+    "message": "更新记录 $1 · 未读"
   },
   "panel_selection_prompt": {
-    "message": "点击：隐藏 · 按住 Shift：选择父元素"
+    "message": "选择中 · Shift 扩大范围"
   },
   "panel_selection_keys": {
-    "message": "按住 Shift：选择父元素 · ↑/↓：父元素/子元素 · Enter：隐藏"
+    "message": "Shift：扩大范围 · ↑：扩大选择 · ↓：上次选择 · Enter：隐藏"
   },
   "panel_selection_count_one": {
     "message": "已隐藏$1项"
@@ -210,13 +210,13 @@
     "message": "可逐项或一次性取消隐藏。"
   },
   "panel_failure_protected": {
-    "message": "此页面无法使用 Less。"
+    "message": "此页面无法使用。"
   },
   "panel_failure_reload": {
     "message": "请刷新页面后重试。"
   },
   "panel_failure_generic": {
-    "message": "无法打开 Less，请重试。"
+    "message": "无法打开面板，请重试。"
   },
   "panel_settings": {
     "message": "设置"
@@ -252,7 +252,7 @@
     "message": "深色"
   },
   "panel_theme_help": {
-    "message": "选择 Less 在所有网站上使用的主题。无法识别网页主题时，将跟随系统设置。"
+    "message": "应用于所有网站。选择网页设置时，如果无法识别网页主题，将跟随系统设置。"
   },
   "panel_theme_error": {
     "message": "无法保存主题，请重试。"
@@ -294,7 +294,7 @@
     "message": "在选择模式下"
   },
   "panel_shortcuts_help": {
-    "message": "关闭 Less 面板后可使用这些快捷键。"
+    "message": "关闭面板后可使用这些快捷键。"
   },
   "panel_shortcut_selection": {
     "message": "开启或退出选择模式"

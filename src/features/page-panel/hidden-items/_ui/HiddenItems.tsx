@@ -162,6 +162,7 @@ export function HiddenItems({
           <ScrollAreaViewport
             className="records"
             xstyle={styles.records}
+            role="region"
             aria-label={message("panel_hidden_items")}
           >
             <ScrollAreaContent>

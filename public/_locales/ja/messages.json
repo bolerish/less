@@ -54,10 +54,10 @@
     "message": "戻る"
   },
   "panel_close": {
-    "message": "Less を閉じる"
+    "message": "閉じる"
   },
   "panel_preview_title": {
-    "message": "Less · プレビュー"
+    "message": "プレビュー"
   },
   "panel_hidden_items": {
     "message": "非表示の項目"
@@ -72,7 +72,7 @@
     "message": "準備中…"
   },
   "panel_paused": {
-    "message": "このサイトの非表示設定はオフです。オンにすると項目を非表示にできます。"
+    "message": "非表示はオフです。オンにすると、保存した項目が再び非表示になります。"
   },
   "panel_retry_load": {
     "message": "再試行"
@@ -81,7 +81,7 @@
     "message": "保存中…"
   },
   "panel_saved": {
-    "message": "非表示の設定を更新しました。"
+    "message": "変更を保存しました。"
   },
   "panel_reset_done": {
     "message": "このサイトで非表示にした項目をすべて再表示しました。"
@@ -150,7 +150,7 @@
     "message": "項目 $1 をプレビュー: $2"
   },
   "panel_dialog": {
-    "message": "Less — 現在のサイト"
+    "message": "非表示の項目を管理"
   },
   "panel_reset_group": {
     "message": "非表示設定をリセットしますか？"
@@ -168,16 +168,16 @@
     "message": "最新"
   },
   "panel_version_updates": {
-    "message": "v$1 · 更新履歴"
+    "message": "更新履歴 $1"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 未読の更新履歴"
+    "message": "更新履歴 $1 · 未読のお知らせ"
   },
   "panel_selection_prompt": {
-    "message": "クリックで非表示 · Shiftを押して親を選択"
+    "message": "選択中 · Shiftで範囲を広げる"
   },
   "panel_selection_keys": {
-    "message": "Shift: 親を選択 · ↑/↓: 親/子 · Enter: 非表示"
+    "message": "Shift: 範囲を広げる · ↑: 選択範囲を広げる · ↓: 前の範囲 · Enter: 非表示"
   },
   "panel_selection_count_one": {
     "message": "$1件を非表示"
@@ -210,13 +210,13 @@
     "message": "非表示にした項目を個別に、またはまとめて再表示できます。"
   },
   "panel_failure_protected": {
-    "message": "このページではLessを使用できません。"
+    "message": "このページでは使用できません。"
   },
   "panel_failure_reload": {
     "message": "ページを再読み込みして、もう一度お試しください。"
   },
   "panel_failure_generic": {
-    "message": "Lessを開けませんでした。もう一度お試しください。"
+    "message": "パネルを開けませんでした。もう一度お試しください。"
   },
   "panel_settings": {
     "message": "設定"
@@ -252,7 +252,7 @@
     "message": "ダーク"
   },
   "panel_theme_help": {
-    "message": "すべてのサイトで使うLessのテーマを選べます。ページのテーマを判別できない場合は、システム設定に従います。"
+    "message": "すべてのサイトに適用されます。「ウェブページ設定」でテーマを判別できない場合は、システム設定に従います。"
   },
   "panel_theme_error": {
     "message": "テーマを保存できませんでした。もう一度お試しください。"
@@ -294,7 +294,7 @@
     "message": "選択モード中"
   },
   "panel_shortcuts_help": {
-    "message": "Lessのパネルを閉じた状態で使えます。"
+    "message": "パネルを閉じた状態で使えます。"
   },
   "panel_shortcut_selection": {
     "message": "選択モードの切り替え"

@@ -10,6 +10,7 @@ import { setContentHostStyles } from "~shared/lib/content-host";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { isThemeDark, subscribeTheme } from "~shared/theme/_model/theme";
 import { isMotionReduced, subscribeMotionPreference } from "~shared/motion/preference";
+import { lockPageScroll } from "~shared/lib/page-scroll";
 
 export const PANEL_HOST_ATTRIBUTE = "data-less-panel";
 
@@ -25,10 +26,16 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   let unsubscribePreview: (() => void) | undefined;
   let unsubscribeTheme: (() => void) | undefined;
   let unsubscribeMotion: (() => void) | undefined;
+  let unlockPageScroll: (() => void) | undefined;
   const syncTheme = (): void => {
     if (!dialog) return;
     const dark = isThemeDark();
-    dialog.className = ["less-theme", getSurfaceProps(dark, styles.dialog).className].join(" ");
+    dialog.className = [
+      "less-theme",
+      getSurfaceProps(dark).className,
+      stylex.props(styles.dialog, dialog.dataset.preview === "true" && styles.previewBackdrop)
+        .className,
+    ].join(" ");
     dialog.dataset.theme = dark ? "dark" : "light";
     dialog.style.colorScheme = dialog.dataset.theme;
   };
@@ -47,6 +54,8 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     unsubscribeMotion = undefined;
     reducedMotion.removeEventListener("change", syncMotion);
     dialog?.close();
+    unlockPageScroll?.();
+    unlockPageScroll = undefined;
     root?.unmount();
     root = null;
     host?.remove();
@@ -175,7 +184,10 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       }
     });
     unsubscribePreview = preview.subscribe((state) => {
-      if (dialog) dialog.dataset.preview = String(state.id !== null);
+      if (dialog) {
+        dialog.dataset.preview = String(state.id !== null);
+        syncTheme();
+      }
     });
     dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
@@ -209,6 +221,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
         }}
       />,
     );
+    unlockPageScroll = lockPageScroll(document);
     dialog.showModal();
     animate(true);
     observer.observe(document, { childList: true, subtree: true });
@@ -284,10 +297,20 @@ const styles = stylex.create({
     insetBlock: {
       default: "0",
       ":is([data-preview-layout='compact'] )": "auto 8px",
-      ":is([data-preview-edge='top'] )": "8px auto",
+      ":is([data-preview-layout='compact'][data-preview-edge='top'])": "8px auto",
     },
   },
   mount: {
     height: "100%",
+  },
+  previewBackdrop: {
+    "::backdrop": {
+      backgroundColor: {
+        default: "transparent",
+        "@media (forced-colors: active)": "transparent",
+      },
+      backdropFilter: "none",
+      WebkitBackdropFilter: "none",
+    },
   },
 });

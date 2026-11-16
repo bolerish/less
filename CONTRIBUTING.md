@@ -31,6 +31,8 @@ profile and local fixture server are cleaned up afterward.
 The page-panel shell and shared header/body inset live in `src/features/page-panel/layout.tsx`.
 `view.tsx` owns the breadcrumb hierarchy and screen state; `mount.tsx` owns the native modal lifetime, backdrop dismissal and panel motion.
 Motion preferences live in `src/shared/motion/preference.ts`; the system setting is the default.
+`src/shared/lib/page-scroll.ts` owns overlapping hiding-gutter and modal-scroll claims.
+The modal hides both page scrollbars while preserving its opening width; explicit preview navigation remains possible.
 
 ## Verify previously corrected behavior
 
@@ -48,6 +50,7 @@ submission. A passing build does not establish the behavior below.
 | Help opens install onboarding; shortcuts are read-only; Switch uses the documented default size             | `pnpm verify:settings`, `pnpm verify:panel`                           | Review the labels and Kbd list against the actual key handlers                                |
 | Breadcrumb navigation, overlay dismissal and saved motion respect keyboard and system settings              | `pnpm verify:settings`                                                | Review long paths and actual motion on the reported device                                    |
 | Hiding the last tall item preserves an existing scrollbar gutter without adding one to short pages          | `pnpm verify:panel`                                                   | The fixture enables classic scrollbars; overlay scrollbars do not reserve space               |
+| Panel OFF/ON preserves width; preview works while OFF and removes backdrop blur                             | `pnpm verify:panel`, `verify-page-scroll.ts`                          | Exercise the reported site's saved items                                                      |
 | Hiding is applied before reveal and remains correct on navigation/cache changes                             | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |
 | Five languages retain keys/placeholders and supported product claims                                        | `pnpm verify:copy`, `pnpm verify:locale`                              | Review natural wording in each changed language; key parity does not prove fluency            |
 | Toolbar launch and failure lifecycle remain correct                                                         | `pnpm verify:toolbar`, `pnpm verify:failure`                          | Fixture API checks do not establish Firefox runtime behavior                                  |
@@ -80,6 +83,19 @@ pnpm verify:failure --chromium "/path/to/Google Chrome"
 mutation script edits source files temporarily; do not run it in a shared or
 already modified checkout. None of these commands starts a scheduled agent or
 permits automatic merging.
+
+For root scroll ownership and an optional axe audit:
+
+```bash
+node scripts/verify-page-scroll.ts --chromium "/path/to/Google Chrome"
+pnpm verify:panel --chromium "/path/to/Google Chrome" --axe "/path/to/axe.min.js"
+```
+
+Axe scans an exact rendered DOM/CSS snapshot in an open shadow root because it
+cannot traverse the production closed shadow. The same run checks the real
+closed-shadow accessibility tree and keyboard flows. Arrow-only Kbd contrast is
+measured separately when axe reports non-text glyphs. These checks do not replace
+screen-reader or live Firefox testing.
 
 Before submitting, connect each approved requirement to an executed check and
 its result, or state that it remains unverified. Recheck previously corrected

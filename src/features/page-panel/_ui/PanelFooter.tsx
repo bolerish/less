@@ -64,7 +64,7 @@ export function PanelFooter({
         )}
         onClick={onUpdates}
       >
-        {message("panel_update_history")}
+        {message("panel_update_history")}{" "}
         <Badge variant="secondary">{browser.runtime.getManifest().version}</Badge>
         {hasUnreadUpdates ? (
           <span

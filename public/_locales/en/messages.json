@@ -54,10 +54,10 @@
     "message": "Back"
   },
   "panel_close": {
-    "message": "Close Less"
+    "message": "Close"
   },
   "panel_preview_title": {
-    "message": "Less · Preview"
+    "message": "Preview"
   },
   "panel_hidden_items": {
     "message": "Hidden items"
@@ -72,7 +72,7 @@
     "message": "Starting…"
   },
   "panel_paused": {
-    "message": "Hiding is off for this site. Turn it on to hide an item."
+    "message": "Hiding is off. Turn it on to hide your saved items again."
   },
   "panel_retry_load": {
     "message": "Try again"
@@ -81,7 +81,7 @@
     "message": "Saving…"
   },
   "panel_saved": {
-    "message": "Hiding settings updated."
+    "message": "Changes saved."
   },
   "panel_reset_done": {
     "message": "All hidden items on this site are shown again."
@@ -150,7 +150,7 @@
     "message": "Preview item $1: $2"
   },
   "panel_dialog": {
-    "message": "Less — current site"
+    "message": "Hidden item management"
   },
   "panel_reset_group": {
     "message": "Reset hiding settings?"
@@ -168,16 +168,16 @@
     "message": "Latest"
   },
   "panel_version_updates": {
-    "message": "v$1 · Update history"
+    "message": "Update history $1"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · Unread update history"
+    "message": "Update history $1 · Unread"
   },
   "panel_selection_prompt": {
-    "message": "Click to hide · Hold Shift to select the parent"
+    "message": "Selecting · Shift: wider"
   },
   "panel_selection_keys": {
-    "message": "Hold Shift: select parent · ↑/↓: parent/child · Enter: hide"
+    "message": "Shift: wider · ↑: widen selection · ↓: previous selection · Enter: hide"
   },
   "panel_selection_count_one": {
     "message": "$1 hidden"
@@ -210,13 +210,13 @@
     "message": "Unhide items one at a time or all at once."
   },
   "panel_failure_protected": {
-    "message": "Less isn’t available on this page."
+    "message": "Unavailable on this page."
   },
   "panel_failure_reload": {
     "message": "Reload the page and try again."
   },
   "panel_failure_generic": {
-    "message": "Less could not open. Try again."
+    "message": "Couldn’t open the panel. Try again."
   },
   "panel_settings": {
     "message": "Settings"
@@ -252,7 +252,7 @@
     "message": "Dark"
   },
   "panel_theme_help": {
-    "message": "Choose how Less looks on all sites. When the page theme is unavailable, Less follows your system setting."
+    "message": "Applies on all sites. With the web page setting, your system setting is used when the page theme is unavailable."
   },
   "panel_theme_error": {
     "message": "Couldn’t save the theme. Try again."
@@ -294,7 +294,7 @@
     "message": "In selection mode"
   },
   "panel_shortcuts_help": {
-    "message": "Available when the Less panel is closed."
+    "message": "Available when the panel is closed."
   },
   "panel_shortcut_selection": {
     "message": "Toggle selection mode"

@@ -31,7 +31,7 @@ export function RecordRow({
 }) {
   const message = usePanelMessage();
   const { category, text } = getRecordLabel(record, message);
-  const label = text ? `${category} · ${text}` : category;
+  const label = text ? `${category} ${text}` : category;
   const locateButton = usePreviewFocus(selected);
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const tooltipId = useId();
@@ -61,7 +61,7 @@ export function RecordRow({
         >
           <Badge className="record-kind" variant="outline" aria-hidden="true">
             {category}
-          </Badge>
+          </Badge>{" "}
           {text ? (
             <span
               className={["record-label", stylex.props(styles.recordLabel).className].join(" ")}

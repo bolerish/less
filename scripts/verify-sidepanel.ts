@@ -66,6 +66,7 @@ const { values } = parseArgs({
     "firefox-build": { type: "string" },
     "released-update-fixture": { type: "boolean", default: false },
     screenshot: { type: "string", default: "/tmp/veil-in-page-panel.png" },
+    axe: { type: "string" },
   },
 });
 assert(values.chromium, "Pass --chromium (Chrome with Extensions.triggerAction)");
@@ -392,6 +393,120 @@ try {
         () => panel((d, t) => !d.innerText.includes(t), messages.panel_find),
         "preview layout settled",
       );
+  }
+  async function auditPanel(label: string) {
+    if (!values.axe) return;
+    // axe cannot traverse a closed shadow; audit an exact open-shadow DOM/CSS snapshot.
+    const rendered = await panel((d) => ({
+      html: d.outerHTML,
+      css: Array.from(
+        (d.getRootNode() as ShadowRoot).querySelectorAll("style"),
+        (e) => e.textContent,
+      ).join("\n"),
+    }));
+    const auditPage = await activeContext.newPage();
+    try {
+      await auditPage.setContent(
+        '<!doctype html><html lang="en"><head><title>Panel audit</title></head><body></body></html>',
+      );
+      await auditPage.evaluate(({ html, css }) => {
+        const host = document.createElement("div");
+        document.body.append(host);
+        const shadow = host.attachShadow({ mode: "open" });
+        const style = document.createElement("style");
+        style.textContent = css;
+        shadow.append(style);
+        const template = document.createElement("template");
+        template.innerHTML = html;
+        const dialog = template.content.firstElementChild as HTMLDialogElement;
+        dialog.removeAttribute("open");
+        shadow.append(dialog);
+        dialog.showModal();
+      }, rendered);
+      await auditPage.addScriptTag({ path: resolve(values.axe) });
+      const result = await auditPage.evaluate(async () => {
+        const dialog = document.querySelector("body > div")!.shadowRoot!.querySelector("dialog")!;
+        const axe = (
+          window as unknown as {
+            axe: {
+              run: (
+                node: Element,
+                options: unknown,
+              ) => Promise<{
+                passes: unknown[];
+                violations: { id: string; nodes: { html: string }[] }[];
+                incomplete: {
+                  id: string;
+                  nodes: { html: string; any: { data?: { messageKey?: string } }[] }[];
+                }[];
+              }>;
+            };
+          }
+        ).axe;
+        const audit = await axe.run(dialog, {
+          runOnly: {
+            type: "tag",
+            values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+          },
+        });
+        const context = document.createElement("canvas").getContext("2d")!;
+        const luma = (rgb: number[]) =>
+          rgb.slice(0, 3).reduce((total, value, index) => {
+            const c = value / 255;
+            return (
+              total +
+              (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4) *
+                [0.2126, 0.7152, 0.0722][index]
+            );
+          }, 0);
+        const keyContrast = Array.from(dialog.querySelectorAll("kbd"), (key) => {
+          context.clearRect(0, 0, 1, 1);
+          context.fillStyle = getComputedStyle(dialog).backgroundColor;
+          context.fillRect(0, 0, 1, 1);
+          context.fillStyle = getComputedStyle(key).backgroundColor;
+          context.fillRect(0, 0, 1, 1);
+          const bg = luma(Array.from(context.getImageData(0, 0, 1, 1).data));
+          context.fillStyle = getComputedStyle(key).color;
+          context.fillRect(0, 0, 1, 1);
+          const fg = luma(Array.from(context.getImageData(0, 0, 1, 1).data));
+          return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+        });
+        return { ...audit, keyContrast };
+      });
+      await writeFile(`/tmp/less-accessibility-${label}.json`, JSON.stringify(result, null, 2));
+      assert(result.passes.length > 10, "axe actually audited the rendered controls");
+      assert.deepEqual(result.violations, [], `${label}: axe WCAG A/AA violations`);
+      assert(
+        result.keyContrast.every((ratio) => ratio >= 4.5),
+        `${label}: Kbd contrast including arrow glyphs`,
+      );
+      assert(
+        result.incomplete.every(
+          (rule) =>
+            rule.id === "color-contrast" &&
+            rule.nodes.every((node) =>
+              node.any.some((check) => check.data?.messageKey === "nonBmp"),
+            ),
+        ),
+        `${label}: no unreviewed automated findings`,
+      );
+      console.log(
+        `PASS axe snapshot ${label}: ${result.passes.length} rules; arrow glyph contrast checked separately`,
+      );
+    } finally {
+      await auditPage.close();
+      await site.bringToFront();
+    }
+    const tree = await session.send("Accessibility.getFullAXTree");
+    assert(
+      tree.nodes.some(
+        (node) =>
+          !node.ignored &&
+          node.role?.value === "dialog" &&
+          node.name?.value === messages.panel_dialog,
+      ),
+      "real closed-shadow modal remains named in the accessibility tree",
+    );
   }
   async function selectionSurface<T>(
     attribute: string,
@@ -748,6 +863,18 @@ try {
   await action();
   await waitFor(() => panel((d) => d.querySelectorAll(".record").length === 3), "three saved rows");
   console.log("PASS reload hidden rules, three records");
+  await auditPanel("home");
+  if (values.axe) {
+    await click(".settings-button");
+    await auditPanel("settings");
+    for (const page of ["language", "theme", "motion", "shortcuts"]) {
+      await click(`[data-settings-page="${page}"]`);
+      await auditPanel(page);
+      await click('header a[data-panel-destination="settings"]');
+    }
+    await click('header a[data-panel-destination="hidden"]');
+  }
+
   const cssBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
   const visibleScroll = await site.evaluate(() => scrollY);
   await click(".record:nth-child(3) .locate-button");
@@ -782,6 +909,19 @@ try {
     "solid",
   );
   await waitFor(() => panel((d) => d.dataset.preview === "true"), "preview status committed");
+  await site.emulateMedia({ forcedColors: "active" });
+  assert.equal(
+    await panel((d) => {
+      const context = document.createElement("canvas").getContext("2d")!;
+      context.fillStyle = getComputedStyle(d, "::backdrop").backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      return context.getImageData(0, 0, 1, 1).data[3];
+    }),
+    0,
+    "forced colors still leave the preview visible",
+  );
+  await site.emulateMedia({ forcedColors: "none" });
+  await auditPanel("preview");
   assert.equal(
     await panel((d) => {
       const status = d.querySelector<HTMLElement>(".preview-status")!;
@@ -817,6 +957,31 @@ try {
   );
   await hidden("#one", false);
   await hidden("#two", false);
+  const visiblePreviewStyle = await site.locator("#two").getAttribute("style");
+  await click(".record:nth-child(2) .locate-button");
+  await waitFor(() => panel((d) => d.dataset.preview === "true"), "OFF items can be located");
+  assert.equal(
+    await panel((d) => d.dataset.previewEdge),
+    "top",
+    "preview can move above a middle-of-page target",
+  );
+  assert.equal(
+    await panel((d) => d.getBoundingClientRect().top),
+    8,
+    "top placement wins over compact bottom placement",
+  );
+  assert.equal(
+    await panel((d) => getComputedStyle(d, "::backdrop").backdropFilter),
+    "none",
+    "preview is not blurred",
+  );
+  await site.keyboard.press("Escape");
+  await hidden("#two", false);
+  assert.equal(
+    await site.locator("#two").getAttribute("style"),
+    visiblePreviewStyle,
+    "OFF preview restores the visible element exactly",
+  );
   await waitFor(
     () => panel((d) => d.dataset.preview === "false"),
     "pause clears temporary preview",
@@ -2695,7 +2860,7 @@ try {
     "es",
   );
   await welcomePage.getByRole("combobox", { name: "Idioma" }).waitFor();
-  await welcomePage.getByRole("heading", { name: "Oculta lo innecesario con Less." }).waitFor();
+  await welcomePage.getByRole("heading", { name: "Oculta lo innecesario." }).waitFor();
   await welcomePage.reload();
   await welcomePage.getByRole("combobox", { name: "Idioma" }).waitFor();
   await welcomePage.getByRole("combobox", { name: "Idioma" }).click();
@@ -3556,6 +3721,7 @@ try {
   assert.equal(iframeAuthority.ok, false, "iframe management rejected despite matching origin");
   await site.setViewportSize({ width: 1100, height: 800 });
   await site.emulateMedia({ reducedMotion: "reduce" });
+  const beforeGutterCount = await count();
   await site.goto(`${origin}/scrollbar-tall`);
   await action();
   await waitFor(
@@ -3606,6 +3772,67 @@ try {
   await hidden("#gutter-target", false);
   console.log(
     "PASS disappearing classic scrollbar preserves content position, exact gutter cleanup and no added space on short pages",
+  );
+  await waitFor(async () => (await count()) === beforeGutterCount, "gutter undo finishes saving");
+  await site.goto(`${origin}/scrollbar-modal`);
+  await action();
+  await waitFor(
+    () => panel((d) => !!d.querySelector(".select-button:not([disabled])")),
+    "modal fixture ready",
+  );
+  await click(".panel-header button:last-child");
+  await hide("#gutter-target", { position: { x: 30, y: 30 } });
+  await site.reload();
+  await hidden("#gutter-target");
+  const modalBaseline = await site.evaluate(() => ({
+    x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+    width: document.documentElement.clientWidth,
+    style: document.documentElement.getAttribute("style"),
+  }));
+  assert.equal(modalBaseline.width, 1100, "initial cached hiding has no scrollbar gutter");
+  await action();
+  for (let cycle = 0; cycle < 3; cycle++) {
+    await click('.preference [role="switch"]');
+    await hidden("#gutter-target", false);
+    const beforeWheel = await site.evaluate(() => scrollY);
+    await site.mouse.move(100, 100);
+    await site.mouse.wheel(0, 400);
+    await site.waitForTimeout(80);
+    assert.equal(
+      await site.evaluate(() => scrollY),
+      beforeWheel,
+      "panel blocks background wheel scroll",
+    );
+    await click('.preference [role="switch"]');
+    await hidden("#gutter-target");
+    assert.deepEqual(
+      await site.evaluate(() => ({
+        x: document.querySelector("#gutter-reference")!.getBoundingClientRect().x,
+        width: document.documentElement.clientWidth,
+        overflowX: getComputedStyle(document.documentElement).overflowX,
+        overflowY: getComputedStyle(document.documentElement).overflowY,
+      })),
+      { x: modalBaseline.x, width: modalBaseline.width, overflowX: "hidden", overflowY: "hidden" },
+      "ON/OFF keeps initial width with both page scrollbars locked",
+    );
+  }
+  await click(".panel-header button:last-child");
+  assert.equal(
+    await site.evaluate(() => document.documentElement.getAttribute("style")),
+    modalBaseline.style,
+    "panel close leaves no forced scrollbar",
+  );
+  assert.equal(
+    await site.evaluate(() => document.documentElement.clientWidth),
+    modalBaseline.width,
+  );
+  await action();
+  await click('tr:has(.locate-button[aria-label*="Tall removable block"]) .restore-button');
+  await hidden("#gutter-target", false);
+  await waitFor(async () => (await count()) === beforeGutterCount, "modal fixture record restored");
+  await click(".panel-header button:last-child");
+  console.log(
+    "PASS initial no-gutter page keeps its layout through panel OFF/ON, both-axis background lock and exact close cleanup",
   );
   const unsupported = await context.newPage();
   await unsupported.goto("chrome://version");

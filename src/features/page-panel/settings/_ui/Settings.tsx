@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { spacingVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { spacingVars, sizeVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
 import { Label } from "@bolerish/ui/label";
 import { RadioGroup, RadioGroupItem } from "@bolerish/ui/radio-group";
@@ -155,15 +155,19 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     gap: spacingVars.space2,
-    color: colorVars.fgSecondary,
+    color: colorVars.fgTertiary,
     fontWeight: typo.fontWeightSemibold,
     fontSize: typo.fontSizeSm,
     margin: 0,
     marginBottom: spacingVars.space2,
   },
-  icon: { width: 20, height: 20, flexShrink: 0 },
-  navigationList: { display: "grid", paddingBlock: spacingVars.space1, marginInlineStart: 28 },
-  navigation: { marginInline: `calc(${spacingVars.space4} * -1)`, minWidth: 0 },
+  icon: { width: sizeVars.iconSm, height: sizeVars.iconSm, flexShrink: 0 },
+  navigationList: {
+    display: "grid",
+    paddingBlock: spacingVars.space1,
+    marginInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
+  },
+  navigation: { marginInlineStart: `calc(${spacingVars.space3} * -1)`, minWidth: 0 },
   field: { display: "grid", gap: spacingVars.space3 },
   fieldLabel: { fontWeight: typo.fontWeightSemibold },
   description: { margin: 0, color: colorVars.fgSecondary, overflowWrap: "anywhere" },

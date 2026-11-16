@@ -403,6 +403,69 @@ try {
       { url: site.url(), factor },
     );
   }
+  async function verifySettingsHome(locale: string, width: number, factor: number) {
+    for (const scheme of ["light", "dark"]) {
+      await store("less:theme", scheme);
+      await theme(scheme);
+      await waitFor(
+        () =>
+          panel((dialog) =>
+            Array.from(dialog.querySelectorAll("[data-settings-page]")).every(
+              (row) => row.getAnimations().length === 0,
+            ),
+          ),
+        "settings navigation theme transitions finish",
+      );
+      const layout = await panel((dialog) => {
+        const settings = dialog.querySelector<HTMLElement>("main > section")!;
+        const bounds = settings.getBoundingClientRect();
+        return {
+          width: settings.clientWidth,
+          scroll: settings.scrollWidth,
+          overflow: getComputedStyle(settings).overflowX,
+          background: getComputedStyle(dialog).backgroundColor,
+          headings: Array.from(settings.querySelectorAll("h2")).map((heading) => ({
+            color: getComputedStyle(heading).color,
+            font: parseFloat(getComputedStyle(heading).fontSize),
+            iconColor: getComputedStyle(heading.querySelector("svg")!).color,
+            iconWidth: heading.querySelector("svg")!.getBoundingClientRect().width,
+          })),
+          rows: Array.from(settings.querySelectorAll<HTMLElement>("[data-settings-page]")).map(
+            (row) => ({
+              fits:
+                row.scrollWidth <= row.clientWidth &&
+                row.getBoundingClientRect().left >= bounds.left &&
+                row.getBoundingClientRect().right <= bounds.right,
+              color: getComputedStyle(row).color,
+            }),
+          ),
+        };
+      });
+      console.log(
+        `SETTINGS HOME ${locale}/${width}/${factor}/${scheme}: ${JSON.stringify(layout)}`,
+      );
+      if (locale === "ko" || locale === "en")
+        await site.screenshot({
+          path: `/tmp/less-settings-home-${locale}-${width}-${factor}-${scheme}.png`,
+        });
+      assert(
+        layout.scroll <= layout.width && layout.rows.every((row) => row.fits),
+        `${locale}/${width}/${factor}/${scheme}: settings home fits without horizontal scrolling`,
+      );
+      assert(!["hidden", "clip"].includes(layout.overflow), "settings content remains scrollable");
+      assert(
+        layout.headings.every(
+          (heading) =>
+            heading.font >= 14 &&
+            heading.iconWidth === 14 &&
+            heading.color === heading.iconColor &&
+            heading.color !== layout.rows[0].color &&
+            contrast(heading.color, layout.background) >= 4.5,
+        ),
+        "settings headings keep readable text and smaller, muted icons",
+      );
+    }
+  }
   for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
     const catalog = JSON.parse(await readFile(`public/_locales/${locale}/messages.json`, "utf8"));
     await store("less:locale", locale);
@@ -422,6 +485,7 @@ try {
         await panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length),
         2,
       );
+      await verifySettingsHome(locale, width, 1);
       if (locale === "ko" && width === 375)
         await site.screenshot({ path: "/tmp/less-settings-ko-home.png" });
       for (const page of ["language", "theme"]) {
@@ -578,6 +642,7 @@ try {
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
       await click(".settings-button");
+      await verifySettingsHome(locale, width, 2);
       for (const page of ["language", "theme"]) {
         await click(`[data-settings-page="${page}"]`);
         await waitFor(

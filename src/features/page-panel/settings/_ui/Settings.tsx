@@ -10,8 +10,8 @@ import {
 import { Button } from "@bolerish/ui/button";
 import { Select, SelectValue, SelectTrigger, SelectList, SelectItem } from "@bolerish/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@bolerish/ui/toggle-group";
-import { Tooltip, TooltipProvider, TooltipTrigger } from "@bolerish/ui/tooltip";
-import { Select as SelectPrimitive, Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@bolerish/ui/tooltip";
+import { Select as SelectPrimitive } from "@bolerish/ui/primitives";
 import {
   BrowserIcon,
   DesktopIcon,
@@ -71,6 +71,7 @@ export function Settings({
               <div {...stylex.props(styles.navigationList)}>
                 <Button
                   variant="ghost"
+                  size="sm"
                   align="space-between"
                   xstyle={styles.navigation}
                   data-settings-page={page}
@@ -220,23 +221,22 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
                 </Button>
               }
             />
-            <TooltipPrimitive.Portal container={portalContainer}>
-              <TooltipPrimitive.Positioner side="bottom" align="start" sideOffset={6}>
-                <TooltipPrimitive.Popup
-                  ref={helpPopup}
-                  role="tooltip"
-                  id={`${id}-help`}
-                  onPointerEnter={() => setActiveTooltip("help")}
-                  onPointerLeave={() => {
-                    if (!helpTrigger.current?.matches(":focus-visible")) setActiveTooltip(null);
-                  }}
-                  {...stylex.props(styles.tooltip, styles.helpTooltip)}
-                >
-                  <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_help")}</p>
-                  <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_fallback")}</p>
-                </TooltipPrimitive.Popup>
-              </TooltipPrimitive.Positioner>
-            </TooltipPrimitive.Portal>
+            <TooltipContent
+              ref={helpPopup}
+              portalContainer={portalContainer}
+              side="bottom"
+              align="start"
+              role="tooltip"
+              id={`${id}-help`}
+              onPointerEnter={() => setActiveTooltip("help")}
+              onPointerLeave={() => {
+                if (!helpTrigger.current?.matches(":focus-visible")) setActiveTooltip(null);
+              }}
+              xstyle={styles.helpTooltip}
+            >
+              <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_help")}</p>
+              <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_fallback")}</p>
+            </TooltipContent>
           </Tooltip>
         </div>
         <ToggleGroup
@@ -289,17 +289,14 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
                 >
                   <Icon size={20} aria-hidden="true" />
                 </TooltipTrigger>
-                <TooltipPrimitive.Portal container={portalContainer}>
-                  <TooltipPrimitive.Positioner side="bottom" sideOffset={6}>
-                    <TooltipPrimitive.Popup
-                      role="tooltip"
-                      id={`${id}-${option}-tooltip`}
-                      {...stylex.props(styles.tooltip)}
-                    >
-                      {label}
-                    </TooltipPrimitive.Popup>
-                  </TooltipPrimitive.Positioner>
-                </TooltipPrimitive.Portal>
+                <TooltipContent
+                  portalContainer={portalContainer}
+                  side="bottom"
+                  role="tooltip"
+                  id={`${id}-${option}-tooltip`}
+                >
+                  {label}
+                </TooltipContent>
               </Tooltip>
             );
           })}
@@ -331,9 +328,15 @@ const styles = stylex.create({
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
-    marginInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
+    marginInlineStart: {
+      default: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
+      "@media (max-width: 240px)": 0,
+    },
   },
-  navigation: { marginInlineStart: `calc(${spacingVars.space3} * -1)`, minWidth: 0 },
+  navigation: {
+    marginInlineStart: `calc((${spacingVars.space3} + ${sizeVars.stroke}) * -1)`,
+    minWidth: 0,
+  },
   field: { display: "grid", gap: spacingVars.space3 },
   fieldLabel: { fontWeight: typo.fontWeightSemibold },
   fieldTitle: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
@@ -364,15 +367,6 @@ const styles = stylex.create({
   focus: {
     outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
     outlineOffset: { ":is(.less-control):focus-visible": 3 },
-  },
-  tooltip: {
-    backgroundColor: colorVars.bgRaised,
-    color: colorVars.fgPrimary,
-    borderRadius: radiusVars.sm,
-    paddingBlock: spacingVars.space1,
-    paddingInline: spacingVars.space2,
-    boxShadow: shadowVars.overlay,
-    fontSize: typo.fontSizeXs,
   },
   error: { color: colorVars.fgFeedbackError, margin: 0, overflowWrap: "anywhere" },
 });

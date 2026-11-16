@@ -191,8 +191,8 @@ const styles = stylex.create({
   body: {
     flex: 1,
     minHeight: 0,
-    padding: spacingVars.space4,
-    paddingBottom: `max(${spacingVars.space4}, env(safe-area-inset-bottom))`,
+    padding: spacingVars.space6,
+    paddingBottom: `max(${spacingVars.space6}, env(safe-area-inset-bottom))`,
     overflow: "auto",
   },
   hiddenBody: { display: "flex", flexDirection: "column", overflow: "hidden" },

@@ -719,6 +719,39 @@ try {
   await site.bringToFront();
   await action();
   await waitFor(() => panel((d) => d.querySelectorAll(".record").length === 3), "three saved rows");
+  const tableLayout = await panel((dialog) => {
+    const table = dialog.querySelector<HTMLTableElement>(".records table")!;
+    const footer = dialog.querySelector<HTMLElement>(".panel-footer")!;
+    const body = dialog.querySelector<HTMLElement>(".panel-body")!;
+    const header = dialog.querySelector<HTMLElement>(".panel-header")!;
+    const style = getComputedStyle(footer);
+    return {
+      heads: table.querySelectorAll('thead th[scope="col"]').length,
+      rows: table.tBodies[0].rows.length,
+      cells: Array.from(table.tBodies[0].rows).every((row) => row.cells.length === 2),
+      footer: [style.borderTopWidth, style.borderTopStyle, style.borderTopColor],
+      bodyPadding: parseFloat(getComputedStyle(body).paddingLeft),
+      headerPadding: parseFloat(getComputedStyle(header).paddingLeft),
+      footerLeft: footer.getBoundingClientRect().left,
+      tableLeft: table.getBoundingClientRect().left,
+    };
+  });
+  assert(
+    tableLayout.heads === 2 && tableLayout.rows === 3 && tableLayout.cells,
+    "official table exposes item/restore column headers and two cells per record",
+  );
+  assert(
+    tableLayout.bodyPadding >= tableLayout.headerPadding &&
+      tableLayout.bodyPadding === 24 &&
+      Math.abs(tableLayout.footerLeft - tableLayout.tableLeft) <= 1,
+    "table and footer share the body inset, wider than the header",
+  );
+  assert(
+    tableLayout.footer[0] === "1px" &&
+      tableLayout.footer[1] === "solid" &&
+      tableLayout.footer[2] !== "rgba(0, 0, 0, 0)",
+    "update history has a visible top separator",
+  );
   console.log("PASS reload hidden rules, three records");
   const cssBefore = await worker.evaluate(() => chrome.storage.local.get("veil:css:all"));
   const visibleScroll = await site.evaluate(() => scrollY);
@@ -2145,6 +2178,19 @@ try {
   await hidden("#fixed-target");
   assert.equal(await panel((d) => d.dataset.preview), "false", "Escape ends preview");
   async function assertMouseRowBackgroundOnly(state: string) {
+    await waitFor(
+      () =>
+        panel((dialog) => {
+          const row = dialog
+            .querySelector('.locate-button[aria-label*="Nested"]')!
+            .closest(".record-row")!;
+          return (
+            getComputedStyle(row).backgroundColor !== "rgba(0, 0, 0, 0)" &&
+            row.getAnimations().every((animation) => animation.playState !== "running")
+          );
+        }),
+      "official table row transition settles",
+    );
     const paint = await panel((d) => {
       const button = d.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
       const row = button.closest<HTMLElement>(".record-row")!;
@@ -2178,10 +2224,13 @@ try {
     assert.equal(paint.inner, "rgba(0, 0, 0, 0)", `${state}: no nested button background`);
     for (const layer of paint.layers) {
       assert.equal(layer.outline, "none", `${state}: no row/button/pseudo outline`);
-      for (const [width, style, color] of layer.borders)
+      for (const [index, [width, style, color]] of layer.borders.entries())
         assert(
-          width === "0px" || style === "none" || color === "rgba(0, 0, 0, 0)",
-          `${state}: no visible row/button/pseudo border`,
+          (layer === paint.layers[0] && index === 2 && width === "1px" && style === "solid") ||
+            width === "0px" ||
+            style === "none" ||
+            color === "rgba(0, 0, 0, 0)",
+          `${state}: only the permanent table row separator is visible`,
         );
       assert.equal(layer.shadow, "none", `${state}: no row/button/pseudo shadow`);
     }
@@ -2295,8 +2344,8 @@ try {
       );
       assert.equal(paint.shadow, "none", "selected row has no inset blue edge");
       assert(
-        paint.fullWidth && paint.radius !== "0px",
-        "hover and selected paint share full row bounds and radius",
+        paint.fullWidth && paint.radius === "0px",
+        "hover and selected paint fill the collapsed table row",
       );
       await site.screenshot({
         path: values.screenshot.replace(
@@ -2512,7 +2561,7 @@ try {
         footer = d.querySelector<HTMLElement>(".panel-footer")!;
       list.scrollTop = list.scrollHeight;
       const li = list.querySelector<HTMLElement>(".record")!,
-        row = li.querySelector<HTMLElement>(".record-row")!,
+        row = li,
         badge = row.querySelector<HTMLElement>(".record-kind")!,
         button = row.querySelector<HTMLElement>(".restore-button")!;
       const a = li.getBoundingClientRect(),

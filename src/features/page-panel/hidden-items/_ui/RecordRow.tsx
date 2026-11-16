@@ -1,12 +1,11 @@
 import { getRecordLabel } from "../_lib/record-label";
 import { usePreviewFocus } from "./usePreviewFocus";
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Badge } from "@bolerish/ui/badge";
 import { Button } from "@bolerish/ui/button";
-import { Item } from "@bolerish/ui/item";
-import { Tooltip, TooltipTrigger } from "@bolerish/ui/tooltip";
-import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
+import { TableRow, TableCell } from "@bolerish/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@bolerish/ui/tooltip";
 import { XIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
@@ -38,13 +37,12 @@ export function RecordRow({
   const tooltipId = useId();
 
   return (
-    <li className={["record", stylex.props(styles.record).className].join(" ")}>
-      <Item
-        className="record-row"
-        xstyle={styles.recordRow}
-        data-selected={selected ? "" : undefined}
-        size="xs"
-      >
+    <TableRow
+      className="record record-row"
+      xstyle={styles.recordRow}
+      data-selected={selected ? "" : undefined}
+    >
+      <TableCell xstyle={styles.itemCell}>
         <Button
           ref={locateButton}
           className={["locate-button", stylex.props(styles.locateButton).className].join(" ")}
@@ -70,6 +68,8 @@ export function RecordRow({
             </span>
           ) : null}
         </Button>
+      </TableCell>
+      <TableCell xstyle={styles.restoreCell}>
         <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
           <TooltipTrigger
             render={
@@ -99,40 +99,23 @@ export function RecordRow({
               </Button>
             }
           />
-          <TooltipPrimitive.Portal container={portalContainer}>
-            <TooltipPrimitive.Positioner side="left" sideOffset={6}>
-              <TooltipPrimitive.Popup
-                className={["restore-tooltip", stylex.props(styles.restoreTooltip).className].join(
-                  " ",
-                )}
-                role="tooltip"
-                id={tooltipId}
-              >
-                {message("panel_restore_tooltip")}
-              </TooltipPrimitive.Popup>
-            </TooltipPrimitive.Positioner>
-          </TooltipPrimitive.Portal>
+          <TooltipContent
+            className="restore-tooltip"
+            portalContainer={portalContainer}
+            side="left"
+            role="tooltip"
+            id={tooltipId}
+          >
+            {message("panel_restore_tooltip")}
+          </TooltipContent>
         </Tooltip>
-      </Item>
-    </li>
+      </TableCell>
+    </TableRow>
   );
 }
 
 const styles = stylex.create({
-  record: {
-    minWidth: "0",
-    borderBottom: `1px solid ${colorVars.strokeDefault}`,
-  },
   recordRow: {
-    minHeight: "0",
-    border: "0",
-    paddingInline: "0",
-    paddingBlock: spacingVars.space2,
-    display: "flex",
-    alignItems: "center",
-    gap: spacingVars.space2,
-    borderRadius: radiusVars.sm,
-    outline: "none",
     backgroundColor: {
       default: "transparent",
       ":hover": colorVars.interactionHover,
@@ -140,16 +123,18 @@ const styles = stylex.create({
       ":has(button:active)": colorVars.interactionPressed,
       ":is([data-selected])": colorVars.bgSelected,
     },
-    boxShadow: "none",
   },
+  itemCell: { minWidth: 0, whiteSpace: "normal" },
+  restoreCell: { textAlign: "end" },
   locateButton: {
     ":is(.locate-button)": {
-      flex: "1",
+      display: "flex",
+      width: "100%",
       minWidth: "0",
       justifyContent: "flex-start",
       height: "auto",
       minHeight: "40px",
-      paddingInline: spacingVars.space2,
+      padding: 0,
       textAlign: "start",
       whiteSpace: "normal",
       overflowWrap: "anywhere",
@@ -188,14 +173,5 @@ const styles = stylex.create({
     outline: { ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
     outlineOffset: { ":focus-visible": 3 },
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
-  },
-  restoreTooltip: {
-    pointerEvents: "none",
-    border: `1px solid ${colorVars.strokeDefault}`,
-    background: colorVars.bgRaised,
-    color: colorVars.fgPrimary,
-    padding: spacingVars.space2,
-    borderRadius: radiusVars.sm,
-    fontSize: typo.fontSizeXs,
   },
 });

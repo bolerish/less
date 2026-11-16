@@ -268,5 +268,11 @@
   },
   "panel_theme_info": {
     "message": "테마 안내"
+  },
+  "panel_item": {
+    "message": "항목"
+  },
+  "panel_restore": {
+    "message": "복원"
   }
 }

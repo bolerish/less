@@ -268,5 +268,11 @@
   },
   "panel_theme_info": {
     "message": "主题说明"
+  },
+  "panel_item": {
+    "message": "项目"
+  },
+  "panel_restore": {
+    "message": "恢复"
   }
 }

@@ -268,5 +268,11 @@
   },
   "panel_theme_info": {
     "message": "テーマについて"
+  },
+  "panel_item": {
+    "message": "項目"
+  },
+  "panel_restore": {
+    "message": "復元"
   }
 }

@@ -268,5 +268,11 @@
   },
   "panel_theme_info": {
     "message": "About themes"
+  },
+  "panel_item": {
+    "message": "Item"
+  },
+  "panel_restore": {
+    "message": "Restore"
   }
 }

@@ -171,14 +171,18 @@ try {
       ["16px", "16px", "16px", "16px"],
       "common header owns 16px padding",
     );
-    assert.deepEqual(layout.body, layout.header, "common body owns the same padding");
+    assert.deepEqual(
+      layout.body,
+      ["24px", "24px", "24px", "24px"],
+      "common body has more inset than the header",
+    );
     assert(
       Math.abs(layout.back - layout.start) <= 1,
-      `brand/back icon aligns with body start: ${JSON.stringify(layout)}`,
+      `brand/back icon keeps the header inset: ${JSON.stringify(layout)}`,
     );
     assert(
       Math.abs(layout.close - layout.end) <= 1,
-      `close icon aligns with body end: ${JSON.stringify(layout)}`,
+      `close icon keeps the header inset: ${JSON.stringify(layout)}`,
     );
   }
   async function themeHelp(catalog: Record<string, { message: string }>) {
@@ -202,6 +206,32 @@ try {
       );
     await site.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
     await waitFor(visibleHelp, "theme help opens on hover");
+    const tooltipStyle = await panel((dialog, text) => {
+      const tooltip = Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]')).find(
+        (element) => element.textContent?.includes(text),
+      )!;
+      const style = getComputedStyle(tooltip);
+      return {
+        border: style.borderTopWidth,
+        borderStyle: style.borderTopStyle,
+        arrow: !!tooltip.querySelector(':scope > [aria-hidden="true"][data-side]'),
+        shadow: style.boxShadow,
+        font: parseFloat(style.fontSize),
+      };
+    }, catalog.panel_theme_help.message);
+    assert(
+      tooltipStyle.border === "1px" &&
+        tooltipStyle.borderStyle === "solid" &&
+        tooltipStyle.arrow &&
+        tooltipStyle.shadow !== "none" &&
+        tooltipStyle.font >= 12,
+      "official TooltipContent border, arrow, elevation and type render inside the modal",
+    );
+    assert.equal(
+      await site.locator("[data-base-ui-portal]").count(),
+      0,
+      "Tooltip stays in the closed shadow modal",
+    );
     const popup = await panel(
       (dialog, text) =>
         Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]'))
@@ -625,11 +655,20 @@ try {
   await click('[role="combobox"]');
   await waitFor(
     () =>
-      panel(
-        (dialog) =>
-          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true",
-      ),
-    "language Select opens without reentering panel",
+      panel((dialog) => {
+        const option = dialog.querySelector<HTMLElement>(
+          '[role="option"][data-preference-value="ja"]',
+        );
+        const rect = option?.getBoundingClientRect();
+        return (
+          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
+          !!rect &&
+          rect.width > 0 &&
+          rect.left >= 0 &&
+          rect.right <= innerWidth
+        );
+      }),
+    "language Select is positioned before the next click",
   );
   assert.deepEqual(
     await site.evaluate(() => ({

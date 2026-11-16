@@ -92,7 +92,8 @@ pnpm verify:settings --chromium "/path/to/Google Chrome" --firefox-build dist/fi
 
 This check covers saved choices, page changes, isolated toolbar/feedback surfaces,
 five languages, keyboard focus, contrast, 320/375px and 200% browser zoom.
-It also checks equal header/body padding, theme-help hover/focus/click/touch and
+It also checks body padding at least as large as the header, theme-help hover/focus/click/touch and
 Escape, and stable header coordinates while repeatedly changing languages and
-reopening Select with normal motion enabled.
+reopening Select with normal motion enabled. Panel checks cover the hidden-item
+table column headers, preview/restore actions, and the update-history separator.
 Firefox coverage is an API fixture; it does not establish Firefox runtime behavior.

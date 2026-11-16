@@ -256,5 +256,26 @@
   },
   "panel_theme_error": {
     "message": "テーマを保存できませんでした。もう一度お試しください。"
+  },
+  "panel_location": {
+    "message": "現在の位置"
+  },
+  "panel_motion": {
+    "message": "モーション"
+  },
+  "panel_motion_system": {
+    "message": "システム設定"
+  },
+  "panel_motion_full": {
+    "message": "オン"
+  },
+  "panel_motion_reduced": {
+    "message": "減らす"
+  },
+  "panel_motion_help": {
+    "message": "パネルの切り替え、非表示、プレビューの効果に適用します。"
+  },
+  "panel_motion_error": {
+    "message": "モーション設定を保存できませんでした。もう一度お試しください。"
   }
 }

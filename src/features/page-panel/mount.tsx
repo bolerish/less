@@ -9,6 +9,7 @@ import { appendContentStyles } from "~shared/styles/content-styles";
 import { setContentHostStyles } from "~shared/lib/content-host";
 import type { HiddenItemPreview } from "~features/element-hiding/preview";
 import { isThemeDark, subscribeTheme } from "~shared/theme/_model/theme";
+import { isMotionReduced, subscribeMotionPreference } from "~shared/motion/preference";
 
 export const PANEL_HOST_ATTRIBUTE = "data-less-panel";
 
@@ -23,6 +24,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let unsubscribePreview: (() => void) | undefined;
   let unsubscribeTheme: (() => void) | undefined;
+  let unsubscribeMotion: (() => void) | undefined;
   const syncTheme = (): void => {
     if (!dialog) return;
     const dark = isThemeDark();
@@ -41,6 +43,9 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     observer.disconnect();
     unsubscribeTheme?.();
     unsubscribeTheme = undefined;
+    unsubscribeMotion?.();
+    unsubscribeMotion = undefined;
+    reducedMotion.removeEventListener("change", syncMotion);
     dialog?.close();
     root?.unmount();
     root = null;
@@ -59,7 +64,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     const duration = parseFloat(time) * (time.endsWith("ms") ? 1 : 1000);
     transition?.cancel();
     transition = null;
-    if (reducedMotion.matches) {
+    if (isMotionReduced()) {
       if (!opening) unmount(true);
       return;
     }
@@ -70,7 +75,9 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
       ],
       {
         duration,
-        easing: style.getPropertyValue("--less-motion-easing").trim(),
+        easing: style
+          .getPropertyValue(opening ? "--less-motion-enter" : "--less-motion-exit")
+          .trim(),
         fill: "both",
       },
     );
@@ -83,6 +90,10 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
         else unmount(true);
       })
       .catch(() => {});
+  }
+
+  function syncMotion(): void {
+    if (isMotionReduced()) transition?.finish();
   }
 
   function close(restoreFocus = true): void {
@@ -124,6 +135,25 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     dialog = document.createElement("dialog");
     dialog.lang = getLanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));
+    let backdropPressed = false;
+    const outside = (event: MouseEvent): boolean => {
+      const rect = dialog!.getBoundingClientRect();
+      return (
+        event.target === dialog &&
+        (event.clientX < rect.left ||
+          event.clientX >= rect.right ||
+          event.clientY < rect.top ||
+          event.clientY >= rect.bottom)
+      );
+    };
+    dialog.addEventListener("pointerdown", (event) => {
+      backdropPressed = outside(event);
+    });
+    dialog.addEventListener("click", (event) => {
+      if (backdropPressed && outside(event) && !dialog?.querySelector('[role="alertdialog"]'))
+        close();
+      backdropPressed = false;
+    });
     dialog.addEventListener("keydown", (event) => {
       if (event.key !== "Tab" || !dialog) return;
       const scope = dialog.querySelector<HTMLElement>('[role="alertdialog"]') ?? dialog;
@@ -162,6 +192,8 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     document.documentElement.append(host);
     syncTheme();
     unsubscribeTheme = subscribeTheme(syncTheme);
+    unsubscribeMotion = subscribeMotionPreference(syncMotion);
+    reducedMotion.addEventListener("change", syncMotion);
     root = createRoot(container);
     root.render(
       <PanelView
@@ -209,8 +241,9 @@ const styles = stylex.create({
   dialog: {
     padding: 0,
     "--less-panel-focus": colorVars.fgFeedbackInfo,
-    "--less-motion-duration": motionVars.durationFast,
-    "--less-motion-easing": motionVars.easingStandard,
+    "--less-motion-duration": motionVars.durationSlow,
+    "--less-motion-enter": motionVars.easingEnter,
+    "--less-motion-exit": motionVars.easingExit,
     boxSizing: "border-box",
     display: { default: "block", ":not([open])": "none" },
     position: "fixed",
@@ -231,7 +264,20 @@ const styles = stylex.create({
     borderInlineEndWidth: { default: 0, ":is([data-preview-layout='compact'] )": 1 },
     borderInlineStartWidth: 1,
     boxShadow: shadowVars.overlay,
-    "::backdrop": { backgroundColor: "rgb(0 0 0 / .12)" },
+    "::backdrop": {
+      backgroundColor: colorVars.bgOverlay,
+      backdropFilter: "blur(4px)",
+      WebkitBackdropFilter: "blur(4px)",
+      "@media (prefers-reduced-transparency: reduce)": {
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
+      },
+      "@media (forced-colors: active)": {
+        backgroundColor: "Canvas",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
+      },
+    },
     borderStyle: "solid",
     borderColor: colorVars.strokeDefault,
     borderRadius: { default: 0, ":is([data-preview-layout='compact'] )": radiusVars.md },

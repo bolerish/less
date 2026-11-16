@@ -1,5 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
+import {
+  colorVars,
+  spacingVars,
+  radiusVars,
+  sizeVars,
+  typo,
+} from "@bolerish/tokens/semantic.stylex";
 import { Table, TableBody, TableContainer } from "@bolerish/ui/table";
 import { Button } from "@bolerish/ui/button";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@bolerish/ui/empty";
@@ -166,7 +172,9 @@ export function HiddenItems({
                 >
                   <colgroup>
                     <col />
-                    <col style={{ width: 64 }} />
+                    <col
+                      style={{ width: `calc(${sizeVars.controlMd} + ${spacingVars.space3} * 2)` }}
+                    />
                   </colgroup>
                   <TableBody>
                     {records.map((record, index) => (

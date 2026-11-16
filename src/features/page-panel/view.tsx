@@ -29,7 +29,7 @@ export default function PanelView({
   const hasUnreadUpdates = useUpdateNotice(view === "updates");
   const updatesButton = useRef<HTMLButtonElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
-  const viewHeading = useRef<HTMLHeadingElement>(null);
+  const viewHeading = useRef<HTMLSpanElement>(null);
   const previousView = useRef(view);
   const closeButton = useRef<HTMLButtonElement>(null);
 
@@ -48,7 +48,9 @@ export default function PanelView({
   useEffect(() => {
     if (
       view === "settings" &&
-      (previousView.current === "language" || previousView.current === "theme")
+      (previousView.current === "language" ||
+        previousView.current === "theme" ||
+        previousView.current === "motion")
     )
       closeButton.current
         ?.closest("dialog")
@@ -57,24 +59,43 @@ export default function PanelView({
     else if (view !== "hidden") viewHeading.current?.focus();
     else if (previousView.current === "updates")
       updatesButton.current?.focus({ preventScroll: true });
-    else if (previousView.current === "settings")
+    else if (previousView.current !== "hidden")
       settingsButton.current?.focus({ preventScroll: true });
     previousView.current = view;
     closeButton.current?.closest("dialog")?.querySelector(".panel-body")?.scrollTo(0, 0);
   }, [view]);
 
   function back() {
-    setView(view === "language" || view === "theme" ? "settings" : "hidden");
+    setView(view === "language" || view === "theme" || view === "motion" ? "settings" : "hidden");
   }
 
   return (
     <PanelLayout
       language={language}
-      title={
-        view === "hidden"
-          ? undefined
-          : message(view === "updates" ? "panel_update_history" : `panel_${view}`)
-      }
+      breadcrumbs={[
+        {
+          id: "hidden",
+          label: "Less",
+          onNavigate: view === "hidden" ? undefined : () => setView("hidden"),
+        },
+        ...(view === "language" || view === "theme" || view === "motion"
+          ? [
+              {
+                id: "settings",
+                label: message("panel_settings"),
+                onNavigate: () => setView("settings"),
+              },
+            ]
+          : []),
+        ...(view === "hidden"
+          ? []
+          : [
+              {
+                id: view,
+                label: message(view === "updates" ? "panel_update_history" : `panel_${view}`),
+              },
+            ]),
+      ]}
       onBack={view === "hidden" ? undefined : back}
       onClose={onClose}
       closeButton={closeButton}
@@ -105,7 +126,7 @@ export default function PanelView({
         ) : null}
       </div>
       {view === "updates" ? <Updates /> : null}
-      {view === "settings" || view === "language" || view === "theme" ? (
+      {view === "settings" || view === "language" || view === "theme" || view === "motion" ? (
         <Settings key={view} page={view} onNavigate={setView} portalContainer={portalContainer} />
       ) : null}
     </PanelLayout>

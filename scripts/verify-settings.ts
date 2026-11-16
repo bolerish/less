@@ -169,18 +169,19 @@ try {
       return element.getBoundingClientRect().toJSON();
     }, selector);
     await site.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
-    if (selector === ".language-select")
+    if (selector === ".language-select" || selector === ".motion-select")
       await waitFor(
         () =>
           panel(
-            (d) => d.querySelector(".language-select")?.getAttribute("aria-expanded") === "true",
+            (d, selector) => d.querySelector(selector)?.getAttribute("aria-expanded") === "true",
+            selector,
           ),
         "language popup opened",
       );
   }
   async function back() {
     await site.mouse.move(0, 0);
-    await panel((d) => d.querySelector<HTMLElement>("h1")!.focus());
+    await panel((d) => d.querySelector<HTMLElement>(".panel-current")!.focus());
     await waitFor(
       () =>
         panel((d) =>
@@ -255,7 +256,7 @@ try {
       expected === "dark" ? "rgb(17, 17, 17)" : "rgb(255, 255, 255)",
     );
   }
-  async function store(key: "less:theme" | "less:locale", value: string) {
+  async function store(key: "less:theme" | "less:locale" | "less:motion", value: string) {
     await worker.evaluate(({ key, value }) => chrome.storage.local.set({ [key]: value }), {
       key,
       value,
@@ -292,8 +293,8 @@ try {
   }));
   await click(".settings-button");
   await waitFor(
-    () => panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length === 2),
-    "two settings rows",
+    () => panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length === 3),
+    "three settings rows",
   );
   await click('[data-settings-page="language"]');
   await site.emulateMedia({ reducedMotion: "no-preference" });
@@ -338,7 +339,7 @@ try {
     "official theme Tooltip opens in the styled modal",
   );
   await site.mouse.move(0, 0);
-  await panel((d) => d.querySelector<HTMLElement>("h1")!.focus());
+  await panel((d) => d.querySelector<HTMLElement>(".panel-current")!.focus());
   await site.evaluate(() => {
     document.body.dataset.theme = "dark";
   });
@@ -559,8 +560,13 @@ try {
           headings: Array.from(settings.querySelectorAll("h2")).map((heading) => ({
             color: getComputedStyle(heading).color,
             font: parseFloat(getComputedStyle(heading).fontSize),
-            iconColor: getComputedStyle(heading.querySelector("svg")!).color,
-            iconWidth: heading.querySelector("svg")!.getBoundingClientRect().width,
+            textOffset: (() => {
+              const label = document.createRange();
+              label.selectNodeContents(heading);
+              const link = document.createRange();
+              link.selectNodeContents(heading.closest("section")!.querySelector("button")!);
+              return label.getBoundingClientRect().left - link.getBoundingClientRect().left;
+            })(),
           })),
           rows: Array.from(settings.querySelectorAll<HTMLElement>("[data-settings-page]")).map(
             (row) => ({
@@ -591,14 +597,13 @@ try {
             layout.headings.map(
               async (heading) =>
                 heading.font >= 14 &&
-                heading.iconWidth === 14 &&
-                heading.color === heading.iconColor &&
+                Math.abs(heading.textOffset) < 0.5 &&
                 heading.color !== layout.rows[0].color &&
                 (await contrast(heading.color, layout.background)) >= 4.5,
             ),
           )
         ).every(Boolean),
-        "settings headings keep readable text and smaller, muted icons",
+        "section labels and links share a text edge with readable muted headings",
       );
     }
   }
@@ -619,23 +624,23 @@ try {
       await click(".settings-button");
       assert.equal(
         await panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length),
-        2,
+        3,
       );
       await verifySettingsHome(locale, width, 1);
       if (locale === "ko" && width === 375)
         await site.screenshot({ path: "/tmp/less-settings-ko-home.png" });
-      for (const page of ["language", "theme"]) {
+      for (const page of ["language", "theme", "motion"]) {
         await store("less:locale", locale);
         await click(`[data-settings-page="${page}"]`);
         await waitFor(
           () =>
             panel(
-              (dialog, title) => dialog.querySelector("h1")?.textContent === title,
+              (dialog, title) => dialog.querySelector(".panel-current")?.textContent === title,
               catalog[`panel_${page}`].message,
             ),
           "localized preference title",
         );
-        const selector = page === "language" ? ".language-select" : "[data-preference-value]";
+        const selector = page === "theme" ? "[data-preference-value]" : `.${page}-select`;
         await waitFor(
           () => panel((dialog, selector) => !!dialog.querySelector(selector), selector),
           "preference controls",
@@ -643,7 +648,8 @@ try {
         assert.equal(
           await panel(
             (dialog) =>
-              (dialog.getRootNode() as ShadowRoot).activeElement === dialog.querySelector("h1"),
+              (dialog.getRootNode() as ShadowRoot).activeElement ===
+              dialog.querySelector(".panel-current"),
           ),
           true,
         );
@@ -674,6 +680,18 @@ try {
               background: getComputedStyle(dialog).backgroundColor,
               headerPadding: getComputedStyle(dialog.querySelector("header")!).paddingInline,
               bodyPadding: getComputedStyle(body).paddingInline,
+              themeLayout: (() => {
+                const group = dialog.querySelector<HTMLElement>(".theme-options");
+                if (!group) return null;
+                return {
+                  width: group.getBoundingClientRect().width,
+                  parent: group.parentElement!.getBoundingClientRect().width,
+                  choices: Array.from(
+                    group.querySelectorAll<HTMLElement>("[data-preference-value]"),
+                    (e) => e.getBoundingClientRect().width,
+                  ),
+                };
+              })(),
               iconOnly: Array.from(dialog.querySelectorAll("[data-preference-value]")).every(
                 (e) => !!e.querySelector("svg") && !e.textContent?.trim(),
               ),
@@ -689,12 +707,41 @@ try {
             "all screens share the header/body gutter",
           );
           assert((await contrast(layout.color, layout.background)) >= 4.5, "readable controls");
-          if (page === "theme")
+          if (page === "theme") {
             assert(layout.iconOnly, "theme choices contain only icons with accessible labels");
+            assert(
+              layout.themeLayout &&
+                Math.abs(layout.themeLayout.width - layout.themeLayout.parent) < 1,
+              "theme group fills its Field",
+            );
+            assert(
+              Math.max(...layout.themeLayout.choices) - Math.min(...layout.themeLayout.choices) < 1,
+              "theme choices share the available width equally",
+            );
+          }
         }
         if (locale === "ko" && width === 375)
           await site.screenshot({ path: `/tmp/less-settings-ko-${page}.png` });
-        if (page === "language") {
+        if (page === "motion") {
+          assert(
+            await panel((d) => {
+              const trigger = d.querySelector(".motion-select")!;
+              return trigger
+                .getAttribute("aria-describedby")
+                ?.split(/\s+/)
+                .some((id) =>
+                  (d.getRootNode() as ShadowRoot).getElementById(id)?.id.endsWith("-help"),
+                );
+            }),
+            "official Field description is associated with motion selection",
+          );
+          await click(".motion-select");
+          await waitFor(
+            () => panel((d) => d.querySelectorAll('[role="option"]').length === 3),
+            "three motion choices",
+          );
+          await site.keyboard.press("Escape");
+        } else if (page === "language") {
           await click(".language-select");
           await waitFor(
             () => panel((d) => d.querySelectorAll('[role="option"]').length === 6),
@@ -744,9 +791,18 @@ try {
         } else {
           await click('[data-preference-value="dark"]');
           await site.mouse.move(0, 0);
-          await panel((d) => d.querySelector<HTMLElement>("h1")!.focus());
+          await panel((d) => d.querySelector<HTMLElement>(".panel-current")!.focus());
         }
-        await panel((d) => d.querySelector<HTMLElement>("h1")!.focus());
+        if (page !== "theme")
+          await waitFor(
+            () =>
+              panel((d) => {
+                const popup = d.querySelector<HTMLElement>('[role="listbox"]');
+                return !popup || popup.getClientRects().length === 0;
+              }),
+            `${locale}/${width}/${page}: preference popup finishes closing before keyboard traversal`,
+          );
+        await panel((d) => d.querySelector<HTMLElement>(".panel-current")!.focus());
         for (let step = 0; step < 6; step++) {
           await site.keyboard.press("Tab");
           if (
@@ -763,7 +819,7 @@ try {
             selector,
           ),
           true,
-          "keyboard reaches preference control",
+          `${locale}/${width}/${page}: keyboard reaches preference control ${await panel((d) => (d.getRootNode() as ShadowRoot).activeElement?.outerHTML)}`,
         );
         const focus = await panel((d) => {
           const style = getComputedStyle((d.getRootNode() as ShadowRoot).activeElement!);
@@ -780,28 +836,33 @@ try {
             (await contrast(focus.outline, focus.background)) >= 3,
           "official keyboard focus remains visible",
         );
-        if (page === "language") {
+        if (page !== "theme") {
           await site.keyboard.press("Enter");
           await waitFor(
-            () => panel((d) => d.querySelectorAll('[role="option"]').length === 6),
-            "keyboard opens language popup",
+            () =>
+              panel(
+                (d, count) => d.querySelectorAll('[role="option"]').length === count,
+                page === "language" ? 6 : 3,
+              ),
+            "keyboard opens preference popup",
           );
           await site.keyboard.press("ArrowDown");
           await site.keyboard.press("Enter");
           await waitFor(
             () =>
               panel(
-                (d) =>
-                  d.querySelector(".language-select")?.getAttribute("aria-expanded") === "false",
+                (d, selector) =>
+                  d.querySelector(selector)?.getAttribute("aria-expanded") === "false",
+                selector,
               ),
             "keyboard selection closes popup",
           );
           await waitFor(
             () =>
               panel(
-                (d) =>
-                  (d.getRootNode() as ShadowRoot).activeElement ===
-                  d.querySelector(".language-select"),
+                (d, selector) =>
+                  (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(selector),
+                selector,
               ),
             "language selection returns focus to its trigger",
           );
@@ -828,6 +889,7 @@ try {
             "Space selects theme",
           );
         }
+        if (page === "motion") await store("less:motion", "system");
         await back();
         await waitFor(
           () =>
@@ -858,12 +920,12 @@ try {
       await site.setViewportSize({ width, height: 720 });
       await click(".settings-button");
       await verifySettingsHome(locale, width, 2);
-      for (const page of ["language", "theme"]) {
+      for (const page of ["language", "theme", "motion"]) {
         await click(`[data-settings-page="${page}"]`);
         await waitFor(
           () =>
             panel(
-              (dialog, title) => dialog.querySelector("h1")?.textContent === title,
+              (dialog, title) => dialog.querySelector(".panel-current")?.textContent === title,
               catalog[`panel_${page}`].message,
             ),
           "zoom locale title",
@@ -968,6 +1030,128 @@ try {
   );
   console.log(
     "PASS failed theme/language writes preserve selection, show an error and support retry",
+  );
+  await back();
+  await back();
+  await site.setViewportSize({ width: 1100, height: 800 });
+  await store("less:locale", "en");
+  for (const [preference, media, animated] of [
+    ["system", "reduce", false],
+    ["system", "no-preference", true],
+    ["full", "reduce", true],
+    ["reduced", "no-preference", false],
+  ] as const) {
+    await click(".settings-button");
+    await click('[data-settings-page="motion"]');
+    await store("less:motion", preference);
+    await waitFor(
+      () =>
+        panel(
+          (d, value) =>
+            d.querySelector(".motion-select")?.getAttribute("data-preference-value") === value,
+          preference,
+        ),
+      "motion preference synchronized",
+    );
+    const path = await panel((d) =>
+      Array.from(d.querySelectorAll("header nav li:not([aria-hidden])"), (e) => e.textContent),
+    );
+    assert.deepEqual(
+      path,
+      ["Less", "Settings", "Motion"],
+      "real hierarchy in the official Breadcrumb",
+    );
+    const hash = new URL(site.url()).hash;
+    await click('[data-panel-destination="settings"]');
+    assert.equal(new URL(site.url()).hash, hash, "local navigation does not alter the site URL");
+    await click('[data-panel-destination="hidden"]');
+    await click(".panel-header button:last-child");
+    await waitFor(async () => !(await site.locator("[data-less-panel]").count()), "panel closed");
+    await site.emulateMedia({ reducedMotion: media });
+    await action();
+    await waitFor(() => site.locator("[data-less-panel]").count(), "panel reopened for motion");
+    const animations = await panel((d) =>
+      d.getAnimations().map((a) => a.effect?.getTiming().duration),
+    );
+    assert.equal(
+      animations.includes(240),
+      animated,
+      `${preference}/${media}: panel motion follows the saved setting`,
+    );
+    await waitFor(() => panel((d) => d.getAnimations().length === 0), "panel entrance settles");
+    const backdrop = await panel((d) => getComputedStyle(d, "::backdrop").backdropFilter);
+    assert.equal(backdrop, "blur(4px)", "panel uses the design-system modal blur");
+    await click(".panel-current");
+    assert.equal(
+      await site.locator("[data-less-panel]").count(),
+      1,
+      "inside clicks keep panel open",
+    );
+    await site.mouse.click(20, 300);
+    await waitFor(
+      async () => !(await site.locator("[data-less-panel]").count()),
+      "outside overlay closes panel",
+    );
+    await action();
+    await waitFor(() => site.locator("[data-less-panel]").count(), "panel reopened");
+    await waitFor(() => panel((d) => d.getAnimations().length === 0), "reopen settles");
+  }
+  await click(".settings-button");
+  await click('[data-settings-page="motion"]');
+  await store("less:motion", "system");
+  await waitFor(
+    () =>
+      panel(
+        (d) =>
+          d.querySelector(".motion-select")?.getAttribute("data-preference-value") === "system",
+      ),
+    "motion starts from saved system setting",
+  );
+  await failNextPreferenceWrite("less:motion");
+  await click(".motion-select");
+  await click('[role="option"][data-preference-value="reduced"]');
+  await waitFor(
+    () => panel((d) => !!d.querySelector('[role="alert"]')),
+    "motion save failure is visible",
+  );
+  assert.equal(
+    await panel((d) => d.querySelector(".motion-select")?.getAttribute("data-preference-value")),
+    "system",
+    "failed motion save preserves selection",
+  );
+  assert(
+    await panel((d) =>
+      d
+        .querySelector(".motion-select")!
+        .getAttribute("aria-describedby")
+        ?.split(/\s+/)
+        .includes(d.querySelector('[role="alert"]')!.id),
+    ),
+    "save failure Banner is associated with the selection",
+  );
+  await click(".motion-select");
+  await click('[role="option"][data-preference-value="reduced"]');
+  await waitFor(
+    () =>
+      panel(
+        (d) =>
+          d.querySelector(".motion-select")?.getAttribute("data-preference-value") === "reduced",
+      ),
+    "motion retry succeeds",
+  );
+  assert.equal(await panel((d) => !!d.querySelector('[role="alert"]')), false);
+  await site.reload();
+  await action();
+  await waitFor(() => site.locator("[data-less-panel]").count(), "panel after reload");
+  await click(".settings-button");
+  await click('[data-settings-page="motion"]');
+  assert.equal(
+    await panel((d) => d.querySelector(".motion-select")?.getAttribute("data-preference-value")),
+    "reduced",
+    "motion persists across reload",
+  );
+  console.log(
+    "PASS Breadcrumb navigation, motion/system override, persistence, save failure/retry, backdrop blur and outside dismissal",
   );
   assert.deepEqual(errors, [], "no runtime page errors");
   console.log(

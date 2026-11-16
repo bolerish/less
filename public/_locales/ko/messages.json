@@ -256,5 +256,26 @@
   },
   "panel_theme_error": {
     "message": "테마를 저장하지 못했어요. 다시 시도해 주세요."
+  },
+  "panel_location": {
+    "message": "현재 위치"
+  },
+  "panel_motion": {
+    "message": "모션"
+  },
+  "panel_motion_system": {
+    "message": "시스템 설정"
+  },
+  "panel_motion_full": {
+    "message": "사용"
+  },
+  "panel_motion_reduced": {
+    "message": "줄이기"
+  },
+  "panel_motion_help": {
+    "message": "패널 전환과 숨김·미리보기 효과에 적용돼요."
+  },
+  "panel_motion_error": {
+    "message": "모션 설정을 저장하지 못했어요. 다시 시도해 주세요."
   }
 }

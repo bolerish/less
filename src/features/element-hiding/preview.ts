@@ -7,6 +7,7 @@ import { finishHiddenElementAnimation } from "~features/element-hiding/element-h
 import { positionPreview } from "~features/element-hiding/preview-position";
 import type { PanelMessage } from "~features/record/management-messages";
 import { getPaintedRect } from "~shared/lib/painted-rect";
+import { isMotionReduced } from "~shared/motion/preference";
 
 export type PreviewState = { id: string | null; message: PanelMessage | "" };
 export type HiddenItemPreview = ReturnType<typeof createHiddenItemPreview>;
@@ -16,7 +17,6 @@ export function createHiddenItemPreview() {
   type Target = { element: HTMLElement; style: string | null; animation?: Animation };
   let current: Target | null = null;
   const outgoing = new Set<Target>();
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   function restore(target: Target): void {
     target.animation?.cancel();
     if (target.style === null) target.element.removeAttribute("style");
@@ -46,7 +46,7 @@ export function createHiddenItemPreview() {
       current = null;
       const opacity = getComputedStyle(target.element).opacity;
       target.animation?.cancel();
-      if (animate && !reducedMotion.matches && target.element.isConnected) {
+      if (animate && !isMotionReduced() && target.element.isConnected) {
         outgoing.add(target);
         target.animation = target.element.animate([{ opacity }, { opacity: 0 }], {
           duration: 140,
@@ -153,7 +153,7 @@ export function createHiddenItemPreview() {
           });
           return;
         }
-        if (!reducedMotion.matches) {
+        if (!isMotionReduced()) {
           current.animation = element.animate([{ opacity: 0 }, { opacity }], {
             duration: 140,
             easing: "ease-out",

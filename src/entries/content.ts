@@ -1,5 +1,6 @@
 import { initializeLocale } from "~shared/locale/preference";
 import { initializeTheme } from "~shared/theme/_model/theme";
+import { initializeMotionPreference } from "~shared/motion/preference";
 import "@bolerish/ui/global.css";
 import { loadContentStyles } from "~shared/styles/content-styles";
 import { restoreAllHiddenElements } from "~features/element-hiding";
@@ -57,6 +58,8 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
     ctx.onInvalidated(disposeLocale);
     const disposeTheme = await initializeTheme(true);
     ctx.onInvalidated(disposeTheme);
+    const disposeMotion = await initializeMotionPreference();
+    ctx.onInvalidated(disposeMotion);
     await loadContentStyles();
     await preferencePromise;
     if (ctx.isInvalid) return;

@@ -1,15 +1,22 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
-import { Heading } from "@bolerish/ui/heading";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@bolerish/ui/breadcrumb";
 import { TooltipProvider } from "@bolerish/ui/tooltip";
-import { CaretLeftIcon, XIcon } from "@phosphor-icons/react";
-import type { ReactNode, RefObject } from "react";
+import { XIcon } from "@phosphor-icons/react";
+import { Fragment, type ReactNode, type RefObject } from "react";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 export function PanelLayout({
   language,
-  title,
+  breadcrumbs,
   onBack,
   onClose,
   closeButton,
@@ -17,11 +24,11 @@ export function PanelLayout({
   children,
 }: {
   language: string;
-  title?: string;
+  breadcrumbs: { id: string; label: string; onNavigate?: () => void }[];
   onBack?: () => void;
   onClose: () => void;
   closeButton: RefObject<HTMLButtonElement | null>;
-  heading: RefObject<HTMLHeadingElement | null>;
+  heading: RefObject<HTMLSpanElement | null>;
   children: ReactNode;
 }) {
   const message = usePanelMessage();
@@ -39,34 +46,63 @@ export function PanelLayout({
       }}
     >
       <header className={["panel-header", stylex.props(styles.header).className].join(" ")}>
-        {onBack ? (
-          <>
-            <Button variant="ghost" size="sm" onClick={onBack} aria-label={message("panel_back")}>
-              <CaretLeftIcon size={16} aria-hidden="true" />
-              <span {...stylex.props(styles.backLabel)}>{message("panel_back")}</span>
-            </Button>
-            <Heading
-              level={1}
-              size="subsection"
-              ref={heading}
-              tabIndex={-1}
-              className={["updates-heading", stylex.props(styles.heading).className].join(" ")}
-            >
-              {title}
-            </Heading>
-          </>
-        ) : (
-          <div {...stylex.props(styles.brand)}>
-            <span className={["brand-name", stylex.props(styles.brandName).className].join(" ")}>
-              Less
-            </span>
-            <span
-              className={["preview-label", stylex.props(styles.previewLabel).className].join(" ")}
-            >
-              {message("panel_preview_title")}
-            </span>
-          </div>
-        )}
+        <Breadcrumb aria-label={message("panel_location")} xstyle={styles.breadcrumb}>
+          <BreadcrumbList>
+            {breadcrumbs.map(({ id, label, onNavigate }, index) => (
+              <Fragment key={id}>
+                {index > 0 ? <BreadcrumbSeparator /> : null}
+                <BreadcrumbItem xstyle={styles.breadcrumbItem}>
+                  {onNavigate ? (
+                    <BreadcrumbLink
+                      href="#"
+                      data-panel-destination={id}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onNavigate();
+                      }}
+                    >
+                      {label}
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage
+                      ref={heading}
+                      role="heading"
+                      aria-level={1}
+                      tabIndex={-1}
+                      className={[
+                        "panel-current updates-heading",
+                        stylex.props(styles.heading).className,
+                      ].join(" ")}
+                    >
+                      {onBack ? (
+                        label
+                      ) : (
+                        <>
+                          <span
+                            className={[
+                              "brand-name",
+                              stylex.props(styles.brandName).className,
+                            ].join(" ")}
+                          >
+                            {label}
+                          </span>
+                          <span
+                            className={[
+                              "preview-label",
+                              stylex.props(styles.previewLabel).className,
+                            ].join(" ")}
+                          >
+                            {message("panel_preview_title")}
+                          </span>
+                        </>
+                      )}
+                    </BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
         <Button
           ref={closeButton}
           variant="ghost"
@@ -119,15 +155,12 @@ const styles = stylex.create({
     padding: "var(--less-panel-inset)",
     paddingBottom: "max(var(--less-panel-inset), env(safe-area-inset-bottom))",
   },
-  backLabel: { display: { default: "inline", "@container less-panel (max-width: 14rem)": "none" } },
+  breadcrumb: { flex: 1, minWidth: 0 },
+  breadcrumbItem: { minWidth: 0, overflowWrap: "anywhere" },
   closeButton: { marginInlineStart: "auto" },
-  brand: { fontWeight: typo.fontWeightSemibold },
   brandName: { display: { default: "inline", ":is([data-preview='true'] *)": "none" } },
   previewLabel: { display: { default: "none", ":is([data-preview='true'] *)": "inline" } },
   heading: {
-    flex: 1,
-    order: { "@container less-panel (max-width: 14rem)": 1 },
-    flexBasis: { "@container less-panel (max-width: 14rem)": "100%" },
     minWidth: 0,
     overflowWrap: "anywhere",
     margin: 0,

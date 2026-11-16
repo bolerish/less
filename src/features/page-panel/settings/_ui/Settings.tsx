@@ -1,7 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { spacingVars, sizeVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
-import { Field, FieldLabel } from "@bolerish/ui/field";
+import { Banner, BannerContent, BannerDescription } from "@bolerish/ui/banner";
+import { Field, FieldLabel, FieldDescription } from "@bolerish/ui/field";
 import {
   Select,
   SelectTrigger,
@@ -14,23 +15,27 @@ import { ToggleGroup, ToggleGroupItem } from "@bolerish/ui/toggle-group";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@bolerish/ui/tooltip";
 import {
   CaretRightIcon,
-  PaintBrushIcon,
-  SlidersHorizontalIcon,
   BrowserIcon,
   DesktopIcon,
   SunIcon,
   MoonIcon,
   InfoIcon,
 } from "@phosphor-icons/react";
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { LOCALES, parseLocalePreference } from "~shared/locale/locales";
 import { setLocalePreference } from "~shared/locale/preference";
 import { useLocalePreference } from "~shared/locale/use-locale";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
 import { setThemePreference, themePreferenceSchema } from "~shared/theme/_model/preference";
+import {
+  getMotionPreference,
+  subscribeMotionPreference,
+  setMotionPreference,
+  motionPreferenceSchema,
+} from "~shared/motion/preference";
 import { useThemePreference } from "../_model/use-theme-preference";
 
-export type SettingsPage = "settings" | "language" | "theme";
+export type SettingsPage = "settings" | "language" | "theme" | "motion";
 
 export function Settings({
   page,
@@ -44,11 +49,19 @@ export function Settings({
   const message = usePanelMessage();
   const language = useLocalePreference();
   const theme = useThemePreference();
+  const motion = useSyncExternalStore(subscribeMotionPreference, getMotionPreference);
   const id = useId();
-  const languageTrigger = useRef<HTMLButtonElement>(null);
+  const selectTrigger = useRef<HTMLButtonElement>(null);
   const [error, setError] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
+  const [selectOpen, setSelectOpen] = useState(false);
   const languages = [{ value: "auto", label: message("panel_language_auto") }, ...LOCALES];
+  const selectItems =
+    page === "motion"
+      ? motionPreferenceSchema.options.map((value) => ({
+          value,
+          label: message(`panel_motion_${value}`),
+        }))
+      : languages;
   const themeIcons = { page: BrowserIcon, system: DesktopIcon, light: SunIcon, dark: MoonIcon };
 
   function save(preference: Promise<void>) {
@@ -60,10 +73,10 @@ export function Settings({
       {...stylex.props(styles.settings)}
       aria-label={message("panel_settings")}
       onKeyDownCapture={(event) => {
-        if (event.key === "Escape" && languageOpen) {
+        if (event.key === "Escape" && selectOpen) {
           event.preventDefault();
           event.stopPropagation();
-          setLanguageOpen(false);
+          setSelectOpen(false);
         }
       }}
     >
@@ -71,65 +84,65 @@ export function Settings({
         <div {...stylex.props(styles.home)}>
           {(
             [
-              {
-                page: "language",
-                title: "panel_general",
-                label: "panel_language",
-                icon: SlidersHorizontalIcon,
-              },
-              {
-                page: "theme",
-                title: "panel_appearance",
-                label: "panel_theme",
-                icon: PaintBrushIcon,
-              },
+              { title: "panel_general", pages: ["language"] },
+              { title: "panel_appearance", pages: ["theme", "motion"] },
             ] as const
-          ).map(({ page, title, label, icon: Icon }) => (
-            <section key={page}>
-              <h2 {...stylex.props(styles.sectionHeading)}>
-                <Icon aria-hidden="true" {...stylex.props(styles.icon)} />
-                {message(title)}
-              </h2>
+          ).map(({ pages, title }) => (
+            <section key={title}>
+              <h2 {...stylex.props(styles.sectionHeading)}>{message(title)}</h2>
               <div {...stylex.props(styles.navigationList)}>
-                <Button
-                  variant="ghost"
-                  align="space-between"
-                  xstyle={styles.navigation}
-                  data-settings-page={page}
-                  onClick={() => onNavigate(page)}
-                >
-                  {message(label)}
-                  <CaretRightIcon aria-hidden="true" />
-                </Button>
+                {pages.map((page) => (
+                  <Button
+                    key={page}
+                    variant="ghost"
+                    align="space-between"
+                    xstyle={styles.navigation}
+                    data-settings-page={page}
+                    onClick={() => onNavigate(page)}
+                  >
+                    {message(`panel_${page}`)}
+                    <CaretRightIcon aria-hidden="true" />
+                  </Button>
+                ))}
               </div>
             </section>
           ))}
         </div>
-      ) : page === "language" ? (
+      ) : page === "language" || page === "motion" ? (
         <Field>
-          <FieldLabel htmlFor={id}>{message("panel_language")}</FieldLabel>
+          <FieldLabel htmlFor={id}>{message(`panel_${page}`)}</FieldLabel>
           <Select
-            value={language}
-            open={languageOpen}
-            onOpenChange={setLanguageOpen}
-            items={languages}
+            value={page === "motion" ? motion : language}
+            open={selectOpen}
+            onOpenChange={setSelectOpen}
+            items={selectItems}
             modal={false}
             onValueChange={(value) => {
-              if (value !== null) save(setLocalePreference(parseLocalePreference(value)));
+              if (value === null) return;
+              save(
+                page === "motion"
+                  ? setMotionPreference(motionPreferenceSchema.parse(value))
+                  : setLocalePreference(parseLocalePreference(value)),
+              );
             }}
           >
             <SelectTrigger
-              ref={languageTrigger}
-              data-preference-value={language}
+              ref={selectTrigger}
+              data-preference-value={page === "motion" ? motion : language}
               id={id}
-              className="language-select"
+              aria-describedby={
+                [page === "motion" ? `${id}-help` : null, error ? `${id}-error` : null]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
+              className={page === "motion" ? "motion-select" : "language-select"}
               xstyle={styles.languageSelect}
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectPopup portalContainer={portalContainer} finalFocus={languageTrigger}>
+            <SelectPopup portalContainer={portalContainer} finalFocus={selectTrigger}>
               <SelectList>
-                {languages.map(({ value, label }) => (
+                {selectItems.map(({ value, label }) => (
                   <SelectItem key={value} value={value} data-preference-value={value}>
                     {label}
                   </SelectItem>
@@ -137,10 +150,17 @@ export function Settings({
               </SelectList>
             </SelectPopup>
           </Select>
+          {page === "motion" ? (
+            <FieldDescription id={`${id}-help`}>{message("panel_motion_help")}</FieldDescription>
+          ) : null}
           {error ? (
-            <p role="alert" {...stylex.props(styles.error)}>
-              {message("panel_language_error")}
-            </p>
+            <Banner id={`${id}-error`} size="sm" announce="assertive">
+              <BannerContent>
+                <BannerDescription>
+                  {message(page === "motion" ? "panel_motion_error" : "panel_language_error")}
+                </BannerDescription>
+              </BannerContent>
+            </Banner>
           ) : null}
         </Field>
       ) : (
@@ -161,9 +181,12 @@ export function Settings({
             </Tooltip>
           </div>
           <ToggleGroup
+            className="theme-options"
             aria-labelledby={id}
+            aria-describedby={error ? `${id}-error` : undefined}
             value={[theme]}
-            style={{ flexWrap: "wrap", maxWidth: "100%" }}
+            xstyle={styles.themeGroup}
+            style={{ flexWrap: "wrap" }}
             variant="soft"
             onValueChange={(values) => {
               const value = values[0];
@@ -179,6 +202,7 @@ export function Settings({
                     render={
                       <ToggleGroupItem
                         value={value}
+                        xstyle={styles.themeChoice}
                         data-preference-value={value}
                         aria-label={label}
                       >
@@ -192,9 +216,11 @@ export function Settings({
             })}
           </ToggleGroup>
           {error ? (
-            <p role="alert" {...stylex.props(styles.error)}>
-              {message("panel_theme_error")}
-            </p>
+            <Banner id={`${id}-error`} size="sm" announce="assertive">
+              <BannerContent>
+                <BannerDescription>{message("panel_theme_error")}</BannerDescription>
+              </BannerContent>
+            </Banner>
           ) : null}
         </Field>
       )}
@@ -214,14 +240,21 @@ const styles = stylex.create({
     fontSize: typo.fontSizeSm,
     margin: 0,
     marginBottom: spacingVars.space2,
+    paddingInline: `calc(${spacingVars.space4} + ${sizeVars.stroke})`,
   },
-  icon: { width: sizeVars.iconSm, height: sizeVars.iconSm, flexShrink: 0 },
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
   },
   navigation: { minWidth: 0 },
   fieldHeading: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
+  themeGroup: { width: "100%" },
+  themeChoice: {
+    flexGrow: 1,
+    flexBasis: {
+      default: 0,
+      "@container less-panel (max-width: 14rem)": `calc(50% - ${spacingVars.space1})`,
+    },
+  },
   languageSelect: { width: "100%", minWidth: 0 },
-  error: { color: colorVars.fgFeedbackError, margin: 0, overflowWrap: "anywhere" },
 });

@@ -256,5 +256,26 @@
   },
   "panel_theme_error": {
     "message": "Couldn’t save the theme. Try again."
+  },
+  "panel_location": {
+    "message": "Current location"
+  },
+  "panel_motion": {
+    "message": "Motion"
+  },
+  "panel_motion_system": {
+    "message": "System setting"
+  },
+  "panel_motion_full": {
+    "message": "On"
+  },
+  "panel_motion_reduced": {
+    "message": "Reduced"
+  },
+  "panel_motion_help": {
+    "message": "Applies to panel transitions, hiding and previews."
+  },
+  "panel_motion_error": {
+    "message": "Couldn’t save the motion setting. Try again."
   }
 }

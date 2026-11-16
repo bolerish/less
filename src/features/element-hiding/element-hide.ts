@@ -4,6 +4,7 @@ import {
   isHiddenElement,
   isHideExcludedElement,
 } from "./hide-policy";
+import { isMotionReduced } from "~shared/motion/preference";
 
 const pendingAnimations = new WeakMap<HTMLElement, () => void>();
 const ADDED_INERT_ATTRIBUTE = "data-veil-inert-added";
@@ -28,7 +29,7 @@ export function applyHiddenElement(element: HTMLElement, animated = false): void
   const focused = document.activeElement;
   if (focused instanceof HTMLElement && element.contains(focused)) focused.blur();
 
-  if (animated) {
+  if (animated && !isMotionReduced()) {
     element.style.setProperty("will-change", "opacity", "important");
     element.style.setProperty("opacity", "1", "important");
 

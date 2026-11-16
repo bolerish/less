@@ -459,7 +459,7 @@ try {
   assert(before);
   await action(site, false);
   await waitFor(
-    () => panelAnimations.some((a) => a.type === "WebAnimation" && a.duration === 120),
+    () => panelAnimations.some((a) => a.type === "WebAnimation" && a.duration === 240),
     "panel entrance animation observed through CDP",
   );
   await waitFor(() => panel((d) => d.getAnimations().length === 0), "panel entrance finishes");
@@ -631,7 +631,7 @@ try {
   await action(site, false);
   await waitFor(
     () =>
-      panelAnimations.filter((a) => a.type === "WebAnimation" && a.duration === 120).length >= 2,
+      panelAnimations.filter((a) => a.type === "WebAnimation" && a.duration === 240).length >= 2,
     "panel exit animation observed through CDP",
   );
   await waitFor(
@@ -2579,6 +2579,19 @@ try {
           padding: getComputedStyle(li).paddingBlock,
         },
         alignment: Math.abs((tag.top + tag.bottom) / 2 - (x.top + x.bottom) / 2),
+        cellPadding: [
+          getComputedStyle(row.firstElementChild!).paddingInlineStart,
+          getComputedStyle(row.lastElementChild!).paddingInlineEnd,
+        ],
+        actionColumnExtra:
+          row.lastElementChild!.getBoundingClientRect().width -
+          x.width -
+          parseFloat(getComputedStyle(row.lastElementChild!).paddingInlineStart) -
+          parseFloat(getComputedStyle(row.lastElementChild!).paddingInlineEnd),
+        edgeDifference:
+          tag.left -
+          b.left -
+          (b.right - button.querySelector("path")!.getBoundingClientRect().right),
         width: d.clientWidth,
         overflow: d.scrollWidth,
       };
@@ -2589,6 +2602,19 @@ try {
       "footer stays in viewport below list",
     );
     assert.equal(after.row.padding, "0px", "no outer row gap");
+    assert.equal(
+      after.cellPadding[0],
+      after.cellPadding[1],
+      "both Table cells retain the same native horizontal padding",
+    );
+    assert(
+      Math.abs(after.actionColumnExtra) < 1,
+      "action column contains only the native Button and cell padding",
+    );
+    assert(
+      Math.abs(after.edgeDifference) < 1,
+      "badge and restore icon have the same visible outer inset",
+    );
     assert.equal(after.row.left, after.row.hoverLeft);
     assert.equal(after.row.right, after.row.hoverRight);
     assert(
@@ -2932,7 +2958,7 @@ try {
         0,
         "no duplicate header entry",
       );
-      if (width === 320) await click(".panel-header button:first-child");
+      if (width === 320) await click('[data-panel-destination="hidden"]');
       else await site.keyboard.press("Escape");
       await waitFor(
         () =>
@@ -2982,7 +3008,7 @@ try {
         "keyboard opens settings sections",
       );
       assert.equal(
-        await panel((d) => d.querySelector("h1")!.textContent),
+        await panel((d) => d.querySelector(".panel-current")!.textContent),
         catalog.panel_settings.message,
       );
       await click('[data-settings-page="language"]');

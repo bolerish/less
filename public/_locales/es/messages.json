@@ -47,6 +47,9 @@
   "panel_updates": {
     "message": "Novedades"
   },
+  "panel_update_history": {
+    "message": "Historial de actualizaciones"
+  },
   "panel_back": {
     "message": "Volver"
   },

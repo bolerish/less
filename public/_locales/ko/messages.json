@@ -47,6 +47,9 @@
   "panel_updates": {
     "message": "업데이트"
   },
+  "panel_update_history": {
+    "message": "업데이트 기록"
+  },
   "panel_back": {
     "message": "뒤로"
   },
@@ -171,10 +174,10 @@
     "message": "최신"
   },
   "panel_version_updates": {
-    "message": "v$1 · 업데이트 내역"
+    "message": "v$1 · 업데이트 기록"
   },
   "panel_version_updates_unread": {
-    "message": "v$1 · 읽지 않은 업데이트 내역"
+    "message": "v$1 · 읽지 않은 업데이트 기록"
   },
   "panel_selection_prompt": {
     "message": "클릭: 숨기기 · Shift 누르기: 부모 선택"

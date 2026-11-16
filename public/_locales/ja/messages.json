@@ -47,6 +47,9 @@
   "panel_updates": {
     "message": "更新情報"
   },
+  "panel_update_history": {
+    "message": "更新履歴"
+  },
   "panel_back": {
     "message": "戻る"
   },

@@ -47,6 +47,9 @@
   "panel_updates": {
     "message": "更新"
   },
+  "panel_update_history": {
+    "message": "更新记录"
+  },
   "panel_back": {
     "message": "返回"
   },

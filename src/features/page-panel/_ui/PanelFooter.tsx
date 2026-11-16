@@ -43,7 +43,8 @@ export function PanelFooter({
         )}
         onClick={onUpdates}
       >
-        <Badge variant="outline">v{browser.runtime.getManifest().version}</Badge>
+        {message("panel_update_history")}
+        <Badge variant="secondary">{browser.runtime.getManifest().version}</Badge>
         {hasUnreadUpdates ? (
           <span
             className={["update-notice-dot", stylex.props(styles.updateNoticeDot).className].join(

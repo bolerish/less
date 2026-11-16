@@ -2726,6 +2726,7 @@ try {
           refresh: d.querySelector(".refresh-button"),
           resetText: reset.textContent,
           resetIcons: reset.querySelectorAll("svg").length,
+          updatesText: d.querySelector(".updates-button")!.childNodes[0].textContent,
           versionBadge: d.querySelector(".updates-button > span")?.textContent,
         };
       });
@@ -2740,7 +2741,39 @@ try {
       assert.equal(before.refresh, null);
       assert.equal(before.resetText, catalog.panel_reset.message);
       assert.equal(before.resetIcons, 0);
-      assert.equal(before.versionBadge, `v${manifest.version}`);
+      assert.equal(before.updatesText, catalog.panel_update_history.message);
+      assert.equal(before.versionBadge, manifest.version);
+      await site.mouse.move(0, 0);
+      const updateEntry = await panel((d) => {
+        const button = d.querySelector<HTMLElement>(".updates-button")!;
+        const badge = button.querySelector<HTMLElement>(":scope > span")!;
+        const settings = d.querySelector<HTMLElement>(".settings-button")!;
+        const style = getComputedStyle(badge);
+        const bounds = button.getBoundingClientRect();
+        return {
+          background: getComputedStyle(button).backgroundColor,
+          badgeBackground: style.backgroundColor,
+          badgeBorder: style.borderTopColor,
+          pill: parseFloat(style.borderTopLeftRadius) >= badge.clientHeight / 2,
+          fits:
+            button.scrollWidth <= button.clientWidth &&
+            bounds.left >= 0 &&
+            bounds.right <= settings.getBoundingClientRect().left,
+          label: button.getAttribute("aria-label"),
+        };
+      });
+      assert.equal(updateEntry.background, "rgba(0, 0, 0, 0)", "ghost entry rests transparent");
+      assert.notEqual(updateEntry.badgeBackground, "rgba(0, 0, 0, 0)");
+      assert.equal(
+        updateEntry.badgeBorder,
+        updateEntry.badgeBackground,
+        "filled badge has no outline",
+      );
+      assert(
+        updateEntry.pill && updateEntry.fits,
+        `${locale}/${width}: label and pill fit beside settings`,
+      );
+      assert(updateEntry.label!.includes(catalog.panel_update_history.message));
       assert(before.reset.bottom <= 720);
       console.log(
         `ALIGN ${locale}/${width}: label ${before.labelOffset}px, switch ${before.switchOffset}px, CardContent padding ${before.padding}, border ${before.border}`,
@@ -2758,6 +2791,13 @@ try {
         ),
         true,
         "footer version follows list in tab order",
+      );
+      assert(
+        await panel((d) => {
+          const style = getComputedStyle(d.querySelector(".updates-button")!);
+          return style.outlineStyle !== "none" && parseFloat(style.outlineWidth) >= 2;
+        }),
+        "update history keeps a visible keyboard focus outline",
       );
       await site.keyboard.press("Tab");
       assert.equal(

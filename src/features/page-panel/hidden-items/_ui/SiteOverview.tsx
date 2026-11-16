@@ -107,8 +107,6 @@ export function SiteOverview({
       <label className={["preference", stylex.props(styles.preference).className].join(" ")}>
         <span style={{ minWidth: 0 }}>{message("panel_enable_hiding")}</span>
         <Switch
-          style={{ flexShrink: 0 }}
-          size="sm"
           checked={enabled ?? true}
           disabled={enabled === null || busy}
           onCheckedChange={(value) => {

@@ -277,5 +277,44 @@
   },
   "panel_motion_error": {
     "message": "Couldn’t save the motion setting. Try again."
+  },
+  "panel_help": {
+    "message": "Help"
+  },
+  "panel_help_error": {
+    "message": "Couldn’t open help. Try again."
+  },
+  "panel_shortcuts": {
+    "message": "Keyboard shortcuts"
+  },
+  "panel_shortcuts_page": {
+    "message": "On the web page"
+  },
+  "panel_shortcuts_selection": {
+    "message": "In selection mode"
+  },
+  "panel_shortcuts_help": {
+    "message": "Available when the Less panel is closed."
+  },
+  "panel_shortcut_selection": {
+    "message": "Toggle selection mode"
+  },
+  "panel_shortcut_undo": {
+    "message": "Undo the last hide"
+  },
+  "panel_shortcut_shift": {
+    "message": "Select a wider area while held"
+  },
+  "panel_shortcut_wider": {
+    "message": "Widen the selection"
+  },
+  "panel_shortcut_previous": {
+    "message": "Return to the previous selection"
+  },
+  "panel_shortcut_hide": {
+    "message": "Hide the selected item"
+  },
+  "panel_shortcut_exit": {
+    "message": "Exit selection mode"
   }
 }

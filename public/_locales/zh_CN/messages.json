@@ -277,5 +277,44 @@
   },
   "panel_motion_error": {
     "message": "无法保存动态效果设置。请重试。"
+  },
+  "panel_help": {
+    "message": "帮助"
+  },
+  "panel_help_error": {
+    "message": "无法打开帮助，请重试。"
+  },
+  "panel_shortcuts": {
+    "message": "键盘快捷键"
+  },
+  "panel_shortcuts_page": {
+    "message": "在网页上"
+  },
+  "panel_shortcuts_selection": {
+    "message": "在选择模式下"
+  },
+  "panel_shortcuts_help": {
+    "message": "关闭 Less 面板后可使用这些快捷键。"
+  },
+  "panel_shortcut_selection": {
+    "message": "开启或退出选择模式"
+  },
+  "panel_shortcut_undo": {
+    "message": "撤销上一次隐藏"
+  },
+  "panel_shortcut_shift": {
+    "message": "按住时扩大选择范围"
+  },
+  "panel_shortcut_wider": {
+    "message": "扩大选择范围"
+  },
+  "panel_shortcut_previous": {
+    "message": "返回上一个选择范围"
+  },
+  "panel_shortcut_hide": {
+    "message": "隐藏所选内容"
+  },
+  "panel_shortcut_exit": {
+    "message": "退出选择模式"
   }
 }

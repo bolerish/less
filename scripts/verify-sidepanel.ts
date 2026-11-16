@@ -2924,11 +2924,23 @@ try {
       await site.keyboard.press("Tab");
       assert.equal(
         await panel(
+          (d) => (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".help-button"),
+        ),
+        true,
+        "help follows version in tab order",
+      );
+      assert.equal(
+        await panel((d) => d.querySelector(".help-button")!.getAttribute("aria-label")),
+        catalog.panel_help.message,
+      );
+      await site.keyboard.press("Tab");
+      assert.equal(
+        await panel(
           (d) =>
             (d.getRootNode() as ShadowRoot).activeElement === d.querySelector(".settings-button"),
         ),
         true,
-        "settings follows version in tab order",
+        "settings follows help in tab order",
       );
       await site.keyboard.press("Tab");
       assert.equal(

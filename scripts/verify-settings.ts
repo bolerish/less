@@ -286,6 +286,23 @@ try {
   }
   await site.bringToFront();
   await theme("light");
+  assert.deepEqual(
+    await panel((d) => {
+      const control = d.querySelector('[role="switch"]')!;
+      const rect = control.getBoundingClientRect();
+      return [rect.width, rect.height, control.firstElementChild!.getBoundingClientRect().width];
+    }),
+    [40, 24, 20],
+    "Switch uses the default documentation size without width overrides",
+  );
+  const helpOpened = activeContext.waitForEvent("page");
+  await click(".help-button");
+  const help = await helpOpened;
+  await help.waitForURL(`chrome-extension://${id}/welcome.html`);
+  assert(await help.locator(".welcome-title").textContent(), "help opens the install onboarding");
+  await help.close();
+  await site.bringToFront();
+  assert.equal(await site.locator("[data-less-panel]").count(), 1, "help keeps the page panel");
   const before = await site.evaluate(() => ({
     root: document.documentElement.getAttribute("style"),
     body: document.body.getAttribute("style"),
@@ -293,8 +310,8 @@ try {
   }));
   await click(".settings-button");
   await waitFor(
-    () => panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length === 3),
-    "three settings rows",
+    () => panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length === 4),
+    "four settings rows",
   );
   await click('[data-settings-page="language"]');
   await site.emulateMedia({ reducedMotion: "no-preference" });
@@ -585,6 +602,7 @@ try {
                 const style = getComputedStyle(row);
                 const ring = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
                 const rect = row.getBoundingClientRect();
+                const bounds = settings.getBoundingClientRect();
                 return (
                   row.matches(":focus-visible") &&
                   ring > 0 &&
@@ -631,6 +649,59 @@ try {
       );
     }
   }
+  async function verifyShortcuts(locale: string, width: number, factor: number) {
+    await click('[data-settings-page="shortcuts"]');
+    for (const scheme of ["light", "dark"]) {
+      await store("less:theme", scheme);
+      await theme(scheme);
+      const layout = await panel((d) => {
+        const list = d.querySelector<HTMLElement>(".shortcuts")!;
+        const rect = list.getBoundingClientRect();
+        return {
+          keys: Array.from(list.querySelectorAll("dd"), (row) =>
+            Array.from(row.querySelectorAll("kbd"), (key) => key.textContent),
+          ),
+          editing: list.querySelectorAll("input, select, textarea, button").length,
+          fits:
+            list.scrollWidth <= list.clientWidth &&
+            rect.left >= 0 &&
+            rect.right <= innerWidth &&
+            Array.from(
+              list.querySelectorAll("kbd"),
+              (key) => key.getBoundingClientRect().right <= innerWidth,
+            ).every(Boolean),
+          path: Array.from(d.querySelectorAll("header nav li"), (e) => e.textContent).filter(
+            Boolean,
+          ),
+        };
+      });
+      assert.deepEqual(layout.keys, [
+        ["Ctrl", "Shift", "E"],
+        ["Ctrl", "Shift", "Z"],
+        ["Shift"],
+        ["↑"],
+        ["↓"],
+        ["Enter"],
+        ["Esc"],
+      ]);
+      assert.equal(layout.editing, 0, "shortcut page is read-only");
+      assert(
+        layout.fits,
+        `${locale}/${width}/${factor}/${scheme}: shortcut list and native Kbd fit`,
+      );
+      assert.equal(layout.path.length, 3, "shortcuts keep the Less/settings/current hierarchy");
+      if (locale === "ko" && width === 375)
+        await site.screenshot({ path: `/tmp/less-shortcuts-ko-${factor}-${scheme}.png` });
+    }
+    await back();
+    assert.equal(
+      await panel((d) =>
+        (d.getRootNode() as ShadowRoot).activeElement?.getAttribute("data-settings-page"),
+      ),
+      "shortcuts",
+      "return to the shortcuts row",
+    );
+  }
   for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
     const catalog = JSON.parse(await readFile(`public/_locales/${locale}/messages.json`, "utf8"));
     await store("less:locale", locale);
@@ -648,9 +719,10 @@ try {
       await click(".settings-button");
       assert.equal(
         await panel((dialog) => dialog.querySelectorAll("[data-settings-page]").length),
-        3,
+        4,
       );
       await verifySettingsHome(locale, width, 1);
+      await verifyShortcuts(locale, width, 1);
       if (locale === "ko" && width === 375)
         await site.screenshot({ path: "/tmp/less-settings-ko-home.png" });
       for (const page of ["language", "theme", "motion"]) {
@@ -989,6 +1061,7 @@ try {
       await site.setViewportSize({ width, height: 720 });
       await click(".settings-button");
       await verifySettingsHome(locale, width, 2);
+      await verifyShortcuts(locale, width, 2);
       for (const page of ["language", "theme", "motion"]) {
         await click(`[data-settings-page="${page}"]`);
         await waitFor(

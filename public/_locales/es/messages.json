@@ -277,5 +277,44 @@
   },
   "panel_motion_error": {
     "message": "No se pudo guardar el movimiento. Inténtalo de nuevo."
+  },
+  "panel_help": {
+    "message": "Ayuda"
+  },
+  "panel_help_error": {
+    "message": "No se pudo abrir la ayuda. Vuelve a intentarlo."
+  },
+  "panel_shortcuts": {
+    "message": "Atajos de teclado"
+  },
+  "panel_shortcuts_page": {
+    "message": "En la página web"
+  },
+  "panel_shortcuts_selection": {
+    "message": "En el modo de selección"
+  },
+  "panel_shortcuts_help": {
+    "message": "Disponibles cuando el panel de Less está cerrado."
+  },
+  "panel_shortcut_selection": {
+    "message": "Activar o salir del modo de selección"
+  },
+  "panel_shortcut_undo": {
+    "message": "Volver a mostrar el último elemento oculto"
+  },
+  "panel_shortcut_shift": {
+    "message": "Ampliar la selección mientras se mantiene presionada"
+  },
+  "panel_shortcut_wider": {
+    "message": "Ampliar la selección"
+  },
+  "panel_shortcut_previous": {
+    "message": "Volver a la selección anterior"
+  },
+  "panel_shortcut_hide": {
+    "message": "Ocultar el elemento seleccionado"
+  },
+  "panel_shortcut_exit": {
+    "message": "Salir del modo de selección"
   }
 }

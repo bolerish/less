@@ -277,5 +277,44 @@
   },
   "panel_motion_error": {
     "message": "모션 설정을 저장하지 못했어요. 다시 시도해 주세요."
+  },
+  "panel_help": {
+    "message": "도움말"
+  },
+  "panel_help_error": {
+    "message": "도움말을 열지 못했어요. 다시 시도해 주세요."
+  },
+  "panel_shortcuts": {
+    "message": "단축키"
+  },
+  "panel_shortcuts_page": {
+    "message": "웹페이지에서"
+  },
+  "panel_shortcuts_selection": {
+    "message": "선택 모드에서"
+  },
+  "panel_shortcuts_help": {
+    "message": "Less 패널을 닫은 상태에서 사용할 수 있어요."
+  },
+  "panel_shortcut_selection": {
+    "message": "선택 모드 켜기·끄기"
+  },
+  "panel_shortcut_undo": {
+    "message": "마지막 숨김 실행 취소"
+  },
+  "panel_shortcut_shift": {
+    "message": "누르는 동안 더 넓게 선택"
+  },
+  "panel_shortcut_wider": {
+    "message": "선택 범위 넓히기"
+  },
+  "panel_shortcut_previous": {
+    "message": "이전 선택 범위로 돌아가기"
+  },
+  "panel_shortcut_hide": {
+    "message": "선택한 항목 숨기기"
+  },
+  "panel_shortcut_exit": {
+    "message": "선택 모드 종료"
   }
 }

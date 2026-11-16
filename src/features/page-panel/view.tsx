@@ -50,7 +50,8 @@ export default function PanelView({
       view === "settings" &&
       (previousView.current === "language" ||
         previousView.current === "theme" ||
-        previousView.current === "motion")
+        previousView.current === "motion" ||
+        previousView.current === "shortcuts")
     )
       closeButton.current
         ?.closest("dialog")
@@ -66,7 +67,11 @@ export default function PanelView({
   }, [view]);
 
   function back() {
-    setView(view === "language" || view === "theme" || view === "motion" ? "settings" : "hidden");
+    setView(
+      view === "language" || view === "theme" || view === "motion" || view === "shortcuts"
+        ? "settings"
+        : "hidden",
+    );
   }
 
   return (
@@ -78,7 +83,7 @@ export default function PanelView({
           label: "Less",
           onNavigate: view === "hidden" ? undefined : () => setView("hidden"),
         },
-        ...(view === "language" || view === "theme" || view === "motion"
+        ...(view === "language" || view === "theme" || view === "motion" || view === "shortcuts"
           ? [
               {
                 id: "settings",
@@ -126,7 +131,11 @@ export default function PanelView({
         ) : null}
       </div>
       {view === "updates" ? <Updates /> : null}
-      {view === "settings" || view === "language" || view === "theme" || view === "motion" ? (
+      {view === "settings" ||
+      view === "language" ||
+      view === "theme" ||
+      view === "motion" ||
+      view === "shortcuts" ? (
         <Settings key={view} page={view} onNavigate={setView} portalContainer={portalContainer} />
       ) : null}
     </PanelLayout>

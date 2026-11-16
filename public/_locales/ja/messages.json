@@ -277,5 +277,44 @@
   },
   "panel_motion_error": {
     "message": "モーション設定を保存できませんでした。もう一度お試しください。"
+  },
+  "panel_help": {
+    "message": "ヘルプ"
+  },
+  "panel_help_error": {
+    "message": "ヘルプを開けませんでした。もう一度お試しください。"
+  },
+  "panel_shortcuts": {
+    "message": "キーボードショートカット"
+  },
+  "panel_shortcuts_page": {
+    "message": "ウェブページ上"
+  },
+  "panel_shortcuts_selection": {
+    "message": "選択モード中"
+  },
+  "panel_shortcuts_help": {
+    "message": "Lessのパネルを閉じた状態で使えます。"
+  },
+  "panel_shortcut_selection": {
+    "message": "選択モードの切り替え"
+  },
+  "panel_shortcut_undo": {
+    "message": "最後に非表示にした項目を元に戻す"
+  },
+  "panel_shortcut_shift": {
+    "message": "押している間だけ選択範囲を広げる"
+  },
+  "panel_shortcut_wider": {
+    "message": "選択範囲を広げる"
+  },
+  "panel_shortcut_previous": {
+    "message": "前の選択範囲に戻る"
+  },
+  "panel_shortcut_hide": {
+    "message": "選択した項目を非表示にする"
+  },
+  "panel_shortcut_exit": {
+    "message": "選択モードを終了"
   }
 }

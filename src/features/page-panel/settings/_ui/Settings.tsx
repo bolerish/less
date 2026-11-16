@@ -35,8 +35,9 @@ import {
   motionPreferenceSchema,
 } from "~shared/motion/preference";
 import { useThemePreference } from "../_model/use-theme-preference";
+import { Shortcuts } from "./Shortcuts";
 
-export type SettingsPage = "settings" | "language" | "theme" | "motion";
+export type SettingsPage = "settings" | "language" | "theme" | "motion" | "shortcuts";
 
 export function Settings({
   page,
@@ -85,7 +86,11 @@ export function Settings({
         <div {...stylex.props(styles.home)}>
           {(
             [
-              { title: "panel_general", pages: ["language"], icon: SlidersHorizontalIcon },
+              {
+                title: "panel_general",
+                pages: ["language", "shortcuts"],
+                icon: SlidersHorizontalIcon,
+              },
               { title: "panel_appearance", pages: ["theme", "motion"], icon: PaintBrushIcon },
             ] as const
           ).map(({ pages, title, icon: Icon }) => (
@@ -122,6 +127,8 @@ export function Settings({
             </section>
           ))}
         </div>
+      ) : page === "shortcuts" ? (
+        <Shortcuts />
       ) : page === "language" || page === "motion" ? (
         <Field>
           <FieldLabel htmlFor={id}>{message(`panel_${page}`)}</FieldLabel>

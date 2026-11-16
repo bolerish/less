@@ -75,7 +75,21 @@ export default defineBackground(() => {
     if (frameId === 0) revisions.set(tabId, (revisions.get(tabId) ?? 0) + 1);
   });
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-    if (sender.id !== browser.runtime.id || !isManagementRequest(message)) return;
+    if (sender.id !== browser.runtime.id) return;
+    if (
+      typeof message === "object" &&
+      message !== null &&
+      "type" in message &&
+      message.type === "OPEN_HELP"
+    ) {
+      if (sender.tab?.id === undefined || sender.frameId !== 0) return;
+      void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") }).then(
+        () => sendResponse({ ok: true }),
+        () => sendResponse({ ok: false }),
+      );
+      return true;
+    }
+    if (!isManagementRequest(message)) return;
     void (async () => {
       if (!(await canManageSite(sender, message.origin))) {
         sendResponse({ ok: false, error: "Less can only manage the site in this tab." });

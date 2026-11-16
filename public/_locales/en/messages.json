@@ -125,9 +125,6 @@
   "panel_updates_help": {
     "message": "Latest changes, newest first."
   },
-  "panel_installed_version": {
-    "message": "Installed version $1"
-  },
   "panel_unreleased": {
     "message": "Not yet released"
   },
@@ -204,25 +201,16 @@
     "message": "Could not save this item. Try again."
   },
   "panel_release_1_2_0_title": {
-    "message": "A simpler panel, now called Less"
+    "message": "A new name: Less"
   },
   "panel_release_1_2_0_change_1": {
-    "message": "Less keeps your saved hiding rules and site settings."
+    "message": "Your hidden items and site settings stay as they are."
   },
   "panel_release_1_2_0_change_2": {
-    "message": "Unhide all items from the list toolbar. Open update history from the version badge at the bottom."
+    "message": "Click the Less icon to open the panel right on the page."
   },
   "panel_release_1_2_0_change_3": {
-    "message": "An unread indicator appears for released updates you have not opened yet."
-  },
-  "panel_release_1_2_0_change_4": {
-    "message": "Click the Less toolbar icon to open the panel on the current website."
-  },
-  "panel_release_1_2_0_change_5": {
-    "message": "Unhide one item or clear this site’s hiding rules while keeping the page open."
-  },
-  "panel_release_1_2_0_change_6": {
-    "message": "The count shows saved hiding rules for the current site. Unhiding an item lowers it."
+    "message": "Unhide items one at a time or all at once."
   },
   "panel_failure_protected": {
     "message": "Less isn’t available on this page."

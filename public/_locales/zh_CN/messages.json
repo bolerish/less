@@ -125,9 +125,6 @@
   "panel_updates_help": {
     "message": "按最新更改排序。"
   },
-  "panel_installed_version": {
-    "message": "已安装版本 $1"
-  },
   "panel_unreleased": {
     "message": "尚未发布"
   },
@@ -204,25 +201,16 @@
     "message": "无法保存隐藏设置，请重试。"
   },
   "panel_release_1_2_0_title": {
-    "message": "更简洁的面板，全新名称 Less"
+    "message": "全新名称：Less"
   },
   "panel_release_1_2_0_change_1": {
-    "message": "Less 会保留已保存的隐藏规则和网站设置。"
+    "message": "之前隐藏的内容和网站设置都会保留。"
   },
   "panel_release_1_2_0_change_2": {
-    "message": "可在列表工具栏中取消全部隐藏，也可通过底部的版本徽章查看更新记录。"
+    "message": "点击 Less 图标，即可在页面内打开面板。"
   },
   "panel_release_1_2_0_change_3": {
-    "message": "尚未查看的已发布更新会显示未读标记。"
-  },
-  "panel_release_1_2_0_change_4": {
-    "message": "点击工具栏中的 Less 图标，即可在当前网站打开面板。"
-  },
-  "panel_release_1_2_0_change_5": {
-    "message": "无需关闭页面，即可取消单个项目的隐藏，或移除此网站的全部隐藏规则。"
-  },
-  "panel_release_1_2_0_change_6": {
-    "message": "计数表示当前网站已保存的隐藏规则数，取消隐藏后会减少。"
+    "message": "可逐项或一次性取消隐藏。"
   },
   "panel_failure_protected": {
     "message": "此页面无法使用 Less。"

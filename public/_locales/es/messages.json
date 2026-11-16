@@ -125,9 +125,6 @@
   "panel_updates_help": {
     "message": "Cambios más recientes primero."
   },
-  "panel_installed_version": {
-    "message": "Versión instalada $1"
-  },
   "panel_unreleased": {
     "message": "Sin publicar"
   },
@@ -204,25 +201,16 @@
     "message": "No se pudo guardar la ocultación. Inténtalo de nuevo."
   },
   "panel_release_1_2_0_title": {
-    "message": "Un panel más sencillo, ahora llamado Less"
+    "message": "Un nuevo nombre: Less"
   },
   "panel_release_1_2_0_change_1": {
-    "message": "Less conserva tus reglas de ocultación y los ajustes de cada sitio."
+    "message": "Tus elementos ocultos y los ajustes de cada sitio se mantienen."
   },
   "panel_release_1_2_0_change_2": {
-    "message": "Muestra todos los elementos desde la barra de la lista. Abre el historial de actualizaciones desde la insignia de versión de la parte inferior."
+    "message": "Haz clic en el icono de Less para abrir el panel en la propia página."
   },
   "panel_release_1_2_0_change_3": {
-    "message": "Un indicador señala las novedades publicadas que aún no has abierto."
-  },
-  "panel_release_1_2_0_change_4": {
-    "message": "Haz clic en el icono de Less para abrir el panel en el sitio web actual."
-  },
-  "panel_release_1_2_0_change_5": {
-    "message": "Muestra un elemento o elimina las reglas de ocultación de este sitio sin cerrar la página."
-  },
-  "panel_release_1_2_0_change_6": {
-    "message": "El recuento muestra las reglas de ocultación guardadas en este sitio. Disminuye al mostrar un elemento."
+    "message": "Vuelve a mostrar los elementos ocultos uno a uno o todos a la vez."
   },
   "panel_failure_protected": {
     "message": "No se puede usar Less en esta página."

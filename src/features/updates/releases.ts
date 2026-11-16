@@ -18,9 +18,6 @@ export const productUpdates: readonly ProductUpdate[] = [
       "panel_release_1_2_0_change_1",
       "panel_release_1_2_0_change_2",
       "panel_release_1_2_0_change_3",
-      "panel_release_1_2_0_change_4",
-      "panel_release_1_2_0_change_5",
-      "panel_release_1_2_0_change_6",
     ],
   },
 ];

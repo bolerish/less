@@ -125,9 +125,6 @@
   "panel_updates_help": {
     "message": "新しい変更から表示します。"
   },
-  "panel_installed_version": {
-    "message": "インストール済みのバージョン $1"
-  },
   "panel_unreleased": {
     "message": "未リリース"
   },
@@ -204,25 +201,16 @@
     "message": "非表示設定を保存できませんでした。もう一度お試しください。"
   },
   "panel_release_1_2_0_title": {
-    "message": "よりシンプルなパネル、新しい名前はLess"
+    "message": "新しい名前はLess"
   },
   "panel_release_1_2_0_change_1": {
-    "message": "保存済みの非表示ルールとサイト設定はそのまま保持されます。"
+    "message": "これまで非表示にした項目とサイトの設定は、そのまま引き継がれます。"
   },
   "panel_release_1_2_0_change_2": {
-    "message": "一覧のツールバーからすべて再表示できます。下部のバージョンバッジから更新履歴を開けます。"
+    "message": "Lessアイコンをクリックすると、ページ内にパネルが開きます。"
   },
   "panel_release_1_2_0_change_3": {
-    "message": "まだ開いていないリリース済みの更新情報があると、未読マークが表示されます。"
-  },
-  "panel_release_1_2_0_change_4": {
-    "message": "ツールバーのLessアイコンをクリックすると、現在のウェブサイトでパネルが開きます。"
-  },
-  "panel_release_1_2_0_change_5": {
-    "message": "ページを開いたまま、項目を個別に再表示したり、このサイトの非表示ルールをすべて削除したりできます。"
-  },
-  "panel_release_1_2_0_change_6": {
-    "message": "件数は現在のサイトに保存されている非表示ルールの数です。再表示すると減ります。"
+    "message": "非表示にした項目を個別に、またはまとめて再表示できます。"
   },
   "panel_failure_protected": {
     "message": "このページではLessを使用できません。"

@@ -79,14 +79,6 @@ export function Updates() {
           </TimelineItem>
         ))}
       </Timeline>
-      <p
-        className={[
-          "installed-version muted",
-          stylex.props(styles.installedVersion, styles.muted).className,
-        ].join(" ")}
-      >
-        {message("panel_installed_version", [browser.runtime.getManifest().version])}
-      </p>
     </section>
   );
 }
@@ -129,9 +121,5 @@ const styles = stylex.create({
   },
   updateChange: {
     marginBlock: spacingVars.space2,
-  },
-  installedVersion: {
-    marginTop: spacingVars.space6,
-    fontSize: typo.fontSizeXs,
   },
 });

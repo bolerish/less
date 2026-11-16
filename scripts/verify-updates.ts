@@ -1,10 +1,31 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   compareUpdateVersions,
   getLatestReleasedUpdate,
   isUpdateVersion,
 } from "../src/features/updates/notice.ts";
-import type { ProductUpdate } from "../src/features/updates/releases.ts";
+import { productUpdates, type ProductUpdate } from "../src/features/updates/releases.ts";
+
+const catalogs = await Promise.all(
+  ["en", "ko", "ja", "es", "zh_CN"].map(async (locale) => ({
+    locale,
+    catalog: JSON.parse(await readFile(`public/_locales/${locale}/messages.json`, "utf8")),
+  })),
+);
+const updateKeys = productUpdates.flatMap((update) => [update.titleKey].concat(update.changeKeys));
+for (const { locale, catalog } of catalogs) {
+  assert(!("panel_installed_version" in catalog), `${locale}: redundant version label removed`);
+  for (const key of updateKeys)
+    assert(catalog[key]?.message.trim(), `${locale}/${key}: copy exists`);
+  assert.deepEqual(
+    Object.keys(catalog)
+      .filter((key) => key.startsWith("panel_release_"))
+      .sort(),
+    updateKeys.toSorted(),
+    `${locale}: release copy contains only the displayed changes`,
+  );
+}
 
 const released: ProductUpdate = {
   version: "1.2.0",

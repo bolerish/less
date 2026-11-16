@@ -2828,6 +2828,29 @@ try {
         () => panel((d) => !!d.querySelector(".updates ol li")),
         "actual Timeline rendered by keyboard",
       );
+      const updateView = await panel((d) => {
+        const updates = d.querySelector<HTMLElement>(".updates")!;
+        return {
+          installedVersion: !!updates.querySelector(".installed-version"),
+          titles: Array.from(updates.querySelectorAll("h3"), (title) => title.textContent),
+          changes: Array.from(updates.querySelectorAll("ul li"), (change) => change.textContent),
+          fits: updates.scrollWidth <= updates.clientWidth + 1,
+        };
+      });
+      assert.equal(updateView.installedVersion, false, `${locale}: no duplicate installed version`);
+      assert.deepEqual(
+        updateView.titles,
+        productUpdates.map((update) => catalog[update.titleKey].message),
+      );
+      assert.deepEqual(
+        updateView.changes,
+        productUpdates.flatMap((update) => update.changeKeys.map((key) => catalog[key].message)),
+      );
+      assert(updateView.fits, `${locale}/${width}: update copy wraps without horizontal overflow`);
+      if (width === 375 || locale === "ko")
+        await site.screenshot({
+          path: values.screenshot.replace(/\.png$/, `-updates-${locale}-${width}.png`),
+        });
       assert.equal(
         await panel(
           (d) =>

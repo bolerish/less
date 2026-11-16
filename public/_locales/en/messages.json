@@ -243,10 +243,10 @@
     "message": "Theme"
   },
   "panel_theme_page": {
-    "message": "Match web page"
+    "message": "Web page settings"
   },
   "panel_theme_system": {
-    "message": "Match system"
+    "message": "System settings"
   },
   "panel_theme_light": {
     "message": "Light"
@@ -265,5 +265,8 @@
   },
   "panel_theme_fallback": {
     "message": "If the page theme is unavailable, Less follows your system setting."
+  },
+  "panel_theme_info": {
+    "message": "About themes"
   }
 }

@@ -86,9 +86,6 @@ export function Updates() {
 const styles = stylex.create({
   updates: {
     overflowWrap: "anywhere",
-    flex: "1",
-    minHeight: "0",
-    overflow: "auto",
   },
   paragraph: {
     marginBlock: spacingVars.space2,
@@ -97,7 +94,7 @@ const styles = stylex.create({
     color: colorVars.fgSecondary,
   },
   updatesHelp: {
-    marginBlock: `${spacingVars.space3} ${spacingVars.space5}`,
+    marginBlock: `0 ${spacingVars.space5}`,
   },
   updateHeading: {
     display: "flex",

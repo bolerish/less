@@ -243,10 +243,10 @@
     "message": "テーマ"
   },
   "panel_theme_page": {
-    "message": "ウェブページに合わせる"
+    "message": "ウェブページの設定"
   },
   "panel_theme_system": {
-    "message": "システムに合わせる"
+    "message": "システム設定"
   },
   "panel_theme_light": {
     "message": "ライト"
@@ -265,5 +265,8 @@
   },
   "panel_theme_fallback": {
     "message": "ページのテーマを検出できない場合は、システム設定に合わせます。"
+  },
+  "panel_theme_info": {
+    "message": "テーマについて"
   }
 }

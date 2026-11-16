@@ -145,6 +145,117 @@ try {
     }, selector);
     await site.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
   }
+  async function commonPadding() {
+    const layout = await panel((dialog) => {
+      const header = dialog.querySelector<HTMLElement>(".panel-header")!;
+      const body = dialog.querySelector<HTMLElement>(".panel-body")!;
+      const read = (element: HTMLElement) => {
+        const style = getComputedStyle(element);
+        return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+      };
+      const bodyRect = body.getBoundingClientRect();
+      const back = header.querySelector("button svg");
+      return {
+        header: read(header),
+        body: read(body),
+        back: header.querySelector("h1")
+          ? back!.getBoundingClientRect().left
+          : header.querySelector(".brand")!.getBoundingClientRect().left,
+        start: bodyRect.left + 16,
+        close: header.querySelector("button:last-child svg")!.getBoundingClientRect().right,
+        end: bodyRect.right - 16,
+      };
+    });
+    assert.deepEqual(
+      layout.header,
+      ["16px", "16px", "16px", "16px"],
+      "common header owns 16px padding",
+    );
+    assert.deepEqual(layout.body, layout.header, "common body owns the same padding");
+    assert(
+      Math.abs(layout.back - layout.start) <= 1,
+      `brand/back icon aligns with body start: ${JSON.stringify(layout)}`,
+    );
+    assert(
+      Math.abs(layout.close - layout.end) <= 1,
+      `close icon aligns with body end: ${JSON.stringify(layout)}`,
+    );
+  }
+  async function themeHelp(catalog: Record<string, { message: string }>) {
+    const selector = `[aria-label="${catalog.panel_theme_info.message}"]`;
+    const trigger = await panel(
+      (dialog, selector) =>
+        dialog.querySelector<HTMLElement>(selector)!.getBoundingClientRect().toJSON(),
+      selector,
+    );
+    const visibleHelp = () =>
+      panel(
+        (dialog, text) =>
+          Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]')).some(
+            (tooltip) =>
+              tooltip.textContent?.includes(text) &&
+              tooltip.getBoundingClientRect().width > 0 &&
+              tooltip.getBoundingClientRect().left >= 0 &&
+              tooltip.getBoundingClientRect().right <= innerWidth,
+          ),
+        catalog.panel_theme_help.message,
+      );
+    await site.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
+    await waitFor(visibleHelp, "theme help opens on hover");
+    const popup = await panel(
+      (dialog, text) =>
+        Array.from(dialog.querySelectorAll<HTMLElement>('[role="tooltip"]'))
+          .find((tooltip) => tooltip.textContent?.includes(text))!
+          .getBoundingClientRect()
+          .toJSON(),
+      catalog.panel_theme_help.message,
+    );
+    await site.mouse.move(popup.x + popup.width / 2, popup.y + popup.height / 2);
+    await site.waitForTimeout(250);
+    assert(await visibleHelp(), "theme help stays readable when pointer enters it");
+    await panel(
+      (dialog, selector) => dialog.querySelector<HTMLElement>(selector)!.focus(),
+      selector,
+    );
+    await waitFor(visibleHelp, "theme help opens on focus");
+    await site.keyboard.press("Escape");
+    assert(
+      await panel(
+        (dialog, selector) =>
+          (dialog.getRootNode() as ShadowRoot).activeElement === dialog.querySelector(selector) &&
+          !dialog.querySelector(selector)?.hasAttribute("aria-describedby") &&
+          !!dialog.querySelector('[data-preference-value="page"]'),
+        selector,
+      ),
+      "Escape dismisses only theme help and preserves focus",
+    );
+    await waitFor(async () => !(await visibleHelp()), "theme help dismisses on Escape");
+    await click(selector);
+    await waitFor(visibleHelp, "theme help opens on click");
+    assert(
+      await panel(
+        (dialog, text) =>
+          Array.from(dialog.querySelectorAll('[role="tooltip"]')).some((tooltip) =>
+            tooltip.textContent?.includes(text),
+          ),
+        catalog.panel_theme_fallback.message,
+      ),
+      "fallback guidance is in the same tooltip",
+    );
+    await site.keyboard.press("Escape");
+    await site.mouse.move(0, 0);
+    await waitFor(async () => !(await visibleHelp()), "theme help closes before touch");
+    const session = sessions.get(site)!;
+    await session.send("Emulation.setTouchEmulationEnabled", { enabled: true });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: trigger.x + trigger.width / 2, y: trigger.y + trigger.height / 2 }],
+    });
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await waitFor(visibleHelp, "theme help opens on touch");
+    await site.keyboard.press("Escape");
+    await session.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  }
   async function theme(expected: string, page = site) {
     await waitFor(
       () => page.locator("[data-less-panel]").count(),
@@ -204,6 +315,11 @@ try {
   }
   await site.bringToFront();
   await theme("light");
+  await commonPadding();
+  await click(".updates-button");
+  await waitFor(() => panel((dialog) => !!dialog.querySelector(".updates")), "updates body");
+  await commonPadding();
+  await site.keyboard.press("Escape");
   const before = await site.evaluate(() => ({
     root: document.documentElement.getAttribute("style"),
     body: document.body.getAttribute("style"),
@@ -483,6 +599,8 @@ try {
   await panel((dialog) => {
     dialog.dataset.motionProbe = "stable";
     const initial = dialog.getBoundingClientRect();
+    const header = dialog.querySelector("header")!;
+    const initialHeader = header.getBoundingClientRect();
     let moved = false;
     let frame = 0;
     const sample = () => {
@@ -491,6 +609,9 @@ try {
       moved ||=
         dialog.getAnimations().some((animation) => animation.playState === "running") ||
         style.transform !== "none" ||
+        dialog.scrollLeft !== 0 ||
+        Math.abs(header.getBoundingClientRect().left - initialHeader.left) > 0.5 ||
+        Math.abs(header.getBoundingClientRect().top - initialHeader.top) > 0.5 ||
         Math.abs(rect.left - initial.left) > 0.5 ||
         Math.abs(rect.top - initial.top) > 0.5;
       frame = requestAnimationFrame(sample);
@@ -534,6 +655,45 @@ try {
       ),
     "language updates in the same panel",
   );
+  for (const locale of ["ko", "auto", "en"]) {
+    await click('[role="combobox"]');
+    await waitFor(
+      () =>
+        panel((dialog) => {
+          const option = dialog.querySelector<HTMLElement>('[role="option"]');
+          return (
+            dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true" &&
+            (option?.getBoundingClientRect().width ?? 0) > 0
+          );
+        }),
+      "reopened language options are visible",
+    );
+    await site.waitForTimeout(200);
+    await click(`[role="option"][data-preference-value="${locale}"]`);
+    await site.waitForTimeout(200);
+    await waitFor(
+      () =>
+        panel(
+          (dialog, locale) =>
+            dialog.querySelector('[role="combobox"]')?.getAttribute("data-preference-value") ===
+              locale &&
+            dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "false",
+          locale,
+        ),
+      `repeated language selection ${locale} settles`,
+    );
+  }
+  await click('[role="combobox"]');
+  await waitFor(
+    () =>
+      panel(
+        (dialog) =>
+          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true",
+      ),
+    "reopen after locale changes",
+  );
+  await site.waitForTimeout(200);
+  await site.keyboard.press("Escape");
   assert.equal(
     await panel((dialog) => dialog.dataset.motionProbe),
     "stable",
@@ -599,13 +759,15 @@ try {
           ),
         "settings navigation theme transitions finish",
       );
+      await commonPadding();
       const layout = await panel((dialog) => {
-        const settings = dialog.querySelector<HTMLElement>("main > section")!;
-        const bounds = settings.getBoundingClientRect();
+        const settings = dialog.querySelector<HTMLElement>(".panel-body > section")!;
+        const body = dialog.querySelector<HTMLElement>(".panel-body")!;
+        const bounds = body.getBoundingClientRect();
         return {
-          width: settings.clientWidth,
-          scroll: settings.scrollWidth,
-          overflow: getComputedStyle(settings).overflowX,
+          width: body.clientWidth,
+          scroll: body.scrollWidth,
+          overflow: getComputedStyle(body).overflowX,
           background: getComputedStyle(dialog).backgroundColor,
           headings: Array.from(settings.querySelectorAll("h2")).map((heading) => ({
             color: getComputedStyle(heading).color,
@@ -694,6 +856,7 @@ try {
           ),
           true,
         );
+        await commonPadding();
         for (const scheme of ["light", "dark"]) {
           await store("less:theme", scheme);
           await theme(scheme);
@@ -742,6 +905,18 @@ try {
           );
           if (page === "theme") {
             assert.equal(layout.rows.length, 4);
+            assert.deepEqual(
+              await panel((dialog) =>
+                Array.from(dialog.querySelectorAll("[data-preference-value]")).map((button) =>
+                  button.getAttribute("aria-label"),
+                ),
+              ),
+              ["page", "system", "light", "dark"].map(
+                (value) => catalog[`panel_theme_${value}`].message,
+              ),
+              "theme accessible names match localized tooltips",
+            );
+            if (locale === "ko" && width === 375 && scheme === "dark") await themeHelp(catalog);
             assert.equal(
               new Set(layout.rows.map((row) => row.top)).size,
               1,
@@ -936,6 +1111,7 @@ try {
             ),
           "zoom locale title",
         );
+        await commonPadding();
         for (const scheme of ["light", "dark"]) {
           await store("less:theme", scheme);
           await theme(scheme);

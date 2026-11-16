@@ -92,4 +92,7 @@ pnpm verify:settings --chromium "/path/to/Google Chrome" --firefox-build dist/fi
 
 This check covers saved choices, page changes, isolated toolbar/feedback surfaces,
 five languages, keyboard focus, contrast, 320/375px and 200% browser zoom.
+It also checks equal header/body padding, theme-help hover/focus/click/touch and
+Escape, and stable header coordinates while repeatedly changing languages and
+reopening Select with normal motion enabled.
 Firefox coverage is an API fixture; it does not establish Firefox runtime behavior.

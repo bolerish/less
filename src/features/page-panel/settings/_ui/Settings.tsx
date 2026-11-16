@@ -17,6 +17,7 @@ import {
   DesktopIcon,
   SunIcon,
   MoonIcon,
+  InfoIcon,
   CaretRightIcon,
   PaintBrushIcon,
   SlidersHorizontalIcon,
@@ -166,6 +167,8 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
   const message = usePanelMessage();
   const value = useThemePreference();
   const id = useId();
+  const helpTrigger = useRef<HTMLButtonElement>(null);
+  const helpPopup = useRef<HTMLDivElement>(null);
   const [error, setError] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   const icons = { page: BrowserIcon, system: DesktopIcon, light: SunIcon, dark: MoonIcon };
@@ -180,9 +183,62 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
           setActiveTooltip(null);
         }}
       >
-        <span id={id} {...stylex.props(styles.fieldLabel)}>
-          {message("panel_theme")}
-        </span>
+        <div {...stylex.props(styles.fieldTitle)}>
+          <span id={id} {...stylex.props(styles.fieldLabel)}>
+            {message("panel_theme")}
+          </span>
+          <Tooltip
+            open={activeTooltip === "help"}
+            onOpenChange={(open, details) => {
+              // Document-level hover detection cannot see this closed shadow tree.
+              if (
+                !open &&
+                details.reason === "trigger-hover" &&
+                helpPopup.current?.matches(":hover")
+              )
+                return;
+              setActiveTooltip((current) => (open ? "help" : current === "help" ? null : current));
+            }}
+          >
+            <TooltipTrigger
+              closeDelay={150}
+              closeOnClick={false}
+              render={
+                <Button
+                  ref={helpTrigger}
+                  variant="ghost"
+                  size="icon"
+                  aria-label={message("panel_theme_info")}
+                  aria-describedby={activeTooltip === "help" ? `${id}-help` : undefined}
+                  className={["less-control", stylex.props(styles.focus).className].join(" ")}
+                  onFocus={() => setActiveTooltip("help")}
+                  onBlur={() => setActiveTooltip(null)}
+                  onPointerEnter={() => setActiveTooltip("help")}
+                  onClick={() => setActiveTooltip("help")}
+                >
+                  <InfoIcon size={18} aria-hidden="true" />
+                </Button>
+              }
+            />
+            <TooltipPrimitive.Portal container={portalContainer}>
+              <TooltipPrimitive.Positioner side="bottom" align="start" sideOffset={6}>
+                <TooltipPrimitive.Popup
+                  ref={helpPopup}
+                  role="tooltip"
+                  id={`${id}-help`}
+                  onPointerEnter={() => setActiveTooltip("help")}
+                  onPointerLeave={() => {
+                    if (!helpTrigger.current?.matches(":focus-visible")) setActiveTooltip(null);
+                  }}
+                  {...stylex.props(styles.tooltip, styles.helpTooltip)}
+                >
+                  <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_help")}</p>
+                  <p {...stylex.props(styles.tooltipText)}>{message("panel_theme_fallback")}</p>
+                </TooltipPrimitive.Popup>
+              </TooltipPrimitive.Positioner>
+            </TooltipPrimitive.Portal>
+          </Tooltip>
+        </div>
         <ToggleGroup
           variant="soft"
           size="lg"
@@ -190,7 +246,6 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
           xstyle={styles.themes}
           style={{ flexWrap: "wrap" }}
           aria-labelledby={id}
-          aria-describedby={`${id}-description`}
           onValueChange={(values) => {
             if (!values[0]) return;
             setError(false);
@@ -249,10 +304,6 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
             );
           })}
         </ToggleGroup>
-        <p id={`${id}-description`} {...stylex.props(styles.description)}>
-          {message("panel_theme_help")}
-        </p>
-        <p {...stylex.props(styles.description)}>{message("panel_theme_fallback")}</p>
         {error ? (
           <p role="alert" {...stylex.props(styles.error)}>
             {message("panel_theme_error")}
@@ -264,13 +315,7 @@ function ThemeField({ portalContainer }: { portalContainer?: HTMLElement }) {
 }
 
 const styles = stylex.create({
-  settings: {
-    paddingBlock: spacingVars.space4,
-    paddingInline: spacingVars.space2,
-    marginInline: `calc(${spacingVars.space2} * -1)`,
-    overflow: "auto",
-    minHeight: 0,
-  },
+  settings: { minWidth: 0 },
   home: { display: "grid", gap: spacingVars.space6 },
   sectionHeading: {
     display: "flex",
@@ -291,7 +336,13 @@ const styles = stylex.create({
   navigation: { marginInlineStart: `calc(${spacingVars.space3} * -1)`, minWidth: 0 },
   field: { display: "grid", gap: spacingVars.space3 },
   fieldLabel: { fontWeight: typo.fontWeightSemibold },
-  description: { margin: 0, color: colorVars.fgSecondary, overflowWrap: "anywhere" },
+  fieldTitle: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
+  helpTooltip: {
+    maxWidth: "min(260px, calc(100vw - 48px))",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+  },
+  tooltipText: { margin: 0, lineHeight: typo.lineHeightNormal },
   select: { width: "100%", minWidth: 0 },
   themes: { width: "100%" },
   themeOption: { flexGrow: 1 },

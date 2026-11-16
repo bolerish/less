@@ -243,10 +243,10 @@
     "message": "Tema"
   },
   "panel_theme_page": {
-    "message": "Usar el tema de la página"
+    "message": "Configuración de la página"
   },
   "panel_theme_system": {
-    "message": "Usar el tema del sistema"
+    "message": "Configuración del sistema"
   },
   "panel_theme_light": {
     "message": "Claro"
@@ -265,5 +265,8 @@
   },
   "panel_theme_fallback": {
     "message": "Si no se detecta el tema de la página, se usa el del sistema."
+  },
+  "panel_theme_info": {
+    "message": "Acerca del tema"
   }
 }

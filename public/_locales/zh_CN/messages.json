@@ -243,10 +243,10 @@
     "message": "主题"
   },
   "panel_theme_page": {
-    "message": "跟随网页"
+    "message": "网页设置"
   },
   "panel_theme_system": {
-    "message": "跟随系统"
+    "message": "系统设置"
   },
   "panel_theme_light": {
     "message": "浅色"
@@ -265,5 +265,8 @@
   },
   "panel_theme_fallback": {
     "message": "无法检测网页主题时，将跟随系统设置。"
+  },
+  "panel_theme_info": {
+    "message": "主题说明"
   }
 }

@@ -125,7 +125,7 @@ export function PanelLayout({
 
 const styles = stylex.create({
   panel: {
-    "--less-panel-inset": spacingVars.space4,
+    "--less-panel-inset": `calc(${spacingVars.space4} + var(--less-control-inset))`,
     "--less-control-inset": `calc(${spacingVars.space4} + ${sizeVars.stroke})`,
     container: "less-panel / inline-size",
     boxSizing: "border-box",
@@ -144,7 +144,7 @@ const styles = stylex.create({
     flexWrap: "wrap",
     gap: spacingVars.space2,
     paddingBlock: spacingVars.space3,
-    paddingInline: "calc(var(--less-panel-inset) + var(--less-control-inset))",
+    paddingInline: "var(--less-panel-inset)",
     background: "var(--less-app-background)",
   },
   body: {
@@ -153,8 +153,9 @@ const styles = stylex.create({
     flex: 1,
     minHeight: 0,
     overflowY: { "@container less-panel (max-width: 14rem)": "auto" },
-    padding: "var(--less-panel-inset)",
-    paddingBottom: "max(var(--less-panel-inset), env(safe-area-inset-bottom))",
+    paddingBlock: spacingVars.space4,
+    paddingInline: "var(--less-panel-inset)",
+    paddingBottom: `max(${spacingVars.space4}, env(safe-area-inset-bottom))`,
   },
   breadcrumb: { flex: 1, minWidth: 0 },
   breadcrumbItem: { minWidth: 0, overflowWrap: "anywhere" },

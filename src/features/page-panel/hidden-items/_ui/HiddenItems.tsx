@@ -262,7 +262,7 @@ const styles = stylex.create({
   },
 
   recordsRoot: {
-    flex: "1 1 0",
+    flex: { default: "1 1 0", "@container less-panel (max-width: 14rem)": "none" },
     minHeight: 48,
   },
   records: {
@@ -273,7 +273,7 @@ const styles = stylex.create({
     listStyle: "none",
     padding: "0",
     margin: "0",
-    height: "100%",
+    height: { default: "100%", "@container less-panel (max-width: 14rem)": "auto" },
   },
   controlFocus: {
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,

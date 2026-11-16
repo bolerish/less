@@ -537,6 +537,8 @@ try {
     );
   }
   async function verifySettingsHome(locale: string, width: number, factor: number) {
+    await panel((dialog) => dialog.querySelector<HTMLElement>(".panel-current")!.focus());
+    await site.keyboard.press("Tab");
     for (const scheme of ["light", "dark"]) {
       await store("less:theme", scheme);
       await theme(scheme);
@@ -578,6 +580,20 @@ try {
                 row.getBoundingClientRect().left >= bounds.left &&
                 row.getBoundingClientRect().right <= bounds.right,
               color: getComputedStyle(row).color,
+              focusFits: (() => {
+                row.focus();
+                const style = getComputedStyle(row);
+                const ring = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
+                const rect = row.getBoundingClientRect();
+                return (
+                  row.matches(":focus-visible") &&
+                  ring > 0 &&
+                  rect.left - ring >= bounds.left &&
+                  rect.right + ring <= bounds.right &&
+                  rect.top - ring >= bounds.top &&
+                  rect.bottom + ring <= bounds.bottom
+                );
+              })(),
             }),
           ),
         };
@@ -594,6 +610,10 @@ try {
         `${locale}/${width}/${factor}/${scheme}: settings home fits without horizontal scrolling`,
       );
       assert(!["hidden", "clip"].includes(layout.overflow), "settings content remains scrollable");
+      assert(
+        layout.rows.every((row) => row.focusFits),
+        `${locale}/${width}/${factor}/${scheme}: full native focus rings fit the scroll area`,
+      );
       assert(
         (
           await Promise.all(
@@ -684,6 +704,14 @@ try {
               background: getComputedStyle(dialog).backgroundColor,
               headerPadding: getComputedStyle(dialog.querySelector("header")!).paddingInline,
               bodyPadding: getComputedStyle(body).paddingInline,
+              contentEdges: (() => {
+                const header = dialog.querySelector("header nav")!.getBoundingClientRect();
+                const field = control.closest<HTMLElement>('[data-orientation="vertical"]')!;
+                const bounds = field.getBoundingClientRect();
+                const bodyRect = body.getBoundingClientRect();
+                const inset = parseFloat(getComputedStyle(body).paddingInlineStart);
+                return [bounds.left - header.left, bodyRect.right - inset - bounds.right];
+              })(),
               themeLayout: (() => {
                 const group = dialog.querySelector<HTMLElement>(".theme-options");
                 if (!group) return null;
@@ -706,12 +734,29 @@ try {
             `${locale}/${width}/${page}/${scheme}: controls fit`,
           );
           assert.equal(
-            parseFloat(layout.headerPadding) - parseFloat(layout.bodyPadding),
-            17,
-            "header adds the native medium Button's 16px inset and 1px border",
+            layout.headerPadding,
+            layout.bodyPadding,
+            "header and body share one horizontal inset",
+          );
+          assert(
+            layout.contentEdges.every((offset) => Math.abs(offset) < 0.5),
+            `nested Field aligns with the header and body content edges: ${layout.contentEdges}`,
           );
           assert((await contrast(layout.color, layout.background)) >= 4.5, "readable controls");
           if (page === "theme") {
+            assert.equal(
+              await panel((d) => {
+                const group = d.querySelector(".theme-options")!;
+                const help = d.querySelector('[id$="-help"]')!;
+                return (
+                  !!help.textContent?.trim() &&
+                  group.getAttribute("aria-describedby")?.split(/\s+/).includes(help.id) &&
+                  !help.hasAttribute("role")
+                );
+              }),
+              true,
+              "theme guidance is a persistent associated FieldDescription",
+            );
             assert(layout.iconOnly, "theme choices contain only icons with accessible labels");
             assert(
               layout.themeLayout &&

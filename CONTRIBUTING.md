@@ -28,7 +28,7 @@ background API in a fixture; it does not run Firefox. PNGs are written to `/tmp`
 by default (`--screenshot /path/to/capture.png` changes their prefix). Chrome,
 profile and local fixture server are cleaned up afterward.
 
-The page-panel shell, body inset and header control-content inset live in `src/features/page-panel/layout.tsx`.
+The page-panel shell and shared header/body inset live in `src/features/page-panel/layout.tsx`.
 `view.tsx` owns the breadcrumb hierarchy and screen state; `mount.tsx` owns the native modal lifetime, backdrop dismissal and panel motion.
 Motion preferences live in `src/shared/motion/preference.ts`; the system setting is the default.
 
@@ -44,6 +44,7 @@ submission. A passing build does not establish the behavior below.
 | Table cells own spacing; row Buttons have no padding and retain keyboard focus without a second hover layer | `pnpm verify:panel`                                                   | Inspect the generated hover/selected screenshots                                              |
 | Version/update entry, settings/language selection, panel layout and persistence remain available            | `pnpm verify:panel`, `pnpm verify:locale`, `pnpm verify:updates`      | Compare the approved layout with the rendered result                                          |
 | Settings icons remain visible, section text aligns with links and the header aligns with the icon column    | `pnpm verify:settings`                                                | Compare against the approved settings reference                                               |
+| Header/body edges align at every depth; focus rings fit; theme help uses FieldDescription                   | `pnpm verify:settings`                                                | Inspect the focused settings rows and nested fields                                           |
 | Breadcrumb navigation, overlay dismissal and saved motion respect keyboard and system settings              | `pnpm verify:settings`                                                | Review long paths and actual motion on the reported device                                    |
 | Hiding the last tall item preserves an existing scrollbar gutter without adding one to short pages          | `pnpm verify:panel`                                                   | The fixture enables classic scrollbars; overlay scrollbars do not reserve space               |
 | Hiding is applied before reveal and remains correct on navigation/cache changes                             | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |

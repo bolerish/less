@@ -19,7 +19,6 @@ import {
   DesktopIcon,
   SunIcon,
   MoonIcon,
-  InfoIcon,
   SlidersHorizontalIcon,
   PaintBrushIcon,
 } from "@phosphor-icons/react";
@@ -180,25 +179,13 @@ export function Settings({
         </Field>
       ) : (
         <Field>
-          <div {...stylex.props(styles.fieldHeading)}>
-            <FieldLabel id={id}>{message("panel_theme")}</FieldLabel>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button variant="ghost" size="icon" aria-label={message("panel_theme_help")}>
-                    <InfoIcon aria-hidden="true" size={16} />
-                  </Button>
-                }
-              />
-              <TooltipContent portalContainer={portalContainer}>
-                {message("panel_theme_help")}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          <FieldLabel id={id}>{message("panel_theme")}</FieldLabel>
           <ToggleGroup
             className="theme-options"
             aria-labelledby={id}
-            aria-describedby={error ? `${id}-error` : undefined}
+            aria-describedby={[`${id}-help`, error ? `${id}-error` : null]
+              .filter(Boolean)
+              .join(" ")}
             value={[theme]}
             xstyle={styles.themeGroup}
             style={{ flexWrap: "wrap" }}
@@ -230,6 +217,7 @@ export function Settings({
               );
             })}
           </ToggleGroup>
+          <FieldDescription id={`${id}-help`}>{message("panel_theme_help")}</FieldDescription>
           {error ? (
             <Banner id={`${id}-error`} size="sm" announce="assertive">
               <BannerContent>
@@ -244,7 +232,13 @@ export function Settings({
 }
 
 const styles = stylex.create({
-  settings: { overflow: "auto", minHeight: 0 },
+  settings: {
+    overflow: "auto",
+    minHeight: 0,
+    // Keep the native focus ring inside the scroll clip without moving the content edge.
+    padding: `calc(${sizeVars.focusRing} * 2)`,
+    margin: `calc(${sizeVars.focusRing} * -2)`,
+  },
   home: { display: "grid", gap: spacingVars.space6 },
   sectionHeading: {
     display: "flex",
@@ -255,17 +249,15 @@ const styles = stylex.create({
     fontSize: typo.fontSizeSm,
     margin: 0,
     marginBottom: spacingVars.space2,
-    paddingInlineStart: "var(--less-control-inset)",
   },
   sectionIcon: { width: sizeVars.iconSm, height: sizeVars.iconSm, flexShrink: 0 },
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
-    paddingInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
+    paddingInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2} - var(--less-control-inset))`,
   },
   navigation: { minWidth: 0 },
   navigationLabel: { minWidth: 0, overflowWrap: "anywhere" },
-  fieldHeading: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
   themeGroup: { width: "100%" },
   themeChoice: {
     flexGrow: 1,

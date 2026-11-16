@@ -458,6 +458,15 @@ try {
     await site.locator(selector).click(options);
     await site.keyboard.press("Escape");
     await hidden(selector);
+    await waitFor(
+      () =>
+        worker.evaluate(async () => {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          const result = await chrome.tabs.sendMessage(tab.id!, { type: "GET_UNDO_COUNT" });
+          return result.count > 0;
+        }),
+      "hidden item is saved and ready to undo",
+    );
   }
 
   await site.locator("#before").focus();
@@ -944,6 +953,11 @@ try {
         client: d.clientWidth,
         font: getComputedStyle(d).fontSize,
         button: getComputedStyle(d.querySelector<HTMLElement>("button")!).height,
+        headerInset: getComputedStyle(d.querySelector(".panel-header")!).paddingInline,
+        bodyInset: getComputedStyle(d.querySelector(".panel-body")!).paddingInline,
+        contentOffset:
+          d.querySelector(".site-card")!.getBoundingClientRect().left -
+          d.querySelector("header nav")!.getBoundingClientRect().left,
       }));
       assert(
         geometry.width <= width && geometry.scroll <= geometry.client,
@@ -951,6 +965,8 @@ try {
       );
       assert.equal(geometry.font, "14px");
       assert.equal(geometry.button, "36px");
+      assert.equal(geometry.headerInset, geometry.bodyInset, "header and overview share insets");
+      assert(Math.abs(geometry.contentOffset) < 0.5, "overview aligns with the header content");
       const cardLayout = await panel((d) => {
         const identity = d.querySelector<HTMLElement>(".site-identity")!.getBoundingClientRect();
         const count = d.querySelector<HTMLElement>(".hidden-count")!.getBoundingClientRect();
@@ -958,13 +974,13 @@ try {
         const preference = d.querySelector<HTMLElement>(".preference")!.getBoundingClientRect();
         const select = d.querySelector<HTMLElement>(".select-button")!.getBoundingClientRect();
         return {
-          columns: identity.right <= count.left && identity.top < count.bottom,
+          separated: identity.right <= count.left || identity.bottom <= count.top,
           rows: card.bottom <= select.top && select.bottom <= preference.top,
           countFont: getComputedStyle(d.querySelector(".count-value")!).fontSize,
         };
       });
       assert(
-        cardLayout.columns && cardLayout.rows,
+        cardLayout.separated && cardLayout.rows,
         "site card precedes primary action and separate site switch",
       );
       assert.equal(cardLayout.countFont, "32px", "the count retains its semantic heading size");
@@ -980,7 +996,7 @@ try {
             const right = number.getBoundingClientRect();
             const card = d.querySelector<HTMLElement>(".site-card")!;
             const result = {
-              overlap: left.right > right.left,
+              overlap: left.right > right.left && left.bottom > right.top,
               overflow: card.scrollWidth > card.clientWidth,
             };
             [domain.textContent, number.textContent] = original;

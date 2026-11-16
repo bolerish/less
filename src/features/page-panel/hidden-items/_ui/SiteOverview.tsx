@@ -151,7 +151,7 @@ const styles = stylex.create({
     display: "grid",
     gridTemplateColumns: {
       default: "minmax(0, 1fr) auto",
-      "@container site-card (max-width: 14em)": "minmax(0, 1fr)",
+      "@container site-card (max-width: 18em)": "minmax(0, 1fr)",
     },
     alignItems: "center",
     gap: spacingVars.space4,
@@ -181,7 +181,7 @@ const styles = stylex.create({
     width: "max-content",
     maxWidth: "100%",
     margin: "0",
-    textAlign: { default: "end", "@container site-card (max-width: 14em)": "start" },
+    textAlign: { default: "end", "@container site-card (max-width: 18em)": "start" },
   },
   countValue: {
     fontSize: typo.fontSizeXl,

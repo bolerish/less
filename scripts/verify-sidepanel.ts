@@ -571,6 +571,20 @@ try {
     );
     console.log("PASS no misleading unread badge for bundled unreleased content");
   }
+  await waitFor(
+    () =>
+      panel((d, background) => {
+        const control = d.querySelector<HTMLElement>('.preference [role="switch"]')!;
+        const probe = d.ownerDocument.createElement("span");
+        probe.style.backgroundColor = background;
+        control.after(probe);
+        const matches =
+          getComputedStyle(control).backgroundColor === getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return matches;
+      }, semanticRefs.bgActionPrimary),
+    "enabled switch uses the official primary action background",
+  );
   await click('.preference [role="switch"]');
   await waitFor(
     () =>

@@ -285,7 +285,9 @@ const styles = stylex.create({
     display: "inline-block",
     width: 1,
     height: 12,
-    backgroundColor: colorVars.strokeControl,
+    borderInlineStartColor: colorVars.strokeControl,
+    borderInlineStartStyle: "solid",
+    borderInlineStartWidth: 1,
     flexShrink: 0,
   },
 });

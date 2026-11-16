@@ -1,9 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { colorVars, spacingVars, radiusVars, sizeVars } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
 import { Badge } from "@bolerish/ui/badge";
-import { Tooltip, TooltipTrigger } from "@bolerish/ui/tooltip";
-import { Tooltip as TooltipPrimitive } from "@bolerish/ui/primitives";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@bolerish/ui/tooltip";
 import { GearSixIcon } from "@phosphor-icons/react";
 import { useId, useState, type RefObject } from "react";
 import { usePanelMessage } from "~shared/locale/use-panel-message";
@@ -37,6 +36,12 @@ export function PanelFooter({
           stylex.props(styles.controlFocus).className,
         ].join(" ")}
         xstyle={styles.updatesButton}
+        style={{
+          flexWrap: "wrap",
+          whiteSpace: "normal",
+          height: "auto",
+          minHeight: sizeVars.controlSm,
+        }}
         aria-label={message(
           hasUnreadUpdates ? "panel_version_updates_unread" : "panel_version_updates",
           [browser.runtime.getManifest().version],
@@ -59,6 +64,7 @@ export function PanelFooter({
           render={
             <Button
               ref={settingsButton}
+              xstyle={styles.settingsButton}
               variant="ghost"
               size="icon"
               aria-label={message("panel_settings")}
@@ -87,17 +93,9 @@ export function PanelFooter({
             </Button>
           }
         />
-        <TooltipPrimitive.Portal container={portalContainer}>
-          <TooltipPrimitive.Positioner side="top" sideOffset={6}>
-            <TooltipPrimitive.Popup
-              {...stylex.props(styles.settingsTooltip)}
-              role="tooltip"
-              id={settingsTooltipId}
-            >
-              {message("panel_settings")}
-            </TooltipPrimitive.Popup>
-          </TooltipPrimitive.Positioner>
-        </TooltipPrimitive.Portal>
+        <TooltipContent portalContainer={portalContainer} id={settingsTooltipId}>
+          {message("panel_settings")}
+        </TooltipContent>
       </Tooltip>
     </footer>
   );
@@ -106,6 +104,8 @@ export function PanelFooter({
 const styles = stylex.create({
   panelFooter: {
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: spacingVars.space2,
     alignItems: "center",
     marginTop: "auto",
     paddingTop: spacingVars.space3,
@@ -113,17 +113,10 @@ const styles = stylex.create({
     display: { default: "flex", ":is([data-preview-layout='compact'] *)": "none" },
     flexShrink: 0,
   },
-  settingsTooltip: {
-    pointerEvents: "none",
-    border: `1px solid ${colorVars.strokeDefault}`,
-    background: colorVars.bgRaised,
-    color: colorVars.fgPrimary,
-    padding: spacingVars.space2,
-    borderRadius: radiusVars.sm,
-    fontSize: typo.fontSizeXs,
-  },
+  settingsButton: { marginInlineStart: "auto" },
   updatesButton: {
     flexShrink: "0",
+    maxWidth: "100%",
   },
   updateNoticeDot: {
     position: "absolute",
@@ -137,8 +130,6 @@ const styles = stylex.create({
     pointerEvents: "none",
   },
   controlFocus: {
-    outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":is(.less-control):focus-visible": 3 },
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
   },
 });

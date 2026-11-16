@@ -1,10 +1,28 @@
 import * as stylex from "@stylexjs/stylex";
 import { spacingVars, sizeVars, colorVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Button } from "@bolerish/ui/button";
-import { Label } from "@bolerish/ui/label";
-import { RadioGroup, RadioGroupItem } from "@bolerish/ui/radio-group";
-import { CaretRightIcon, PaintBrushIcon, SlidersHorizontalIcon } from "@phosphor-icons/react";
-import { useId, useState } from "react";
+import { Field, FieldLabel } from "@bolerish/ui/field";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopup,
+  SelectList,
+  SelectItem,
+} from "@bolerish/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@bolerish/ui/toggle-group";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@bolerish/ui/tooltip";
+import {
+  CaretRightIcon,
+  PaintBrushIcon,
+  SlidersHorizontalIcon,
+  BrowserIcon,
+  DesktopIcon,
+  SunIcon,
+  MoonIcon,
+  InfoIcon,
+} from "@phosphor-icons/react";
+import { useId, useRef, useState } from "react";
 import { LOCALES, parseLocalePreference } from "~shared/locale/locales";
 import { setLocalePreference } from "~shared/locale/preference";
 import { useLocalePreference } from "~shared/locale/use-locale";
@@ -17,15 +35,38 @@ export type SettingsPage = "settings" | "language" | "theme";
 export function Settings({
   page,
   onNavigate,
+  portalContainer,
 }: {
+  portalContainer?: HTMLElement;
   page: SettingsPage;
   onNavigate: (page: SettingsPage) => void;
 }) {
   const message = usePanelMessage();
   const language = useLocalePreference();
   const theme = useThemePreference();
+  const id = useId();
+  const languageTrigger = useRef<HTMLButtonElement>(null);
+  const [error, setError] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const languages = [{ value: "auto", label: message("panel_language_auto") }, ...LOCALES];
+  const themeIcons = { page: BrowserIcon, system: DesktopIcon, light: SunIcon, dark: MoonIcon };
+
+  function save(preference: Promise<void>) {
+    setError(false);
+    void preference.catch(() => setError(true));
+  }
   return (
-    <section {...stylex.props(styles.settings)} aria-label={message("panel_settings")}>
+    <section
+      {...stylex.props(styles.settings)}
+      aria-label={message("panel_settings")}
+      onKeyDownCapture={(event) => {
+        if (event.key === "Escape" && languageOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          setLanguageOpen(false);
+        }
+      }}
+    >
       {page === "settings" ? (
         <div {...stylex.props(styles.home)}>
           {(
@@ -65,91 +106,104 @@ export function Settings({
           ))}
         </div>
       ) : page === "language" ? (
-        <PreferenceField
-          key={page}
-          label={message("panel_language")}
-          value={language}
-          options={[{ value: "auto", label: message("panel_language_auto") }, ...LOCALES]}
-          onChange={(value) => setLocalePreference(parseLocalePreference(value))}
-          errorMessage={message("panel_language_error")}
-        />
+        <Field>
+          <FieldLabel htmlFor={id}>{message("panel_language")}</FieldLabel>
+          <Select
+            value={language}
+            open={languageOpen}
+            onOpenChange={setLanguageOpen}
+            items={languages}
+            modal={false}
+            onValueChange={(value) => {
+              if (value !== null) save(setLocalePreference(parseLocalePreference(value)));
+            }}
+          >
+            <SelectTrigger
+              ref={languageTrigger}
+              data-preference-value={language}
+              id={id}
+              className="language-select"
+              xstyle={styles.languageSelect}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup portalContainer={portalContainer} finalFocus={languageTrigger}>
+              <SelectList>
+                {languages.map(({ value, label }) => (
+                  <SelectItem key={value} value={value} data-preference-value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectList>
+            </SelectPopup>
+          </Select>
+          {error ? (
+            <p role="alert" {...stylex.props(styles.error)}>
+              {message("panel_language_error")}
+            </p>
+          ) : null}
+        </Field>
       ) : (
-        <PreferenceField
-          key={page}
-          label={message("panel_theme")}
-          description={message("panel_theme_help")}
-          value={theme}
-          options={themePreferenceSchema.options.map((value) => ({
-            value,
-            label: message(`panel_theme_${value}`),
-          }))}
-          onChange={(value) => setThemePreference(themePreferenceSchema.parse(value))}
-          errorMessage={message("panel_theme_error")}
-        />
+        <Field>
+          <div {...stylex.props(styles.fieldHeading)}>
+            <FieldLabel id={id}>{message("panel_theme")}</FieldLabel>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button variant="ghost" size="icon" aria-label={message("panel_theme_help")}>
+                    <InfoIcon aria-hidden="true" size={16} />
+                  </Button>
+                }
+              />
+              <TooltipContent portalContainer={portalContainer}>
+                {message("panel_theme_help")}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <ToggleGroup
+            aria-labelledby={id}
+            value={[theme]}
+            style={{ flexWrap: "wrap", maxWidth: "100%" }}
+            variant="soft"
+            onValueChange={(values) => {
+              const value = values[0];
+              if (value !== undefined) save(setThemePreference(themePreferenceSchema.parse(value)));
+            }}
+          >
+            {themePreferenceSchema.options.map((value) => {
+              const Icon = themeIcons[value];
+              const label = message(`panel_theme_${value}`);
+              return (
+                <Tooltip key={value}>
+                  <TooltipTrigger
+                    render={
+                      <ToggleGroupItem
+                        value={value}
+                        data-preference-value={value}
+                        aria-label={label}
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                      </ToggleGroupItem>
+                    }
+                  />
+                  <TooltipContent portalContainer={portalContainer}>{label}</TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </ToggleGroup>
+          {error ? (
+            <p role="alert" {...stylex.props(styles.error)}>
+              {message("panel_theme_error")}
+            </p>
+          ) : null}
+        </Field>
       )}
     </section>
   );
 }
 
-function PreferenceField({
-  label,
-  description,
-  value,
-  options,
-  onChange,
-  errorMessage,
-}: {
-  label: string;
-  description?: string;
-  value: string;
-  options: readonly { value: string; label: string }[];
-  onChange: (value: string) => Promise<void>;
-  errorMessage: string;
-}) {
-  const id = useId();
-  const [error, setError] = useState(false);
-  return (
-    <div {...stylex.props(styles.field)}>
-      <span id={id} {...stylex.props(styles.fieldLabel)}>
-        {label}
-      </span>
-      {description ? (
-        <p id={`${id}-description`} {...stylex.props(styles.description)}>
-          {description}
-        </p>
-      ) : null}
-      <RadioGroup
-        value={value}
-        aria-labelledby={id}
-        aria-describedby={description ? `${id}-description` : undefined}
-        onValueChange={(next) => {
-          if (typeof next !== "string") return;
-          setError(false);
-          void onChange(next).catch(() => setError(true));
-        }}
-      >
-        {options.map((option) => (
-          <Label key={option.value} className={stylex.props(styles.option).className}>
-            <RadioGroupItem
-              value={option.value}
-              data-preference-value={option.value}
-              className={["less-preference-radio", stylex.props(styles.focus).className].join(" ")}
-            />
-            <span {...stylex.props(styles.optionText)}>{option.label}</span>
-          </Label>
-        ))}
-      </RadioGroup>
-      {error ? (
-        <p role="alert" {...stylex.props(styles.error)}>
-          {errorMessage}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 const styles = stylex.create({
-  settings: { paddingBlock: spacingVars.space4, overflow: "auto", minHeight: 0 },
+  settings: { overflow: "auto", minHeight: 0 },
   home: { display: "grid", gap: spacingVars.space6 },
   sectionHeading: {
     display: "flex",
@@ -165,20 +219,9 @@ const styles = stylex.create({
   navigationList: {
     display: "grid",
     paddingBlock: spacingVars.space1,
-    marginInlineStart: `calc(${sizeVars.iconSm} + ${spacingVars.space2})`,
   },
-  navigation: { marginInlineStart: `calc(${spacingVars.space3} * -1)`, minWidth: 0 },
-  field: { display: "grid", gap: spacingVars.space3 },
-  fieldLabel: { fontWeight: typo.fontWeightSemibold },
-  description: { margin: 0, color: colorVars.fgSecondary, overflowWrap: "anywhere" },
-  option: { minHeight: 44, gap: spacingVars.space3, alignItems: "center" },
-  optionText: { minWidth: 0, overflowWrap: "anywhere" },
-  focus: {
-    borderColor: { ":is(.less-preference-radio)": colorVars.strokeControl },
-    outline: {
-      ":is(.less-preference-radio):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}`,
-    },
-    outlineOffset: { ":is(.less-preference-radio):focus-visible": 3 },
-  },
+  navigation: { minWidth: 0 },
+  fieldHeading: { display: "flex", alignItems: "center", gap: spacingVars.space2 },
+  languageSelect: { width: "100%", minWidth: 0 },
   error: { color: colorVars.fgFeedbackError, margin: 0, overflowWrap: "anywhere" },
 });

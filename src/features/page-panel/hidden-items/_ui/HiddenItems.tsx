@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, radiusVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { Table, TableBody, TableContainer } from "@bolerish/ui/table";
 import { Button } from "@bolerish/ui/button";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@bolerish/ui/empty";
 import { ScrollArea, ScrollAreaViewport, ScrollAreaContent } from "@bolerish/ui/scroll-area";
@@ -157,21 +158,38 @@ export function HiddenItems({
             xstyle={styles.records}
             aria-label={message("panel_hidden_items")}
           >
-            <ScrollAreaContent render={<ul />} xstyle={styles.recordsList}>
-              {records.map((record, index) => (
-                <RecordRow
-                  key={record.id}
-                  record={record}
-                  index={index}
-                  busy={busy}
-                  selected={previewState.id === record.id}
-                  preview={preview}
-                  portalContainer={portalContainer}
-                  onRestore={() =>
-                    void handleMutation({ type: "RESTORE_HIDDEN_ITEM", origin, id: record.id })
-                  }
-                />
-              ))}
+            <ScrollAreaContent>
+              <TableContainer>
+                <Table
+                  aria-label={message("panel_hidden_items")}
+                  style={{ tableLayout: "fixed", minWidth: "16rem" }}
+                >
+                  <colgroup>
+                    <col />
+                    <col style={{ width: 64 }} />
+                  </colgroup>
+                  <TableBody>
+                    {records.map((record, index) => (
+                      <RecordRow
+                        key={record.id}
+                        record={record}
+                        index={index}
+                        busy={busy}
+                        selected={previewState.id === record.id}
+                        preview={preview}
+                        portalContainer={portalContainer}
+                        onRestore={() =>
+                          void handleMutation({
+                            type: "RESTORE_HIDDEN_ITEM",
+                            origin,
+                            id: record.id,
+                          })
+                        }
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </ScrollAreaContent>
           </ScrollAreaViewport>
         </ScrollArea>
@@ -249,14 +267,7 @@ const styles = stylex.create({
     margin: "0",
     height: "100%",
   },
-  recordsList: {
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
-  },
   controlFocus: {
-    outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":is(.less-control):focus-visible": 3 },
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
   },
 });

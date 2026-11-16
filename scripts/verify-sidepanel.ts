@@ -45,7 +45,14 @@ const semantic = await transformFileAsync(
   },
 );
 const semanticRefs = Object.fromEntries(
-  ["strokeDefault", "bgActionPrimary", "fgPrimary"].map((name) => {
+  [
+    "strokeDefault",
+    "strokeFocus",
+    "bgActionPrimary",
+    "fgPrimary",
+    "interactionHover",
+    "interactionPressed",
+  ].map((name) => {
     const match = semantic?.code?.match(new RegExp(name + ': "([^"]+)"'));
     assert(match, `installed semantic token ${name}`);
     return [name, match[1]];
@@ -633,7 +640,13 @@ try {
   );
   assert.equal(await site.evaluate(() => document.activeElement!.id), "before", "focus restored");
   await action(site, false);
+  await waitFor(() => panel((d) => d.open), "rapid open accepted");
+  const exitCount = panelAnimations.filter((a) => a.type === "WebAnimation").length;
   await action(site, false);
+  await waitFor(
+    () => panelAnimations.filter((a) => a.type === "WebAnimation").length > exitCount,
+    "rapid close accepted",
+  );
   await action(site, false);
   await waitFor(() => panel((d) => d.getAnimations().length === 0), "rapid toggles settled");
   assert.equal(await site.locator("[data-less-panel]").count(), 1, "rapid toggles keep one panel");
@@ -875,16 +888,15 @@ try {
   );
   await site.keyboard.press("Escape");
   assert.equal(await site.locator("[data-less-panel]").count(), 1, "tooltip Escape takes priority");
+  await site.mouse.move(0, 0);
   await panel((d) => d.querySelector<HTMLElement>(".updates-button")!.focus());
-  await site.waitForTimeout(400);
-  assert.equal(
-    await panel((d) => d.querySelectorAll('[role="tooltip"]').length),
-    0,
+  await waitFor(
+    () => panel((d) => !d.querySelector('[role="tooltip"]')),
     "version badge has no visible tooltip",
   );
   assert.equal(await panel((d) => d.querySelector(".updates-button")!.getAttribute("title")), null);
   await click(".updates-button");
-  await waitFor(() => textIncludes(messages.panel_updates_help), "updates timeline");
+  await waitFor(() => textIncludes(messages.panel_update_history), "updates timeline");
   assert(
     !(await panel((d) => d.innerText)).includes("Veil"),
     "unreleased update copy uses current name",
@@ -949,7 +961,7 @@ try {
         cardLayout.columns && cardLayout.rows,
         "site card precedes primary action and separate site switch",
       );
-      assert.equal(cardLayout.countFont, "24px", "the count retains its semantic heading size");
+      assert.equal(cardLayout.countFont, "32px", "the count retains its semantic heading size");
       if (width <= 375) {
         const stress = await panel(
           (d, value) => {
@@ -1848,9 +1860,8 @@ try {
   await action();
   await waitFor(() => textIncludes("날씨"), "collapsed region keeps its accessible name");
   await click(".record:first-child .locate-button");
-  assert.equal(
-    await panel((d) => d.querySelector(".locate-button")!.getAttribute("aria-pressed")),
-    "true",
+  await waitFor(
+    () => panel((d) => d.querySelector(".locate-button")?.getAttribute("aria-pressed") === "true"),
     "collapsed region can be previewed without a hidden-parent error",
   );
   await site.keyboard.press("Escape");
@@ -2144,7 +2155,22 @@ try {
   await site.keyboard.press("Escape");
   await hidden("#fixed-target");
   assert.equal(await panel((d) => d.dataset.preview), "false", "Escape ends preview");
-  async function assertMouseRowBackgroundOnly(state: string) {
+  async function assertMouseRowControls(state: string) {
+    await site.evaluate(
+      () =>
+        new Promise<void>((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => done())),
+        ),
+    );
+    await waitFor(
+      () =>
+        panel((d) =>
+          d
+            .getAnimations({ subtree: true })
+            .every((animation) => animation.playState !== "running"),
+        ),
+      "official interaction transitions settled",
+    );
     const paint = await panel((d) => {
       const button = d.querySelector<HTMLElement>('.locate-button[aria-label*="Nested"]')!;
       const row = button.closest<HTMLElement>(".record-row")!;
@@ -2154,7 +2180,16 @@ try {
         focusVisible: button.matches(":focus-visible"),
         background: getComputedStyle(row).backgroundColor,
         inner: getComputedStyle(button).backgroundColor,
-        layers: [row, button].flatMap((element) =>
+        overlay: getComputedStyle(button, "::after").backgroundColor,
+        expectedOverlay: (() => {
+          const probe = document.createElement("span");
+          probe.style.color = "transparent";
+          d.append(probe);
+          const color = getComputedStyle(probe).color;
+          probe.remove();
+          return color;
+        })(),
+        layers: [button].flatMap((element) =>
           [null, "::before", "::after"].map((pseudo) => {
             const style = getComputedStyle(element, pseudo);
             return {
@@ -2174,15 +2209,21 @@ try {
     });
     console.log("ROW PAINT", state, JSON.stringify(paint));
     assert.equal(paint.focusVisible, false, `${state}: mouse focus is not keyboard focus`);
-    assert.notEqual(paint.background, "rgba(0, 0, 0, 0)", `${state}: semantic row background`);
-    assert.equal(paint.inner, "rgba(0, 0, 0, 0)", `${state}: no nested button background`);
+    assert.equal(
+      paint.overlay,
+      paint.expectedOverlay,
+      `${state}: official ghost interaction layer`,
+    );
+    if (!state.includes("selected"))
+      assert.equal(paint.inner, "rgba(0, 0, 0, 0)", `${state}: official ghost background`);
     for (const layer of paint.layers) {
       assert.equal(layer.outline, "none", `${state}: no row/button/pseudo outline`);
-      for (const [width, style, color] of layer.borders)
-        assert(
-          width === "0px" || style === "none" || color === "rgba(0, 0, 0, 0)",
-          `${state}: no visible row/button/pseudo border`,
-        );
+      if (!state.includes("selected"))
+        for (const [width, style, color] of layer.borders)
+          assert(
+            width === "0px" || style === "none" || color === "rgba(0, 0, 0, 0)",
+            `${state}: no visible row/button/pseudo border`,
+          );
       assert.equal(layer.shadow, "none", `${state}: no row/button/pseudo shadow`);
     }
     return paint;
@@ -2206,15 +2247,15 @@ try {
               getComputedStyle(d.querySelector('.locate-button[aria-label*="Nested"]')!, "::after")
                 .backgroundColor === "rgba(0, 0, 0, 0)",
           ),
-        "text button has no nested hover layer",
+        "inner action has no duplicate hover paint",
       );
-      const hover = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/hover`);
+      const hover = await assertMouseRowControls(`${width}/${colorScheme}/hover`);
       assert(hover.hovered && !hover.pressed, "real mouse hover without pressing");
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-row-hover-${width}-${colorScheme}.png`),
       });
       await site.mouse.down();
-      const pressed = await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/pressed`);
+      const pressed = await assertMouseRowControls(`${width}/${colorScheme}/pressed`);
       assert(pressed.pressed, "real mouse press changes only the background");
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-row-pressed-${width}-${colorScheme}.png`),
@@ -2234,7 +2275,7 @@ try {
         () => panel((d) => d.dataset.previewLayout === "compact"),
         "narrow compact preview",
       );
-      await assertMouseRowBackgroundOnly(`${width}/${colorScheme}/click-selected`);
+      await assertMouseRowControls(`${width}/${colorScheme}/click-selected`);
       const state = await panel((d) => {
         const row = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
         row.focus();
@@ -2243,7 +2284,7 @@ try {
           client: d.clientWidth,
           scroll: d.scrollWidth,
           rows: d.querySelectorAll(".record").length,
-          selected: getComputedStyle(row.closest(".record-row")!).backgroundColor,
+          selected: getComputedStyle(row).backgroundColor,
         };
       });
       assert(
@@ -2261,9 +2302,7 @@ try {
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       });
       await site.mouse.move(selectedPoint.x, selectedPoint.y);
-      const selectedHover = await assertMouseRowBackgroundOnly(
-        `${width}/${colorScheme}/selected-hover`,
-      );
+      const selectedHover = await assertMouseRowControls(`${width}/${colorScheme}/selected-hover`);
       assert(selectedHover.hovered, "selected row is really hovered");
       const paint = await panel((d) => {
         const button = d.querySelector<HTMLElement>('.locate-button[aria-pressed="true"]')!;
@@ -2272,7 +2311,7 @@ try {
         const a = row.getBoundingClientRect(),
           b = item.getBoundingClientRect();
         return {
-          background: getComputedStyle(row).backgroundColor,
+          background: getComputedStyle(button).backgroundColor,
           inner: getComputedStyle(button).backgroundColor,
           overlay: getComputedStyle(button, "::after").backgroundColor,
           radius: getComputedStyle(row).borderRadius,
@@ -2286,18 +2325,23 @@ try {
         state.selected,
         "selection keeps one background while hovered",
       );
-      assert.equal(paint.inner, "rgba(0, 0, 0, 0)");
-      assert.equal(paint.overlay, "rgba(0, 0, 0, 0)");
+      assert.notEqual(
+        paint.inner,
+        "rgba(0, 0, 0, 0)",
+        "selected action keeps its official secondary fill",
+      );
+      assert.equal(
+        paint.overlay,
+        "rgba(0, 0, 0, 0)",
+        "selected action has no duplicate hover layer",
+      );
       assert.equal(
         paint.outline,
         "none",
         "selected/hovered row uses background without an outline",
       );
       assert.equal(paint.shadow, "none", "selected row has no inset blue edge");
-      assert(
-        paint.fullWidth && paint.radius !== "0px",
-        "hover and selected paint share full row bounds and radius",
-      );
+      assert(paint.fullWidth, "Table rows retain full available width");
       await site.screenshot({
         path: values.screenshot.replace(
           /\.png$/,
@@ -2314,13 +2358,13 @@ try {
           style: s.outlineStyle,
           width: s.outlineWidth,
           color: s.outlineColor,
-          background: getComputedStyle(e.closest(".record-row")!).backgroundColor,
+          background: getComputedStyle(e).backgroundColor,
           rowOutline: getComputedStyle(e.closest(".record-row")!).outlineStyle,
           rowShadow: getComputedStyle(e.closest(".record-row")!).boxShadow,
         };
       });
       assert(
-        focus.visible && focus.style === "solid" && focus.width === "2px",
+        focus.visible && focus.style === "solid" && parseFloat(focus.width) >= 2,
         "keyboard focus remains visible",
       );
       assert.notEqual(focus.background, "rgba(0, 0, 0, 0)", "keyboard row focus has a background");
@@ -2329,8 +2373,15 @@ try {
       console.log("ROW FOCUS", width, colorScheme, JSON.stringify(focus));
       assert.equal(
         focus.color,
-        await site.locator("#nested-target").evaluate((e) => getComputedStyle(e).outlineColor),
-        "keyboard row focus and preview use the same blue color",
+        await panel((d, token) => {
+          const probe = document.createElement("span");
+          probe.style.color = token;
+          d.append(probe);
+          const color = getComputedStyle(probe).color;
+          probe.remove();
+          return color;
+        }, semanticRefs.strokeFocus),
+        "keyboard focus uses the official strokeFocus token",
       );
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-preview-${width}-${colorScheme}.png`),
@@ -2341,25 +2392,23 @@ try {
   }
   await site.setViewportSize({ width: 1100, height: 800 });
   await site.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
-  // Row hover is a semantic layer, independent of its button's package hover layer.
+  // The official ghost Button owns hover paint; Item owns selected grouping.
   const hoverPoint = await panel((d) => {
-    const row = d.querySelector<HTMLElement>(".record-row")!,
-      r = row.getBoundingClientRect();
-    return { x: r.left + 2, y: r.top + 2 };
+    const button = d.querySelector<HTMLElement>(".locate-button")!;
+    const rect = button.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
   });
   await site.mouse.move(hoverPoint.x, hoverPoint.y);
-  assert.equal(
-    await panel((d) => {
-      const e = d.querySelector<HTMLElement>(".record-row")!;
-      return e.matches(":hover") && getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)";
-    }),
-    true,
-    "row hover background resolves",
-  );
-  assert.equal(
-    await panel((d) => getComputedStyle(d.querySelector(".record-row")!).outlineStyle),
-    "none",
-    "row hover uses background without an outline",
+  await waitFor(
+    () =>
+      panel((d) => {
+        const button = d.querySelector<HTMLElement>(".locate-button")!;
+        return (
+          button.matches(":hover") &&
+          getComputedStyle(button.closest(".record-row")!).backgroundColor !== "rgba(0, 0, 0, 0)"
+        );
+      }),
+    "TableRow owns hover paint",
   );
   await click(".record:first-child .restore-button");
   await hidden("#fixed-target", false);
@@ -2369,7 +2418,7 @@ try {
   await hidden("#fixed-target", false);
   await hidden("#nested-target");
   console.log(
-    "PASS one click/one record+row, explicit parent and child, identical labels, nested and long scroll, fixed overlay, panel retained, active row, return, hover/focus, narrow light/dark reduced motion, X restore reload",
+    "PASS one click/one record+row, explicit parent and child, identical labels, nested and long scroll, fixed overlay, panel retained, active action, return, hover/focus, narrow light/dark reduced motion, X restore reload",
   );
 
   await activeContext.route("https://external.example/**", (route) =>
@@ -2512,7 +2561,7 @@ try {
         footer = d.querySelector<HTMLElement>(".panel-footer")!;
       list.scrollTop = list.scrollHeight;
       const li = list.querySelector<HTMLElement>(".record")!,
-        row = li.querySelector<HTMLElement>(".record-row")!,
+        row = li,
         badge = row.querySelector<HTMLElement>(".record-kind")!,
         button = row.querySelector<HTMLElement>(".restore-button")!;
       const a = li.getBoundingClientRect(),
@@ -2571,19 +2620,18 @@ try {
   await click(".settings-button");
   await click('[data-settings-page="language"]');
   assert.equal(
-    await panel((d) =>
-      d.querySelector('[role="radio"][aria-checked="true"]')!.getAttribute("data-preference-value"),
-    ),
+    await panel((d) => d.querySelector(".language-select")!.getAttribute("data-preference-value")),
     "auto",
     "browser language is the default",
   );
-  await click('[role="radio"][data-preference-value="es"]');
+  await click(".language-select");
+  await click('[role="option"][data-preference-value="es"]');
   await waitFor(
     () =>
       panel(
         (d) =>
-          d.querySelector('[data-preference-value="es"]')?.getAttribute("aria-checked") ===
-            "true" && d.lang === "es",
+          d.querySelector(".language-select")?.getAttribute("data-preference-value") === "es" &&
+          d.lang === "es",
       ),
     "language change updates mounted settings",
   );
@@ -2603,8 +2651,8 @@ try {
     () =>
       panel(
         (d) =>
-          d.querySelector('[data-preference-value="ja"]')?.getAttribute("aria-checked") ===
-            "true" && d.lang === "ja",
+          d.querySelector(".language-select")?.getAttribute("data-preference-value") === "ja" &&
+          d.lang === "ja",
       ),
     "welcome selection synchronizes mounted panel",
   );
@@ -2690,6 +2738,16 @@ try {
             const button = row.querySelector<HTMLElement>(".locate-button")!;
             return {
               category: badge.textContent,
+              metrics: [badge, text, button].map((e) =>
+                e
+                  ? [
+                      e.clientWidth,
+                      e.scrollWidth,
+                      getComputedStyle(e).whiteSpace,
+                      getComputedStyle(e).height,
+                    ]
+                  : null,
+              ),
               text: text?.textContent ?? "",
               label: button.getAttribute("aria-label"),
               fits:
@@ -2708,7 +2766,7 @@ try {
           );
           assert(
             row.fits && row.text !== row.category && row.label?.includes(row.category!),
-            `${locale}/${width}/${colorScheme}: badge, short text and accessible name fit`,
+            `${locale}/${width}/${colorScheme}: badge, short text and accessible name fit ${JSON.stringify(row)}`,
           );
         }
       }
@@ -2718,7 +2776,6 @@ try {
         const reset = d.querySelector<HTMLElement>(".reset-button")!;
         const card = d.querySelector<HTMLElement>(".site-card")!;
         const content = card.firstElementChild!;
-        const label = d.querySelector<HTMLElement>(".eyebrow")!.getBoundingClientRect();
         const setting = d.querySelector<HTMLElement>(".preference > span")!.getBoundingClientRect();
         const toggle = d
           .querySelector<HTMLElement>('.preference [role="switch"]')!
@@ -2727,12 +2784,8 @@ try {
           scroll: list.scrollTop,
           site: d.querySelector(".site-title")!.textContent,
           reset: reset.getBoundingClientRect().toJSON(),
-          labelOffset: setting.left - label.left,
-          switchOffset:
-            toggle.right -
-            (card.getBoundingClientRect().right -
-              parseFloat(getComputedStyle(card).borderRightWidth) -
-              parseFloat(getComputedStyle(content).paddingRight)),
+          labelOffset: setting.left - card.getBoundingClientRect().left,
+          switchOffset: toggle.right - card.getBoundingClientRect().right,
           padding: getComputedStyle(content).paddingInline,
           border: getComputedStyle(card).borderInlineWidth,
           width: d.clientWidth,
@@ -2750,7 +2803,7 @@ try {
       );
       assert(
         Math.abs(before.labelOffset) < 0.5 && Math.abs(before.switchOffset) < 0.5,
-        `${locale}/${width}: switch row aligns with CardContent (${before.padding} + ${before.border})`,
+        `${locale}/${width}: switch row aligns with the shared body edges`,
       );
       assert.equal(before.refresh, null);
       assert.equal(before.resetText, catalog.panel_reset.message);
@@ -2772,7 +2825,9 @@ try {
           fits:
             button.scrollWidth <= button.clientWidth &&
             bounds.left >= 0 &&
-            bounds.right <= settings.getBoundingClientRect().left,
+            bounds.right <= d.getBoundingClientRect().right &&
+            (bounds.right <= settings.getBoundingClientRect().left ||
+              bounds.bottom <= settings.getBoundingClientRect().top),
           label: button.getAttribute("aria-label"),
         };
       });
@@ -2785,12 +2840,12 @@ try {
       );
       assert(
         updateEntry.pill && updateEntry.fits,
-        `${locale}/${width}: label and pill fit beside settings`,
+        `${locale}/${width}: label and pill fit without overlapping settings`,
       );
       assert(updateEntry.label!.includes(catalog.panel_update_history.message));
       assert(before.reset.bottom <= 720);
       console.log(
-        `ALIGN ${locale}/${width}: label ${before.labelOffset}px, switch ${before.switchOffset}px, CardContent padding ${before.padding}, border ${before.border}`,
+        `ALIGN ${locale}/${width}: label ${before.labelOffset}px, switch ${before.switchOffset}px, CardHeader padding ${before.padding}, border ${before.border}`,
       );
       await site.screenshot({
         path: values.screenshot.replace(/\.png$/, `-${locale}-${width}.png`),
@@ -2931,29 +2986,41 @@ try {
         catalog.panel_settings.message,
       );
       await click('[data-settings-page="language"]');
-      await site.keyboard.press("Tab");
-      await site.keyboard.press("Tab");
-      await site.keyboard.press("Tab");
+      for (let step = 0; step < 5; step++) {
+        await site.keyboard.press("Tab");
+        if (
+          await panel((d) =>
+            (d.getRootNode() as ShadowRoot).activeElement?.matches(".language-select"),
+          )
+        )
+          break;
+      }
       assert.equal(
-        await panel(
-          (d) => (d.getRootNode() as ShadowRoot).activeElement?.getAttribute("role") === "radio",
+        await panel((d) =>
+          (d.getRootNode() as ShadowRoot).activeElement?.matches(".language-select"),
         ),
         true,
-        "language control is keyboard reachable",
+        "language Select is keyboard reachable",
       );
       assert.equal(
         await panel((d) =>
-          d
-            .querySelector('[role="radio"][aria-checked="true"]')!
-            .getAttribute("data-preference-value"),
+          d.querySelector(".language-select")?.getAttribute("data-preference-value"),
         ),
         locale,
       );
-      assert.equal(
-        await panel((d) => d.querySelectorAll('[role="radio"]').length),
-        6,
-        "only auto and five supported locales",
+      await click(".language-select");
+      await waitFor(
+        () =>
+          panel(
+            (d) => d.querySelector(".language-select")?.getAttribute("aria-expanded") === "true",
+          ),
+        "language popup is open before Escape",
       );
+      await waitFor(
+        () => panel((d) => d.querySelectorAll('[role="option"]').length === 6),
+        "auto and five supported locales",
+      );
+      await site.keyboard.press("Escape");
       for (const theme of ["light", "dark"] as const) {
         await site.emulateMedia({ colorScheme: theme });
         await waitFor(
@@ -2961,7 +3028,7 @@ try {
           "settings theme transition settled",
         );
         const layout = await panel((d) => {
-          const select = d.querySelector('[role="radiogroup"]')!;
+          const select = d.querySelector(".language-select")!;
           const rect = select.getBoundingClientRect();
           return {
             left: rect.left,
@@ -3004,6 +3071,14 @@ try {
         await waitFor(
           () => panel((d) => !!d.querySelector('[role="alertdialog"]')),
           "localized confirmation opens",
+        );
+        await waitFor(
+          () =>
+            panel((d) => {
+              const popup = d.querySelector('[role="alertdialog"]');
+              return !!popup?.contains((d.getRootNode() as ShadowRoot).activeElement);
+            }),
+          "confirmation receives initial focus",
         );
         const confirmation = await panel((d) => {
           const popup = d.querySelector<HTMLElement>('[role="alertdialog"]')!;
@@ -3293,7 +3368,7 @@ try {
       const number = d.querySelector<HTMLElement>(".count-value")!;
       return (
         getComputedStyle(content).gridTemplateColumns.split(" ").length === 1 &&
-        getComputedStyle(number).fontSize === "24px"
+        getComputedStyle(number).fontSize === "32px"
       );
     }),
     true,
@@ -3337,7 +3412,7 @@ try {
   await click(".settings-button");
   await click('[data-settings-page="language"]');
   const settingsZoom = await panel((d) => {
-    const select = d.querySelector('[role="radiogroup"]')!;
+    const select = d.querySelector(".language-select")!;
     return {
       right: select.getBoundingClientRect().right,
       viewport: innerWidth,

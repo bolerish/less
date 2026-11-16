@@ -3,8 +3,8 @@ import { getHiddenCount } from "../_lib/hidden-count";
 import type { PanelMessage } from "~features/record/management-messages";
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
-import { Card, CardContent } from "@bolerish/ui/card";
+import { colorVars, spacingVars, sizeVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { Card, CardHeader } from "@bolerish/ui/card";
 import { Button } from "@bolerish/ui/button";
 import { Heading } from "@bolerish/ui/heading";
 import { Switch } from "@bolerish/ui/switch";
@@ -63,7 +63,7 @@ export function SiteOverview({
         aria-label={message("panel_current_site")}
         aria-description={message("panel_count_help")}
       >
-        <CardContent xstyle={styles.siteCardContent}>
+        <CardHeader xstyle={styles.siteCardContent}>
           <div className={["site-identity", stylex.props(styles.siteIdentity).className].join(" ")}>
             <p className={["eyebrow", stylex.props(styles.eyebrow).className].join(" ")}>
               {message("panel_current_site")}
@@ -89,13 +89,14 @@ export function SiteOverview({
               {hiddenCount?.noun ?? message("panel_hidden_items")}
             </span>
           </p>
-        </CardContent>
+        </CardHeader>
       </Card>
       <Button
         className={["select-button less-control", stylex.props(styles.controlFocus).className].join(
           " ",
         )}
         xstyle={styles.selectButton}
+        style={{ whiteSpace: "normal", height: "auto", minHeight: sizeVars.controlSm }}
         size="sm"
         disabled={busy || selecting || enabled !== true}
         onClick={() => void startSelection()}
@@ -103,12 +104,7 @@ export function SiteOverview({
         <CursorIcon {...stylex.props(styles.icon)} aria-hidden="true" />
         {selecting ? message("panel_starting") : message("panel_select")}
       </Button>
-      <label
-        className={[
-          "preference",
-          stylex.props(styles.preference, styles.preferenceGutter).className,
-        ].join(" ")}
-      >
+      <label className={["preference", stylex.props(styles.preference).className].join(" ")}>
         <span style={{ minWidth: 0 }}>{message("panel_enable_hiding")}</span>
         <Switch
           style={{ flexShrink: 0 }}
@@ -130,11 +126,7 @@ export function SiteOverview({
         </p>
       ) : null}
       {enabled === false ? (
-        <p
-          className={["muted", stylex.props(styles.muted, styles.preferenceGutter).className].join(
-            " ",
-          )}
-        >
+        <p className={["muted", stylex.props(styles.muted).className].join(" ")}>
           {message("panel_paused")}
         </p>
       ) : null}
@@ -149,7 +141,6 @@ const styles = stylex.create({
     maxHeight: "45dvh",
     overflow: "auto",
     background: "var(--less-app-background)",
-    paddingBlock: `${spacingVars.space3} ${spacingVars.space4}`,
     display: { default: "block", ":is([data-preview-layout='compact'] *)": "none" },
   },
   siteCard: {
@@ -164,7 +155,6 @@ const styles = stylex.create({
     },
     alignItems: "center",
     gap: spacingVars.space4,
-    padding: spacingVars.space3,
   },
   siteIdentity: {
     minWidth: "0",
@@ -181,9 +171,6 @@ const styles = stylex.create({
       scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
       overflowWrap: "anywhere",
       minWidth: 0,
-      fontSize: typo.fontSizeLg,
-      fontWeight: typo.fontWeightSemibold,
-      marginBlock: spacingVars.space1,
       outlineColor: colorVars.fgFeedbackInfo,
     },
   },
@@ -222,10 +209,6 @@ const styles = stylex.create({
     gap: spacingVars.space2,
     marginBlock: `${spacingVars.space5} ${spacingVars.space3}`,
   },
-  preferenceGutter: {
-    // Match CardContent plus its one-pixel card border.
-    paddingInline: `calc(${spacingVars.space3} + 1px)`,
-  },
   selectionError: {
     marginBlock: spacingVars.space2,
     color: colorVars.fgFeedbackError,
@@ -236,8 +219,6 @@ const styles = stylex.create({
     color: colorVars.fgSecondary,
   },
   controlFocus: {
-    outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":is(.less-control):focus-visible": 3 },
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
   },
 });

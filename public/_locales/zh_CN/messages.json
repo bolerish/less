@@ -45,7 +45,7 @@
     "message": "取消隐藏"
   },
   "panel_updates": {
-    "message": "更新"
+    "message": "更新记录"
   },
   "panel_update_history": {
     "message": "更新记录"
@@ -121,9 +121,6 @@
   },
   "panel_preference_error": {
     "message": "无法更改隐藏设置，请重试。"
-  },
-  "panel_updates_help": {
-    "message": "按最新更改排序。"
   },
   "panel_unreleased": {
     "message": "尚未发布"

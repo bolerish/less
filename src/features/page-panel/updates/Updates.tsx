@@ -1,6 +1,6 @@
 import { useLanguage } from "~shared/locale/use-locale";
 import * as stylex from "@stylexjs/stylex";
-import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Badge } from "@bolerish/ui/badge";
 import {
   Timeline,
@@ -21,16 +21,8 @@ export function Updates() {
   return (
     <section
       className={["updates", stylex.props(styles.updates).className].join(" ")}
-      aria-label={message("panel_updates")}
+      aria-label={message("panel_update_history")}
     >
-      <p
-        className={[
-          "muted",
-          stylex.props(styles.paragraph, styles.muted, styles.updatesHelp).className,
-        ].join(" ")}
-      >
-        {message("panel_updates_help")}
-      </p>
       <Timeline>
         {productUpdates.map((update) => (
           <TimelineItem key={update.version}>
@@ -89,15 +81,6 @@ const styles = stylex.create({
     flex: "1",
     minHeight: "0",
     overflow: "auto",
-  },
-  paragraph: {
-    marginBlock: spacingVars.space2,
-  },
-  muted: {
-    color: colorVars.fgSecondary,
-  },
-  updatesHelp: {
-    marginBlock: `${spacingVars.space3} ${spacingVars.space5}`,
   },
   updateHeading: {
     display: "flex",

@@ -42,11 +42,7 @@ function App() {
         <div className={["welcome-header", stylex.props(styles.header).className].join(" ")}>
           <div className={["welcome-brand", stylex.props(styles.brand).className].join(" ")}>
             <img src={wxtLogo} alt="" width={32} />
-            <Heading
-              level={1}
-              size="page"
-              className={["welcome-title", stylex.props(styles.title).className].join(" ")}
-            >
+            <Heading level={1} size="page" className="welcome-title">
               {t.title}
             </Heading>
           </div>
@@ -68,10 +64,8 @@ function App() {
             const shortcut = STEP_SHORTCUTS[i];
             return (
               <TimelineItem key={step.title}>
-                <TimelineIndicator className="welcome-step-indicator" xstyle={styles.indicator}>
-                  {i + 1}
-                </TimelineIndicator>
-                <TimelineContent className="welcome-step-content" xstyle={styles.step}>
+                <TimelineIndicator className="welcome-step-indicator">{i + 1}</TimelineIndicator>
+                <TimelineContent className="welcome-step-content">
                   <TimelineTitle>{step.title}</TimelineTitle>
                   <TimelineDescription>{step.description}</TimelineDescription>
                   {shortcut && step.kbdLabel && (
@@ -82,9 +76,7 @@ function App() {
                     >
                       <KbdGroup>
                         {shortcut.map((key) => (
-                          <Kbd key={key} className={stylex.props(styles.kbd).className}>
-                            {key}
-                          </Kbd>
+                          <Kbd key={key}>{key}</Kbd>
                         ))}
                       </KbdGroup>
                       <span
@@ -128,7 +120,6 @@ const styles = stylex.create({
     marginBottom: spacingVars.space8,
   },
   brand: { display: "flex", minWidth: 0, alignItems: "center", gap: spacingVars.space3 },
-  title: { fontFamily: "inherit", letterSpacing: "-0.025em", lineHeight: 1.4 },
   divider: { marginBottom: spacingVars.space8 },
   shortcut: {
     display: "flex",
@@ -138,13 +129,4 @@ const styles = stylex.create({
     marginTop: spacingVars.space2,
   },
   shortcutLabel: { fontSize: typo.fontSizeXs, color: colorVars.fgSecondary },
-  indicator: { border: 0 },
-  step: { paddingBlock: 0 },
-  kbd: {
-    border: 0,
-    padding: 0,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-    fontSize: typo.fontSizeXs,
-    lineHeight: typo.lineHeightNormal,
-  },
 });

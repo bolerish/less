@@ -45,7 +45,7 @@
     "message": "再表示"
   },
   "panel_updates": {
-    "message": "更新情報"
+    "message": "更新履歴"
   },
   "panel_update_history": {
     "message": "更新履歴"
@@ -121,9 +121,6 @@
   },
   "panel_preference_error": {
     "message": "非表示設定を変更できませんでした。再試行してください。"
-  },
-  "panel_updates_help": {
-    "message": "新しい変更から表示します。"
   },
   "panel_unreleased": {
     "message": "未リリース"

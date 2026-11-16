@@ -45,7 +45,7 @@
     "message": "Unhide"
   },
   "panel_updates": {
-    "message": "Updates"
+    "message": "Update history"
   },
   "panel_update_history": {
     "message": "Update history"
@@ -121,9 +121,6 @@
   },
   "panel_preference_error": {
     "message": "Could not change hiding. Try again."
-  },
-  "panel_updates_help": {
-    "message": "Latest changes, newest first."
   },
   "panel_unreleased": {
     "message": "Not yet released"

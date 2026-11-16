@@ -28,6 +28,9 @@ background API in a fixture; it does not run Firefox. PNGs are written to `/tmp`
 by default (`--screenshot /path/to/capture.png` changes their prefix). Chrome,
 profile and local fixture server are cleaned up afterward.
 
+The page-panel shell and shared inset live in `src/features/page-panel/layout.tsx`.
+`view.tsx` owns navigation and screen state; `mount.tsx` owns the native modal lifetime.
+
 ## Verify previously corrected behavior
 
 Select checks from the changed user flow before editing. Keep the current
@@ -37,7 +40,7 @@ submission. A passing build does not establish the behavior below.
 | User requirement                                                                                 | Existing verification                                                 | Remaining judgment                                                                            |
 | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Shift previews the parent; click hides that exact target once                                    | `pnpm verify:panel`                                                   | Exercise any reported site-specific DOM case separately                                       |
-| Hidden-item hover changes only the row background; keyboard focus remains visible                | `pnpm verify:panel`                                                   | Inspect the generated hover/selected screenshots                                              |
+| Table rows own hover; inner preview actions retain keyboard focus without a second hover layer   | `pnpm verify:panel`                                                   | Inspect the generated hover/selected screenshots                                              |
 | Version/update entry, settings/language selection, panel layout and persistence remain available | `pnpm verify:panel`, `pnpm verify:locale`, `pnpm verify:updates`      | Compare the approved layout with the rendered result                                          |
 | Hiding is applied before reveal and remains correct on navigation/cache changes                  | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |
 | Five languages retain keys/placeholders and supported product claims                             | `pnpm verify:copy`, `pnpm verify:locale`                              | Review natural wording in each changed language; key parity does not prove fluency            |

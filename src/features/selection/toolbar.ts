@@ -251,7 +251,6 @@ const styles = stylex.create({
   closeButton: {
     flexShrink: 0,
     appearance: "none",
-    backgroundColor: "transparent",
     borderWidth: 0,
     borderStyle: "none",
     padding: 0,
@@ -261,8 +260,12 @@ const styles = stylex.create({
     color: colorVars.fgSecondary,
     cursor: "pointer",
     pointerEvents: "auto",
-    outline: { default: "none", ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
     outlineOffset: 2,
+    // Scope native toolbar atoms so they cannot override the DS cascade layers.
+    ":is(button)": {
+      backgroundColor: "transparent",
+      outline: { default: "none", ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
+    },
   },
   restoreButton: {
     flexShrink: 0,
@@ -273,8 +276,11 @@ const styles = stylex.create({
     transition: "opacity 0.2s ease, transform 0.2s ease",
     cursor: "pointer",
     pointerEvents: { default: "auto", ":disabled": "none" },
-    outline: { default: "none", ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
     outlineOffset: 2,
+    // Scope native toolbar atoms so they cannot override the DS cascade layers.
+    ":is(button)": {
+      outline: { default: "none", ":focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
+    },
   },
   undoIcon: {
     fontSize: typo.fontSizeMd,

@@ -45,7 +45,7 @@
     "message": "Mostrar"
   },
   "panel_updates": {
-    "message": "Novedades"
+    "message": "Historial de actualizaciones"
   },
   "panel_update_history": {
     "message": "Historial de actualizaciones"
@@ -121,9 +121,6 @@
   },
   "panel_preference_error": {
     "message": "No se pudo cambiar la ocultación. Inténtalo de nuevo."
-  },
-  "panel_updates_help": {
-    "message": "Cambios más recientes primero."
   },
   "panel_unreleased": {
     "message": "Sin publicar"

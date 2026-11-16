@@ -24,7 +24,7 @@ const fixture = createServer((_req, res) => {
   res.end("<!doctype html><title>Less HMR fixture</title><p>Reading page</p>");
 });
 const directory = await mkdtemp(join(tmpdir(), "less-dev-"));
-const panelPath = "src/features/page-panel/Panel.tsx";
+const panelPath = "src/features/page-panel/layout.tsx";
 const original = await readFile(panelPath, "utf8");
 let context: BrowserContext | undefined;
 let changed = false;
@@ -33,7 +33,7 @@ try {
   const paths = [
     "/src/entries/welcome/index.html",
     "/src/entries/welcome/App.tsx",
-    "/src/features/page-panel/Panel.tsx",
+    "/src/features/page-panel/layout.tsx",
     "/virtual:stylex.css",
   ];
   const responses = await Promise.all(
@@ -106,7 +106,7 @@ try {
     const result = await session.send("Runtime.callFunctionOn", {
       objectId: object.objectId,
       functionDeclaration:
-        "function(){return getComputedStyle(this.querySelector('.panel')).paddingLeft}",
+        "function(){return getComputedStyle(this.querySelector('.panel-body')).paddingLeft}",
       returnByValue: true,
     });
     return result.result.value;
@@ -114,8 +114,8 @@ try {
   await open();
   await waitFor(async () => (await padding()) === "16px", "initial extracted shadow CSS");
   const replacement = original.replace(
-    "paddingInline: spacingVars.space4",
-    "paddingInline: spacingVars.space5",
+    '"--less-panel-inset": spacingVars.space4',
+    '"--less-panel-inset": spacingVars.space5',
   );
   assert.notEqual(replacement, original, "fixture changes an existing consumed StyleX value");
   changed = true;

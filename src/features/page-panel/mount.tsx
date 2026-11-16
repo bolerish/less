@@ -1,6 +1,6 @@
 import { getLanguage } from "~shared/locale/preference";
 import { createRoot, type Root } from "react-dom/client";
-import Panel from "./Panel";
+import PanelView from "./view";
 import { getPanelMessage } from "~features/record/management-messages";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, radiusVars, shadowVars, motionVars } from "@bolerish/tokens/semantic.stylex";
@@ -124,7 +124,6 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     dialog = document.createElement("dialog");
     dialog.lang = getLanguage();
     dialog.setAttribute("aria-label", getPanelMessage("panel_dialog"));
-    dialog.setAttribute("data-bolerish-surface", "solid");
     dialog.addEventListener("keydown", (event) => {
       if (event.key !== "Tab" || !dialog) return;
       const scope = dialog.querySelector<HTMLElement>('[role="alertdialog"]') ?? dialog;
@@ -165,7 +164,7 @@ export function createPagePanel(onSelect: () => void, preview: HiddenItemPreview
     unsubscribeTheme = subscribeTheme(syncTheme);
     root = createRoot(container);
     root.render(
-      <Panel
+      <PanelView
         origin={location.origin}
         preview={preview}
         portalContainer={dialog}
@@ -224,7 +223,8 @@ const styles = stylex.create({
     height: { default: "100dvh", ":is([data-preview-layout='compact'] )": "min(45dvh, 340px)" },
     maxWidth: "none",
     maxHeight: "none",
-    overflow: "hidden",
+    // Popup autofocus must not scroll the modal shell; each screen owns its scroll area.
+    overflow: "clip",
     overscrollBehavior: "contain",
     pointerEvents: "auto",
     borderBlockWidth: { default: 0, ":is([data-preview-layout='compact'] )": 1 },

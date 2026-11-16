@@ -35,7 +35,7 @@ export function createSelectionSurface(attribute: string, xstyle?: stylex.StyleX
 
 const styles = stylex.create({
   surface: {
-    backgroundColor: "transparent",
+    "--less-app-background": "transparent",
     display: "block",
     boxSizing: "border-box",
     width: "100%",

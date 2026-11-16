@@ -156,8 +156,6 @@ const styles = stylex.create({
     margin: 0,
   },
   controlFocus: {
-    outline: { ":is(.less-control):focus-visible": `2px solid ${colorVars.fgFeedbackInfo}` },
-    outlineOffset: { ":is(.less-control):focus-visible": 3 },
     scrollMarginBlock: `calc(${spacingVars.space8} * 2) ${spacingVars.space4}`,
   },
 });

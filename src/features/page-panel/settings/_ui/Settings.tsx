@@ -112,7 +112,9 @@ function LanguageField({ portalContainer }: { portalContainer?: HTMLElement }) {
       <span id={id} {...stylex.props(styles.fieldLabel)}>
         {message("panel_language")}
       </span>
+      {/* The native panel is already modal; avoid locking the host page a second time. */}
       <Select
+        modal={false}
         open={open}
         onOpenChange={setOpen}
         value={value}

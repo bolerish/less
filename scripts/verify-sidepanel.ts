@@ -2697,6 +2697,10 @@ try {
       () => panel((d) => d.querySelectorAll(".record").length >= 17),
       "localized long list",
     );
+    await waitFor(
+      () => panel((dialog) => dialog.getAnimations().length === 0),
+      "panel entry settles before measuring localized layout",
+    );
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
       for (const colorScheme of ["light", "dark"] as const) {

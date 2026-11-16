@@ -462,8 +462,117 @@ try {
   console.log(
     "PASS real Chrome: welcome/failure fallback and sync, selection toolbar and feedback use shared theme",
   );
+  await site.emulateMedia({ reducedMotion: "no-preference" });
   await action();
   await theme("light");
+  await click(".settings-button");
+  await click('[data-settings-page="language"]');
+  await waitFor(
+    () => panel((dialog) => !!dialog.querySelector('[role="combobox"]')),
+    "language motion check",
+  );
+  const originalLocale = await worker.evaluate(
+    async () => (await chrome.storage.local.get("less:locale"))["less:locale"],
+  );
+  const pageBeforeSelect = await site.evaluate(() => ({
+    html: document.documentElement.getAttribute("style"),
+    body: document.body.getAttribute("style"),
+    x: scrollX,
+    y: scrollY,
+  }));
+  await panel((dialog) => {
+    dialog.dataset.motionProbe = "stable";
+    const initial = dialog.getBoundingClientRect();
+    let moved = false;
+    let frame = 0;
+    const sample = () => {
+      const style = getComputedStyle(dialog);
+      const rect = dialog.getBoundingClientRect();
+      moved ||=
+        dialog.getAnimations().some((animation) => animation.playState === "running") ||
+        style.transform !== "none" ||
+        Math.abs(rect.left - initial.left) > 0.5 ||
+        Math.abs(rect.top - initial.top) > 0.5;
+      frame = requestAnimationFrame(sample);
+    };
+    sample();
+    (dialog as HTMLElement & { stopMotionProbe: () => boolean }).stopMotionProbe = () => {
+      cancelAnimationFrame(frame);
+      return moved;
+    };
+  });
+  await click('[role="combobox"]');
+  await waitFor(
+    () =>
+      panel(
+        (dialog) =>
+          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "true",
+      ),
+    "language Select opens without reentering panel",
+  );
+  assert.deepEqual(
+    await site.evaluate(() => ({
+      html: document.documentElement.getAttribute("style"),
+      body: document.body.getAttribute("style"),
+      x: scrollX,
+      y: scrollY,
+    })),
+    pageBeforeSelect,
+    "nested Select leaves page styles and scroll unchanged",
+  );
+  assert(
+    await panel((dialog) => dialog.matches(":modal")),
+    "outer panel keeps background interactions blocked",
+  );
+  await click('[role="option"][data-preference-value="ja"]');
+  await waitFor(
+    () =>
+      panel(
+        (dialog) =>
+          dialog.lang === "ja" &&
+          dialog.querySelector('[role="combobox"]')?.getAttribute("aria-expanded") === "false",
+      ),
+    "language updates in the same panel",
+  );
+  assert.equal(
+    await panel((dialog) => dialog.dataset.motionProbe),
+    "stable",
+    "language change preserves the mounted panel",
+  );
+  assert.equal(
+    await panel((dialog) => {
+      const element = dialog as HTMLElement & { stopMotionProbe?: () => boolean };
+      const moved = element.stopMotionProbe!();
+      delete element.stopMotionProbe;
+      delete dialog.dataset.motionProbe;
+      return moved;
+    }),
+    false,
+    "Select and language changes never replay panel entry animation",
+  );
+  await worker.evaluate(async (value) => {
+    if (value === undefined) await chrome.storage.local.remove("less:locale");
+    else await chrome.storage.local.set({ "less:locale": value });
+  }, originalLocale);
+  await site.keyboard.press("Escape");
+  await waitFor(
+    () => panel((dialog) => !!dialog.querySelector('[data-settings-page="language"]')),
+    "back from language motion check",
+  );
+  await site.keyboard.press("Escape");
+  await waitFor(
+    () =>
+      panel(
+        (dialog) =>
+          (dialog.getRootNode() as ShadowRoot).activeElement ===
+          dialog.querySelector(".settings-button"),
+      ),
+    "motion check returns to hidden items",
+  );
+  await site.emulateMedia({ reducedMotion: "reduce" });
+  console.log(
+    "PASS normal motion: Select and locale keep the same stationary modal panel and preserve page styles/scroll",
+  );
   async function zoom(factor: number) {
     await worker.evaluate(
       async ({ url, factor }) => {

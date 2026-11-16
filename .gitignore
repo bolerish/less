@@ -180,3 +180,5 @@ docs/
 
 # Outer
 .DS_Store
+
+.research/

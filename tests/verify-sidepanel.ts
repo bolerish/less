@@ -623,8 +623,13 @@ try {
     "PASS selection shortcut toggles once per physical key press, including held enable/disable",
   );
 
-  await hide("#two");
-  await hide("#one");
+  await site.keyboard.press("Control+Shift+E");
+  await site.locator("#two").click();
+  await hidden("#two");
+  await site.locator("#one").click();
+  await hidden("#one");
+  await waitFor(async () => (await count()) === 2, "both session records saved");
+  await site.keyboard.press("Escape");
   await site.waitForTimeout(11_000);
   await site.locator("#one").evaluate((element) => element.replaceWith(element.cloneNode(true)));
   // Remove copied inline hiding so this checks the persistent selector rule.
@@ -641,10 +646,11 @@ try {
   await hidden("#one", false, undoPeer);
   await hidden("#two", true, undoPeer);
   await waitFor(async () => (await count()) === 1, "first undo persisted");
-  await action();
-  await click(".reset-button");
-  await click(".reset-confirmation button:last-child");
+  await hidden("#one", false);
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#two", false);
   await hidden("#two", false, undoPeer);
+  await waitFor(async () => (await count()) === 0, "second undo persisted");
   await undoPeer.close();
   await site.reload();
   await hidden("#one", false);

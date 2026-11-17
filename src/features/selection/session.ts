@@ -1,3 +1,4 @@
+import { reconcileCSSSelector } from "~features/element-hiding/preload-css";
 import {
   applyHiddenElement,
   isHiddenElement,
@@ -222,6 +223,7 @@ async function hideAndSave(element: HTMLElement): Promise<void> {
   try {
     const response = await portRequest<{ ok: boolean }>({ type: "ADD_RECORD", record });
     if (!response.ok) throw new Error("Could not save hidden item");
+    await reconcileCSSSelector(record, element);
     invalidateRecordCache();
     sessionHiddenCount++;
     undoStack.push({ element, recordId: record.id });

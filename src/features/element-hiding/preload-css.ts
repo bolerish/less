@@ -13,7 +13,14 @@ export function removePreloadCSSForElement(element: HTMLElement): void {
   if (!style?.sheet) return;
   for (let i = style.sheet.cssRules.length - 1; i >= 0; i--) {
     try {
-      if (element.matches((style.sheet.cssRules[i] as CSSStyleRule).selectorText)) {
+      if (
+        element.matches(
+          (style.sheet.cssRules[i] as CSSStyleRule).selectorText.replace(
+            /:not\(\[data-veil-hidden\]\)$/,
+            "",
+          ),
+        )
+      ) {
         style.sheet.deleteRule(i);
       }
     } catch {
@@ -27,7 +34,12 @@ export function removePreloadCSSBySelector(selector: string): void {
   if (!style?.sheet) return;
   for (let i = style.sheet.cssRules.length - 1; i >= 0; i--) {
     try {
-      if ((style.sheet.cssRules[i] as CSSStyleRule).selectorText === selector) {
+      if (
+        (style.sheet.cssRules[i] as CSSStyleRule).selectorText.replace(
+          /:not\(\[data-veil-hidden\]\)$/,
+          "",
+        ) === selector
+      ) {
         style.sheet.deleteRule(i);
       }
     } catch {
@@ -44,7 +56,10 @@ export async function reconcileCSSSelector(
   if (old && !isLegacyCSSSelector(old)) {
     try {
       const matches = document.querySelectorAll(old);
-      if (matches.length === 1 && matches[0] === el) return old;
+      if (matches.length === 1 && matches[0] === el) {
+        applyCurrentSelector(old);
+        return old;
+      }
     } catch {
       /* Invalid selectors are replaced below. */
     }
@@ -60,5 +75,21 @@ export async function reconcileCSSSelector(
     cssSelector,
   });
   if (!response.ok) throw new Error("Selector update rejected");
+  if (cssSelector) applyCurrentSelector(cssSelector);
   return cssSelector;
+}
+
+function applyCurrentSelector(selector: string): void {
+  selector = `${selector}:not([data-veil-hidden])`;
+  let style = document.getElementById("__veil_preload__") as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "__veil_preload__";
+    document.documentElement.appendChild(style);
+  }
+  if (
+    style.sheet &&
+    ![...style.sheet.cssRules].some((rule) => (rule as CSSStyleRule).selectorText === selector)
+  )
+    style.sheet.insertRule(`${selector}{display:none!important}`, style.sheet.cssRules.length);
 }

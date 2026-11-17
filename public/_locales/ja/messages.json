@@ -316,5 +316,11 @@
   },
   "panel_shortcut_exit": {
     "message": "選択モードを終了"
+  },
+  "panel_release_1_2_1_title": {
+    "message": "パネルがより安定して開くようになりました"
+  },
+  "panel_release_1_2_1_change_1": {
+    "message": "ページの読み込み中にアイコンを押したときなど、パネルが開かないことがある問題を修正しました。"
   }
 }

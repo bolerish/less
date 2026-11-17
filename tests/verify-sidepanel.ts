@@ -136,13 +136,13 @@ try {
     await cp(sourceBuild, values.build, { recursive: true });
     const contentPath = join(values.build, "content-scripts/content.js");
     const source = await readFile(contentPath, "utf8");
-    const draft = productUpdates.find((update) => update.status === "unreleased");
-    assert(draft, "an unreleased entry provides isolated notification fixture data");
+    const draft = productUpdates[0];
+    assert(draft, "an update entry provides isolated notification fixture data");
     const version = [
       `version:${JSON.stringify(draft.version)}`,
       "version:`" + draft.version + "`",
     ].find((marker) => source.includes(marker));
-    const status = /status:(["`])unreleased\1/;
+    const status = /status:(["`])(?:unreleased|released)\1/;
     assert(version && status.test(source), "fixture finds the bundled release metadata");
     await writeFile(
       contentPath,
@@ -150,9 +150,7 @@ try {
         .replace(version, `version:${JSON.stringify(manifest.version)}`)
         .replace(status, 'status:"released"'),
     );
-    console.log(
-      "FIXTURE ONLY: a temporary build copy simulates an installed released update; production files stay unreleased",
-    );
+    console.log("FIXTURE ONLY: a temporary build copy simulates an installed released update");
   }
   assert.equal(manifest.short_name, "Less");
   assert.equal(manifest.action.default_title, "Less");
@@ -720,6 +718,7 @@ try {
       "close read panel",
     );
     await action();
+    await waitFor(() => site.locator("[data-less-panel]").count(), "read panel remounted");
     assert.equal(
       await panel((d) => !!d.querySelector(".update-notice-dot")),
       false,
@@ -1119,6 +1118,10 @@ try {
   assert.equal(await panel((d) => d.querySelector(".updates-button")!.getAttribute("title")), null);
   await click(".updates-button");
   await waitFor(() => textIncludes(messages.panel_update_history), "updates timeline");
+  await waitFor(
+    () => textIncludes(messages[productUpdates[0].titleKey]),
+    "latest update title is rendered",
+  );
   assert(
     !(await panel((d) => d.innerText)).includes("Veil"),
     "unreleased update copy uses current name",

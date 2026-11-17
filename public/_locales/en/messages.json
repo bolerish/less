@@ -316,5 +316,11 @@
   },
   "panel_shortcut_exit": {
     "message": "Exit selection mode"
+  },
+  "panel_release_1_2_1_title": {
+    "message": "More reliable panel opening"
+  },
+  "panel_release_1_2_1_change_1": {
+    "message": "Fixed intermittent failures when opening the panel, including clicks while a page is loading."
   }
 }

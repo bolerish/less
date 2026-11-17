@@ -316,5 +316,11 @@
   },
   "panel_shortcut_exit": {
     "message": "Salir del modo de selección"
+  },
+  "panel_release_1_2_1_title": {
+    "message": "El panel se abre de forma más fiable"
+  },
+  "panel_release_1_2_1_change_1": {
+    "message": "Corregimos los fallos ocasionales al abrir el panel, incluso al pulsar el icono mientras se carga una página."
   }
 }

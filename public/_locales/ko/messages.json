@@ -316,5 +316,11 @@
   },
   "panel_shortcut_exit": {
     "message": "선택 모드 종료"
+  },
+  "panel_release_1_2_1_title": {
+    "message": "패널이 더 안정적으로 열려요"
+  },
+  "panel_release_1_2_1_change_1": {
+    "message": "페이지 로딩 중 아이콘을 눌렀을 때처럼, 패널이 간헐적으로 열리지 않던 문제를 고쳤어요."
   }
 }

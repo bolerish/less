@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop -- Navigations and cross-context storage changes must be ordered. */
 // Build first; instrumentation only changes a temporary copy and uses native Chrome storage.
-// node scripts/verify-preload.ts --chromium /path/to/Chrome [--build dist/chrome-mv3]
+// node tests/verify-preload.ts --chromium /path/to/Chrome [--build dist/chrome-mv3]
 import assert from "node:assert/strict";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";

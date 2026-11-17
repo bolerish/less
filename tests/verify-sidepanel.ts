@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop -- Browser interactions and viewport checks are sequential. */
 // Build first. Chrome's Extensions.triggerAction dispatches the real toolbar action.
-// node scripts/verify-sidepanel.ts --chromium /path/to/Chrome
+// node tests/verify-sidepanel.ts --chromium /path/to/Chrome
 import assert from "node:assert/strict";
 import { transformFileAsync } from "@babel/core";
 import stylexPlugin from "@stylexjs/babel-plugin";

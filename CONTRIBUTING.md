@@ -69,8 +69,8 @@ pnpm verify:updates
 
 If pnpm stops before running a check because dependency build approval is
 unresolved, report that command failure separately. The source-only checks can
-also run directly with `node scripts/verify-copy.ts`,
-`node scripts/verify-locale.ts` and `node scripts/verify-updates.ts`; do not
+also run directly with `node tests/verify-copy.ts`,
+`node tests/verify-locale.ts` and `node tests/verify-updates.ts`; do not
 change dependency approvals just to make a verification command pass.
 
 Browser checks require a fresh build and the Chrome executable:
@@ -90,7 +90,7 @@ permits automatic merging.
 For root scroll ownership and an optional axe audit:
 
 ```bash
-node scripts/verify-page-scroll.ts --chromium "/path/to/Google Chrome"
+node tests/verify-page-scroll.ts --chromium "/path/to/Google Chrome"
 pnpm verify:panel --chromium "/path/to/Google Chrome" --axe "/path/to/axe.min.js"
 ```
 

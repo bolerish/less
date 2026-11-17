@@ -31,7 +31,7 @@ Follow Oxfmt: two-space indentation, double quotes, and semicolons. Use PascalCa
 
 ## Testing Guidelines
 
-No `pnpm test` or coverage threshold is configured. Add regression checks to `scripts/verify-*.ts`, which use Playwright's `playwright-core` and Node `assert`. Verify behavior changes with static and browser checks.
+No `pnpm test` or coverage threshold is configured. Add regression checks to `tests/verify-*.ts`, which use Playwright's `playwright-core` and Node `assert`. Verify behavior changes with static and browser checks.
 
 ```bash
 pnpm build

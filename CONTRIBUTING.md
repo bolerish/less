@@ -57,6 +57,7 @@ submission. A passing build does not establish the behavior below.
 | Hiding is applied before reveal and remains correct on navigation/cache changes                               | `pnpm verify:preload`                                                 | Verify the reported website; local fixtures do not cover every site                           |
 | Five languages retain keys/placeholders and supported product claims                                          | `pnpm verify:copy`, `pnpm verify:locale`                              | Review natural wording in each changed language; key parity does not prove fluency            |
 | Toolbar launch and failure lifecycle remain correct                                                           | `pnpm verify:toolbar`, `pnpm verify:failure`                          | Fixture API checks do not establish Firefox runtime behavior                                  |
+| A toolbar click during HTML parsing opens the panel after readiness; the next click closes it                 | `pnpm verify:failure`                                                 | Exercise slow real websites separately; the local fixture deliberately blocks the parser      |
 | Official components, StyleX and feature-local responsibilities are preserved                                  | Inspect changed imports, styles and ownership against `bolerish-code` | Tokens alone do not establish component reuse; folder names alone do not establish separation |
 
 Run source-only checks without building:
@@ -82,8 +83,11 @@ pnpm verify:preload --chromium "/path/to/Google Chrome"
 pnpm verify:failure --chromium "/path/to/Google Chrome"
 ```
 
-`pnpm verify:toolbar` requires both Chrome and Firefox builds. The selection
-mutation script edits source files temporarily; do not run it in a shared or
+`pnpm verify:toolbar` requires both Chrome and Firefox builds. It also checks
+early message handling, rapid clicks, navigation cancellation, response expiry,
+and recovery after failed content initialization. Pending panel requests expire
+after five seconds; expiry is a failure limit, not a delay before opening.
+The selection mutation script edits source files temporarily; do not run it in a shared or
 already modified checkout. None of these commands starts a scheduled agent or
 permits automatic merging.
 

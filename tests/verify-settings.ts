@@ -1360,7 +1360,10 @@ try {
           },
           windows: { onFocusChanged: event("focus") },
           storage: { onChanged: event("storage") },
-          webNavigation: { onHistoryStateUpdated: event("navigation") },
+          webNavigation: {
+            onCommitted: event("committed"),
+            onHistoryStateUpdated: event("navigation"),
+          },
         },
         console,
         URL,

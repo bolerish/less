@@ -12,6 +12,10 @@ for (const [engine, bundle] of [
   ["Firefox MV2", firefoxSource],
 ]) {
   const listeners = new Map<string, Listener[]>();
+  const timers = new Map<number, () => void>();
+  let nextTimer = 0;
+  let sent = 0;
+  let getFrame = async (tabId: number) => ({ url: tabs.get(tabId)!.url });
   const event = (name: string) => ({
     addListener: (fn: Listener) => listeners.set(name, [...(listeners.get(name) ?? []), fn]),
     removeListener: (fn: Listener) =>
@@ -67,7 +71,11 @@ for (const [engine, bundle] of [
             (!query.active || t.active) &&
             (query.windowId === undefined || t.windowId === query.windowId),
         ),
-      sendMessage: async () => receiver(),
+      sendMessage: async (_tabId: number, message: { type: string }) => {
+        if (message.type === "CANCEL_PAGE_PANEL") return { ok: true };
+        sent++;
+        return receiver();
+      },
       onActivated: event("activate"),
       onUpdated: event("update"),
       onRemoved: event("remove"),
@@ -81,13 +89,26 @@ for (const [engine, bundle] of [
     webNavigation: {
       onCommitted: { addListener() {} },
       onHistoryStateUpdated: event("history"),
-      getFrame: async ({ tabId }: { tabId: number }) => ({ url: tabs.get(tabId)!.url }),
+      getFrame: async ({ tabId }: { tabId: number }) => getFrame(tabId),
     },
   };
   const load = () =>
     vm.runInNewContext(
       bundle,
-      { browser, console, URL, URLSearchParams, crypto: { randomUUID }, setTimeout, clearTimeout },
+      {
+        browser,
+        console,
+        URL,
+        URLSearchParams,
+        crypto: { randomUUID },
+        AbortController,
+        setTimeout: (callback: () => void) => {
+          const id = ++nextTimer;
+          timers.set(id, callback);
+          return id;
+        },
+        clearTimeout: (id: number) => timers.delete(id),
+      },
       { timeout: 2000 },
     );
   load();
@@ -100,6 +121,73 @@ for (const [engine, bundle] of [
   await drain();
   assert.equal(opened.length, 0);
   assert.equal(badges.get(1), "");
+  const firstSent = sent;
+  click();
+  click();
+  click();
+  await drain();
+  assert.equal(sent - firstSent, 3, "each rapid successful click toggles exactly once");
+  assert.equal(timers.size, 0, "completed requests release timers");
+  const beforeMatchingEvents = sent;
+  click();
+  emit("activate", { tabId: 1, windowId: 1 });
+  emit("focus", 1);
+  await drain();
+  assert.equal(
+    sent,
+    beforeMatchingEvents + 1,
+    "matching activation/focus cannot cancel this tab's click",
+  );
+  let releaseFrame: (() => void) | undefined;
+  getFrame = async (tabId) => {
+    await new Promise<void>((done) => {
+      releaseFrame = done;
+    });
+    return { url: tabs.get(tabId)!.url };
+  };
+  const beforeNavigation = sent;
+  click();
+  await drain();
+  tabs.get(1)!.url = "https://one.test/next";
+  emit("update", 1, { url: tabs.get(1)!.url });
+  releaseFrame!();
+  await drain();
+  assert.equal(
+    sent,
+    beforeNavigation,
+    "navigation during frame lookup cannot deliver stale toggle",
+  );
+  getFrame = async (tabId) => ({ url: tabs.get(tabId)!.url });
+  tabs.get(1)!.url = "https://one.test/";
+  receiver = () => new Promise(() => {});
+  click();
+  await drain();
+  assert.equal(timers.size, 1);
+  for (const timer of timers.values()) timer();
+  await drain();
+  assert.equal(timers.size, 0, "timeout releases timer without waiting for hung receiver");
+  receiver = async () => ({ ok: true });
+  const beforeRetry = sent;
+  click();
+  await drain();
+  assert.equal(sent, beforeRetry + 1, "next click proceeds after hung response timeout");
+  receiver = () => new Promise(() => {});
+  click();
+  await drain();
+  tabs.get(1)!.url = "https://one.test/after-hang";
+  emit("update", 1, { url: tabs.get(1)!.url });
+  await drain();
+  assert.equal(timers.size, 0, "navigation cancels a hung response without waiting for it");
+  receiver = async () => ({ ok: true });
+  const afterCancelledNavigation = sent;
+  click();
+  await drain();
+  assert.equal(
+    sent,
+    afterCancelledNavigation + 1,
+    "new document click bypasses cancelled response",
+  );
+  tabs.get(1)!.url = "https://one.test/";
   receiver = async () => {
     throw new Error("Could not establish connection. Receiving end does not exist.");
   };

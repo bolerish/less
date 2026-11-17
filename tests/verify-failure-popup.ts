@@ -18,8 +18,25 @@ const { values } = parseArgs({
   },
 });
 const directory = await mkdtemp(join(tmpdir(), "less-failure-"));
-const server = createServer((_req, res) => {
+let releaseParser = () => {};
+let notifyParserBlocked = () => {};
+const parserBlocked = new Promise<void>((done) => {
+  notifyParserBlocked = done;
+});
+const server = createServer((req, res) => {
+  if (req.url === "/parser-gate.js") {
+    res.writeHead(200, { "Content-Type": "text/javascript" });
+    releaseParser = () => res.end("");
+    notifyParserBlocked();
+    return;
+  }
   res.writeHead(200, { "Content-Type": "text/html" });
+  if (req.url === "/slow-parser") {
+    res.end(
+      '<!doctype html><html lang="en"><title>Slow page</title><body><h1>Reading page</h1><script src="/parser-gate.js"></script><p>Parsed later</p></body></html>',
+    );
+    return;
+  }
   res.end(
     '<!doctype html><html lang="en"><title>Less fixture</title><body><h1>Reading page</h1><p>Keep reading</p></body></html>',
   );
@@ -95,6 +112,35 @@ try {
         })
       ).result.value;
     return { targetId, send, evaluate };
+  }
+  const slowPage = await context.newPage();
+  try {
+    await slowPage.goto(`${origin}/slow-parser`, { waitUntil: "commit" });
+    await parserBlocked;
+    assert.equal(await slowPage.evaluate(() => document.readyState), "loading");
+    // Click before waiting for any extension receiver or DOM readiness.
+    await action(slowPage);
+    const earlyResponse = await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      return chrome.tabs.sendMessage(tab.id!, { type: "GET_UNDO_COUNT" }, { frameId: 0 });
+    });
+    assert.equal(typeof earlyResponse.count, "number", "receiver exists during HTML parsing");
+    releaseParser();
+    await slowPage.locator("[data-less-panel]").waitFor({ state: "attached" });
+    assert(
+      !(await cdp.send("Target.getTargets")).targetInfos.some((target) =>
+        target.url.startsWith(`chrome-extension://${id}/failure.html?`),
+      ),
+      "early click opens panel without a failure popup",
+    );
+    await action(slowPage);
+    await slowPage.locator("[data-less-panel]").waitFor({ state: "detached" });
+    console.log(
+      "PASS toolbar click during HTML parsing opens once after readiness, next click closes",
+    );
+  } finally {
+    releaseParser();
+    await slowPage.close();
   }
   const page = await context.newPage();
   await page.goto(`${origin}/normal`);
@@ -317,6 +363,7 @@ try {
   );
   await documentPage.close();
 } finally {
+  releaseParser();
   await context.close();
   await new Promise<void>((done) => server.close(() => done()));
   await rm(directory, { recursive: true, force: true });

@@ -22,7 +22,7 @@
     "verify:locale": "node tests/verify-locale.ts",
     "verify:updates": "node tests/verify-updates.ts",
     "verify:preload": "node tests/verify-preload.ts",
-    "verify:toolbar": "node tests/verify-toolbar-lifecycle.ts",
+    "verify:toolbar": "node tests/verify-toolbar-lifecycle.ts && node tests/verify-content-readiness.ts",
     "verify:settings": "node tests/verify-settings.ts",
     "verify:panel": "node tests/verify-sidepanel.ts",
     "verify:dev": "node tests/verify-dev.ts",

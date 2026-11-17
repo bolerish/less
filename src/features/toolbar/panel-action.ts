@@ -18,6 +18,10 @@ export function registerPanelAction(): void {
   const requests = new Map<number, symbol>();
   const queues = new Map<number, Promise<void>>();
   let intent = Symbol();
+  const pendingRequests = new Map<
+    number,
+    { windowId: number; controllers: Set<AbortController> }
+  >();
   // Browser action settings outlive a stopped worker; finish recovery before new work.
   const recovered = browser.tabs
     .query({})
@@ -40,26 +44,65 @@ export function registerPanelAction(): void {
     if (tab.id === undefined) return;
     const tabId = tab.id;
     const request = Symbol();
+    const requestId = crypto.randomUUID();
+    const controller = new AbortController();
+    const pending = pendingRequests.get(tabId) ?? {
+      windowId: tab.windowId,
+      controllers: new Set<AbortController>(),
+    };
+    pending.controllers.add(controller);
+    pendingRequests.set(tabId, pending);
+    const expiresAt = Date.now() + 5000;
     requests.set(tabId, request);
     intent = request;
     enqueue(tabId, async () => {
-      const current = () => requests.get(tabId) === request && intent === request;
+      const current = () => !controller.signal.aborted;
+      const latest = () => current() && requests.get(tabId) === request && intent === request;
       try {
-        if (!current() || !(await isCurrentTab(tab))) return;
+        if (!current() || !(await isCurrentTab(tab)) || !current()) return;
         const frame = await browser.webNavigation.getFrame({ tabId, frameId: 0 }).catch(() => null);
         const url = frame?.url ?? tab.url;
+        if (!current() || !(await isCurrentTab(tab)) || !current()) return;
+        if (Date.now() >= expiresAt || (tab.url && url !== tab.url)) return;
         let reason: FailureReason | undefined;
         try {
-          const response = await browser.tabs.sendMessage(
-            tabId,
-            { type: "TOGGLE_PAGE_PANEL" },
-            { frameId: 0 },
+          const response = await new Promise<{ ok?: boolean; cancelled?: boolean }>(
+            (resolve, reject) => {
+              const cancel = () => {
+                void browser.tabs
+                  .sendMessage(tabId, { type: "CANCEL_PAGE_PANEL", requestId }, { frameId: 0 })
+                  .catch(() => {});
+                clearTimeout(timer);
+                controller.signal.removeEventListener("abort", cancel);
+                resolve({ cancelled: true });
+              };
+              controller.signal.addEventListener("abort", cancel, { once: true });
+              const timer = setTimeout(
+                () => {
+                  reject(new Error("Panel request timed out"));
+                  cancel();
+                },
+                Math.max(0, expiresAt - Date.now()),
+              );
+              void browser.tabs
+                .sendMessage(
+                  tabId,
+                  { type: "TOGGLE_PAGE_PANEL", requestId, url, expiresAt },
+                  { frameId: 0 },
+                )
+                .then(resolve, reject)
+                .finally(() => {
+                  clearTimeout(timer);
+                  controller.signal.removeEventListener("abort", cancel);
+                });
+            },
           );
+          if (response?.cancelled) return;
           if (!response?.ok) reason = "generic";
         } catch (error) {
           reason = classifyFailure(url, error);
         }
-        if (!current() || !(await isCurrentTab(tab))) return;
+        if (!latest() || !(await isCurrentTab(tab)) || !latest()) return;
         if (!reason) {
           await action.setBadgeText({ tabId, text: "" });
           await action.setTitle({ tabId, title: "Less" });
@@ -68,7 +111,7 @@ export function registerPanelAction(): void {
         await action.setBadgeText({ tabId, text: "!" });
         await initializeLocale().then((dispose) => dispose());
         await action.setTitle({ tabId, title: getPanelMessage(`panel_failure_${reason}`) });
-        if (typeof action.openPopup !== "function" || !current()) return;
+        if (typeof action.openPopup !== "function" || !latest()) return;
         const popup = `${failureDocument}?${new URLSearchParams({
           reason,
           tab: String(tabId),
@@ -76,25 +119,38 @@ export function registerPanelAction(): void {
         })}`;
         try {
           await action.setPopup({ tabId, popup });
-          if (!current() || !(await isCurrentTab(tab))) return;
+          if (!latest() || !(await isCurrentTab(tab)) || !latest()) return;
           await action.openPopup({ windowId: tab.windowId });
         } finally {
           await clearPopup(tabId, popup);
         }
       } finally {
+        pending.controllers.delete(controller);
+        if (pending.controllers.size === 0) pendingRequests.delete(tabId);
         if (requests.get(tabId) === request) requests.delete(tabId);
       }
     });
   });
 
-  browser.tabs.onActivated.addListener(() => {
-    intent = Symbol();
+  function cancelPending(tabId?: number): void {
+    for (const [id, pending] of pendingRequests) {
+      if (tabId !== undefined && id !== tabId) continue;
+      for (const controller of pending.controllers) controller.abort();
+    }
+  }
+  browser.tabs.onActivated.addListener(({ tabId, windowId }) => {
+    for (const [id, pending] of pendingRequests) {
+      if (pending.windowId === windowId && id !== tabId) cancelPending(id);
+    }
   });
-  browser.windows.onFocusChanged.addListener(() => {
-    intent = Symbol();
+  browser.windows.onFocusChanged.addListener((windowId) => {
+    for (const [id, pending] of pendingRequests) {
+      if (pending.windowId !== windowId) cancelPending(id);
+    }
   });
   browser.tabs.onUpdated.addListener((tabId, change) => {
     if (change.url === undefined && change.status !== "loading") return;
+    cancelPending(tabId);
     requests.delete(tabId);
     enqueue(tabId, async () => {
       await clearPopup(tabId);
@@ -103,6 +159,7 @@ export function registerPanelAction(): void {
     });
   });
   browser.tabs.onRemoved.addListener((tabId) => {
+    cancelPending(tabId);
     requests.delete(tabId);
   });
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {

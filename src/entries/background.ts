@@ -6,6 +6,7 @@ import {
   rebuildOriginCSSCache,
   isManagementRequest,
   removeManagedRecords,
+  syncSiteTabs,
   withRecordMutation,
 } from "~features/record/management-service";
 import {
@@ -217,7 +218,10 @@ export default defineBackground(() => {
         void withRecordMutation(async () => {
           try {
             const record = await getRecord(id);
-            if (record) await removeManagedRecords(record.pageContext.origin, [id]);
+            if (record) {
+              await removeManagedRecords(record.pageContext.origin, [id]);
+              await syncSiteTabs(record.pageContext.origin);
+            }
             allCSSCache = null;
             port.postMessage({ msgId, ok: true });
             void browser.runtime.sendMessage({ type: "HIDDEN_ITEMS_CHANGED" }).catch(() => {});

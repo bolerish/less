@@ -119,7 +119,7 @@ async function getManagedRecords(origin: string): Promise<ManagedRecord[]> {
     }));
 }
 
-async function syncSiteTabs(origin: string): Promise<number> {
+export async function syncSiteTabs(origin: string): Promise<number> {
   const retainedIds = (await getManagedRecords(origin)).map((record) => record.id);
   const tabs = await browser.tabs.query({});
   const sites = await Promise.all(

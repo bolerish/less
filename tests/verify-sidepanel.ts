@@ -623,6 +623,33 @@ try {
     "PASS selection shortcut toggles once per physical key press, including held enable/disable",
   );
 
+  await hide("#two");
+  await hide("#one");
+  await site.waitForTimeout(11_000);
+  await site.locator("#one").evaluate((element) => element.replaceWith(element.cloneNode(true)));
+  // Remove copied inline hiding so this checks the persistent selector rule.
+  await site.locator("#one").evaluate((element) => {
+    element.removeAttribute("style");
+    element.removeAttribute("data-veil-hidden");
+  });
+  await hidden("#one");
+  const undoPeer = await context.newPage();
+  await undoPeer.goto(site.url());
+  await hidden("#one", true, undoPeer);
+  await site.bringToFront();
+  await site.keyboard.press("Control+Shift+Z");
+  await hidden("#one", false, undoPeer);
+  await hidden("#two", true, undoPeer);
+  await waitFor(async () => (await count()) === 1, "first undo persisted");
+  await action();
+  await click(".reset-button");
+  await click(".reset-confirmation button:last-child");
+  await hidden("#two", false, undoPeer);
+  await undoPeer.close();
+  await site.reload();
+  await hidden("#one", false);
+  console.log("PASS delayed selector replacement and cross-tab shortcut undo");
+
   await site.locator("#before").focus();
   const before = await site.locator("#one").boundingBox();
   assert(before);

@@ -261,7 +261,7 @@ try {
   assert.deepEqual(await database("read"), baseline);
   assert.deepEqual(await cache(), baselineCache);
   console.log("PASS malformed, CAS conflict, cross-site, missing record rejection");
-  await database("seed", [fixture("/late"), fixture("/late", "two")]);
+  await database("seed", [fixture("/late"), fixture("/other", "two")]);
   assert.equal(
     (await request({ id: "one", expectedCssSelector: "#old-target", cssSelector: "#target" })).ok,
     true,

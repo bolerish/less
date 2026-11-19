@@ -606,6 +606,10 @@ try {
   );
   for (let i = 0; i < 6; i++) {
     await site.keyboard.down("E");
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+    });
     assert.equal(
       await site.locator("[data-less-ui]").count(),
       1,
@@ -624,6 +628,10 @@ try {
   );
   for (let i = 0; i < 6; i++) {
     await site.keyboard.down("E");
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+    });
     assert.equal(
       await site.locator("[data-less-ui]").count(),
       0,
@@ -635,7 +643,7 @@ try {
   await site.keyboard.up("Control");
   assert.equal(await count(), 0, "holding the shortcut never creates records");
   console.log(
-    "PASS selection command messages toggle; DOM key repeats do not duplicate Chrome commands (hardware shortcut unverified)",
+    "PASS selection command repeats ignored; Chrome DOM keyup permits next toggle (hardware shortcut unverified)",
   );
 
   await worker.evaluate(async () => {

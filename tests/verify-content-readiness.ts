@@ -26,6 +26,7 @@ function fixture(useNavigationAPI = true) {
   let listener: (...args: any[]) => unknown;
   let navigate = () => {};
   let toggles = 0;
+  let selections = 0;
   let styles = 0;
   let subscriptions = 0;
   let failStyles = false;
@@ -117,7 +118,9 @@ function fixture(useNavigationAPI = true) {
     invalidateRecordCache: () => {},
     releasePageScrollbar: () => {},
     stopSelectionMode: () => {},
-    startSelectionMode: () => {},
+    startSelectionMode: () => {
+      selections++;
+    },
     restoreAllHiddenElements: () => {},
     reconcileUndoStack: () => {},
     getUndoCount: () => 0,
@@ -160,6 +163,11 @@ function fixture(useNavigationAPI = true) {
     });
   return {
     send,
+    release: () => window.dispatchEvent(new Event("keyup")),
+    blur: () => window.dispatchEvent(new Event("blur")),
+    get selections() {
+      return selections;
+    },
     timers,
     ready: () => {
       document.readyState = "interactive";
@@ -299,3 +307,40 @@ for (const action of ["navigate", "hide", "invalidate", "expire", "cancel"] as c
 console.log(
   "PASS content readiness: early listener, DOM gate, navigation/pagehide/invalidation/expiry/cancel, retry and subscription cleanup",
 );
+
+{
+  const f = fixture();
+  f.ready();
+  await drain();
+  await f.send({ type: "TOGGLE_SELECTION" });
+  await f.send({ type: "TOGGLE_SELECTION" });
+  assert.equal(f.selections, 1, "physical hold ignores repeated commands");
+  f.release();
+  await f.send({ type: "TOGGLE_SELECTION" });
+  assert.equal(f.selections, 2, "release allows immediate next press");
+  f.blur();
+  await f.send({ type: "TOGGLE_SELECTION" });
+  assert.equal(f.selections, 3, "blur releases hold");
+}
+
+{
+  const f = fixture();
+  f.failStyles(true);
+  f.ready();
+  await drain();
+  assert.equal((await f.send({ type: "TOGGLE_SELECTION" })).ok, false);
+  f.failStyles(false);
+  assert.equal((await f.send({ type: "TOGGLE_SELECTION" })).ok, true);
+  assert.equal(f.selections, 1, "failed command releases hold without keyup");
+}
+{
+  const f = fixture();
+  const response = f.send({ type: "TOGGLE_SELECTION", requestId: "held" });
+  await f.send({ type: "CANCEL_PAGE_PANEL", requestId: "held" });
+  assert.equal((await response).cancelled, true);
+  f.ready();
+  await drain();
+  await f.send({ type: "TOGGLE_SELECTION" });
+  assert.equal(f.selections, 1, "cancelled command releases hold");
+}
+console.log("PASS selection command hold: repeat, keyup, blur, failure and cancellation");

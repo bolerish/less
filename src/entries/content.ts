@@ -57,8 +57,15 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
     else ctx.addEventListener(document, "DOMContentLoaded", () => resolve(), { once: true });
   });
   const pending = new Map<string, () => void>();
+  let selectionHold: object | undefined;
+  const releaseSelectionHold = () => {
+    selectionHold = undefined;
+  };
+  ctx.addEventListener(window, "keyup", releaseSelectionHold, { capture: true });
+  ctx.addEventListener(window, "blur", releaseSelectionHold);
   let pageGeneration = 0;
   function cancelPending(): void {
+    releaseSelectionHold();
     pageGeneration++;
     for (const cancel of pending.values()) cancel();
   }
@@ -193,6 +200,12 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
         sendResponse({ ok: false });
         return;
       }
+      if (message.type === "TOGGLE_SELECTION" && selectionHold) {
+        sendResponse({ ok: true });
+        return;
+      }
+      const hold = message.type === "TOGGLE_SELECTION" ? {} : undefined;
+      if (hold) selectionHold = hold;
       const generation = pageGeneration;
       const url = window.location.href;
       const expiresAt =
@@ -202,6 +215,7 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
       const respond = (response: { ok: boolean; cancelled?: boolean; error?: string }) => {
         if (settled) return;
         settled = true;
+        if (!response.ok && hold && selectionHold === hold) releaseSelectionHold();
         clearTimeout(timer);
         pending.delete(requestId);
         sendResponse(response);

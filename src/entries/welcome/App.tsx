@@ -1,6 +1,7 @@
 import { Banner, BannerContent, BannerTitle, BannerDescription } from "@bolerish/ui/banner";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
+import { Link } from "@bolerish/ui/link";
 import { Heading } from "@bolerish/ui/heading";
 import { Separator } from "@bolerish/ui/separator";
 import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
@@ -29,6 +30,7 @@ function App() {
   const locale = preference === "auto" ? detectLocale(browser.i18n.getUILanguage()) : preference;
   const message = usePanelMessage();
   const [error, setError] = useState(false);
+  const [settingsFailed, setSettingsFailed] = useState(false);
   const t = translations[locale];
 
   useEffect(() => {
@@ -65,6 +67,24 @@ function App() {
             <BannerContent>
               <BannerTitle>{t.accessTitle}</BannerTitle>
               <BannerDescription>{t.accessDescription}</BannerDescription>
+              <Link
+                href={`chrome://extensions/?id=${browser.runtime.id}`}
+                onClick={async (event) => {
+                  event.preventDefault();
+                  try {
+                    await browser.tabs.create({
+                      url: `chrome://extensions/?id=${browser.runtime.id}`,
+                    });
+                    setSettingsFailed(false);
+                  } catch {
+                    setSettingsFailed(true);
+                  }
+                }}
+              >
+                {message(
+                  settingsFailed ? "panel_failure_settings_retry" : "panel_failure_settings",
+                )}
+              </Link>
             </BannerContent>
           </Banner>
         ) : null}

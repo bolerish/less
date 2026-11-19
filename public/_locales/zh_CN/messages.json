@@ -339,9 +339,9 @@
     "message": "网站访问与快捷键改进"
   },
   "panel_release_1_2_2_change_1": {
-    "message": "说明自动隐藏所需的网站访问权限，并在无法访问时提供扩展程序设置链接。"
+    "message": "新增了网站访问权限说明和设置入口。"
   },
   "panel_release_1_2_2_change_2": {
-    "message": "Chrome 现已将 Ctrl+Shift+E 注册为元素选择快捷键。"
+    "message": "修复了无法通过快捷键开启选择模式的问题。"
   }
 }

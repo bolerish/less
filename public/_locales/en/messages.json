@@ -339,9 +339,9 @@
     "message": "Site access and shortcut improvements"
   },
   "panel_release_1_2_2_change_1": {
-    "message": "Learn which site access automatic hiding needs, and open extension settings when access is unavailable."
+    "message": "Added site access guidance and a shortcut to settings."
   },
   "panel_release_1_2_2_change_2": {
-    "message": "Chrome now registers Ctrl+Shift+E as the element selection shortcut."
+    "message": "Fixed an issue that prevented the keyboard shortcut from starting selection mode."
   }
 }

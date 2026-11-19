@@ -339,9 +339,9 @@
     "message": "Mejoras de acceso y atajos"
   },
   "panel_release_1_2_2_change_1": {
-    "message": "Consulta el acceso necesario para ocultar automáticamente y abre la configuración de la extensión cuando no haya acceso."
+    "message": "Añadimos información sobre los permisos de acceso a los sitios y un enlace a la configuración."
   },
   "panel_release_1_2_2_change_2": {
-    "message": "Chrome ahora registra Ctrl+Shift+E como atajo para seleccionar elementos."
+    "message": "Solucionamos un problema que impedía activar el modo de selección con el atajo de teclado."
   }
 }

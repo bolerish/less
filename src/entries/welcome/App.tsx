@@ -136,7 +136,7 @@ function App() {
                     >
                       {shortcutsFailed
                         ? message("panel_failure_settings_retry")
-                        : t.shortcutSettings}
+                        : message("panel_shortcut_settings")}
                     </Link>
                   ) : null}
                 </TimelineContent>

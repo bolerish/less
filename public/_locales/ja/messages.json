@@ -346,5 +346,17 @@
   },
   "panel_release_1_2_2_change_3": {
     "message": "ページの読み込み中にパネルが開かない問題を修正しました。"
+  },
+  "panel_shortcut_settings": {
+    "message": "キーボード ショートカットの設定を開く"
+  },
+  "panel_release_1_2_2_change_4": {
+    "message": "ショートカットを長押ししても、選択モードの切り替えは1回だけになりました。"
+  },
+  "panel_release_1_2_2_change_5": {
+    "message": "選択の強調を青色に変更し、スナックバーの位置と終了アニメーションを改善しました。"
+  },
+  "panel_release_1_2_2_change_6": {
+    "message": "ショートカットの案内から Chrome のショートカット設定を直接開けます。"
   }
 }

@@ -12,7 +12,6 @@ export type Translations = {
   title: string;
   accessTitle: string;
   accessDescription: string;
-  shortcutSettings: string;
   steps: Step[];
 };
 
@@ -24,7 +23,6 @@ export const translations: Record<Locale, Translations> = {
     accessTitle: "Allow site access in Chrome so Less can hide items automatically.",
     accessDescription:
       "Right-click the Less icon, open “This can read and change site data”, and choose “On this site” or “On all sites”.",
-    shortcutSettings: "Open keyboard shortcut settings",
     steps: [
       {
         title: "Pin the extension",
@@ -53,7 +51,6 @@ export const translations: Record<Locale, Translations> = {
     accessTitle: "자동으로 숨기려면 Chrome에서 Less의 사이트 접근을 허용해 주세요.",
     accessDescription:
       "Less 아이콘을 마우스 오른쪽 버튼으로 클릭한 뒤 “사이트 데이터를 읽고 변경할 수 있음”에서 “이 사이트에서” 또는 “모든 사이트에서”를 선택해 주세요.",
-    shortcutSettings: "단축키 설정 열기",
     steps: [
       {
         title: "확장 프로그램 고정",
@@ -82,7 +79,6 @@ export const translations: Record<Locale, Translations> = {
     accessTitle: "自動で非表示にするには、ChromeでLessのサイトへのアクセスを許可してください。",
     accessDescription:
       "Lessアイコンを右クリックし、「サイトデータの読み取りと変更」から「このサイト」または「すべてのサイト」を選んでください。",
-    shortcutSettings: "キーボード ショートカットの設定を開く",
     steps: [
       {
         title: "拡張機能を固定する",
@@ -113,7 +109,6 @@ export const translations: Record<Locale, Translations> = {
       "Permite que Less acceda a los sitios en Chrome para ocultar elementos automáticamente.",
     accessDescription:
       "Haz clic derecho en el icono de Less y, en «Puede leer y cambiar los datos de los sitios», elige «En este sitio» o «En todos los sitios».",
-    shortcutSettings: "Abrir la configuración de atajos de teclado",
     steps: [
       {
         title: "Ancla la extensión",
@@ -143,7 +138,6 @@ export const translations: Record<Locale, Translations> = {
     accessTitle: "请在 Chrome 中允许 Less 访问网站，以便自动隐藏内容。",
     accessDescription:
       "右键点击 Less 图标，在“可以读取和更改网站数据”中选择“在此网站上”或“在所有网站上”。",
-    shortcutSettings: "打开键盘快捷键设置",
     steps: [
       {
         title: "固定扩展程序",

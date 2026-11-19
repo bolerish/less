@@ -346,5 +346,17 @@
   },
   "panel_release_1_2_2_change_3": {
     "message": "Solucionamos un problema que impedía abrir el panel mientras se cargaba una página."
+  },
+  "panel_shortcut_settings": {
+    "message": "Abrir la configuración de atajos de teclado"
+  },
+  "panel_release_1_2_2_change_4": {
+    "message": "Mantener pulsado un atajo cambia el modo de selección una sola vez."
+  },
+  "panel_release_1_2_2_change_5": {
+    "message": "El resaltado de selección ahora es azul y se han mejorado la posición y la animación de salida de la barra de avisos."
+  },
+  "panel_release_1_2_2_change_6": {
+    "message": "Abre la configuración de atajos de Chrome directamente desde la guía de atajos."
   }
 }

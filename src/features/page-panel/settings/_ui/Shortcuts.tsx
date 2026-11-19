@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Link } from "@bolerish/ui/link";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, sizeVars } from "@bolerish/tokens/semantic.stylex";
 import { Kbd, KbdGroup } from "@bolerish/ui/kbd";
@@ -7,6 +9,7 @@ import { usePanelMessage } from "~shared/locale/use-panel-message";
 
 export function Shortcuts() {
   const message = usePanelMessage();
+  const [failed, setFailed] = useState(false);
   return (
     <div className={["shortcuts", stylex.props(styles.groups).className].join(" ")}>
       {(
@@ -53,6 +56,28 @@ export function Shortcuts() {
               </div>
             ))}
           </dl>
+          {title === "panel_shortcuts_page" && import.meta.env.BROWSER === "chrome" ? (
+            <div {...stylex.props(styles.help)}>
+              <Link
+                variant="current"
+                href="chrome://extensions/shortcuts"
+                onClick={async (event) => {
+                  event.preventDefault();
+                  try {
+                    const response = await browser.runtime.sendMessage({
+                      type: "OPEN_SHORTCUT_SETTINGS",
+                    });
+                    setFailed(response?.ok !== true);
+                  } catch {
+                    setFailed(true);
+                  }
+                }}
+              >
+                {message("panel_shortcut_settings")}
+              </Link>
+              {failed ? <p role="alert">{message("panel_failure_settings_retry")}</p> : null}
+            </div>
+          ) : null}
         </section>
       ))}
     </div>

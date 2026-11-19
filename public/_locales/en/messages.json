@@ -346,5 +346,17 @@
   },
   "panel_release_1_2_2_change_3": {
     "message": "Fixed an issue that prevented the panel from opening while a page was loading."
+  },
+  "panel_shortcut_settings": {
+    "message": "Open keyboard shortcut settings"
+  },
+  "panel_release_1_2_2_change_4": {
+    "message": "Holding a shortcut switches selection mode only once."
+  },
+  "panel_release_1_2_2_change_5": {
+    "message": "Selection highlights are now blue, and the snackbar position and exit animation have improved."
+  },
+  "panel_release_1_2_2_change_6": {
+    "message": "Open Chrome keyboard shortcut settings directly from the shortcut guide."
   }
 }

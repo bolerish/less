@@ -346,5 +346,17 @@
   },
   "panel_release_1_2_2_change_3": {
     "message": "修复了页面加载时无法打开面板的问题。"
+  },
+  "panel_shortcut_settings": {
+    "message": "打开键盘快捷键设置"
+  },
+  "panel_release_1_2_2_change_4": {
+    "message": "长按快捷键时，选择模式只切换一次。"
+  },
+  "panel_release_1_2_2_change_5": {
+    "message": "选择高亮已改为蓝色，并改进了提示条的位置和退出动画。"
+  },
+  "panel_release_1_2_2_change_6": {
+    "message": "可从快捷键指南直接打开 Chrome 快捷键设置。"
   }
 }

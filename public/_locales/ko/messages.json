@@ -346,5 +346,17 @@
   },
   "panel_release_1_2_2_change_3": {
     "message": "페이지 로딩 중 패널이 열리지 않던 문제를 해결했어요."
+  },
+  "panel_shortcut_settings": {
+    "message": "단축키 설정 열기"
+  },
+  "panel_release_1_2_2_change_4": {
+    "message": "단축키를 길게 눌러도 선택 모드가 한 번만 전환돼요."
+  },
+  "panel_release_1_2_2_change_5": {
+    "message": "선택 강조를 파란색으로 바꾸고 스낵바 위치와 퇴장 애니메이션을 개선했어요."
+  },
+  "panel_release_1_2_2_change_6": {
+    "message": "단축키 안내에서 Chrome 단축키 설정을 바로 열 수 있어요."
   }
 }

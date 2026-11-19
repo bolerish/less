@@ -81,13 +81,21 @@ export default defineBackground(() => {
       typeof message === "object" &&
       message !== null &&
       "type" in message &&
-      message.type === "OPEN_HELP"
+      (message.type === "OPEN_HELP" ||
+        (message.type === "OPEN_SHORTCUT_SETTINGS" && import.meta.env.BROWSER === "chrome"))
     ) {
       if (sender.tab?.id === undefined || sender.frameId !== 0) return;
-      void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") }).then(
-        () => sendResponse({ ok: true }),
-        () => sendResponse({ ok: false }),
-      );
+      void browser.tabs
+        .create({
+          url:
+            message.type === "OPEN_HELP"
+              ? browser.runtime.getURL("/welcome.html")
+              : "chrome://extensions/shortcuts",
+        })
+        .then(
+          () => sendResponse({ ok: true }),
+          () => sendResponse({ ok: false }),
+        );
       return true;
     }
     if (!isManagementRequest(message)) return;
@@ -104,7 +112,9 @@ export default defineBackground(() => {
   });
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === "install") {
-      void browser.tabs.create({ url: browser.runtime.getURL("/welcome.html") });
+      void browser.tabs.create({
+        url: browser.runtime.getURL("/welcome.html"),
+      });
     }
     void loadAllCSSCache().then((cache) => {
       allCSSCache = cache;

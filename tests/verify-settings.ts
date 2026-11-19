@@ -677,6 +677,24 @@ try {
     for (const scheme of ["light", "dark"]) {
       await store("less:theme", scheme);
       await theme(scheme);
+      assert.equal(
+        activeContext.pages().filter((p) => p.url() === "chrome://extensions/shortcuts").length,
+        0,
+      );
+      await click('.shortcuts a[href="chrome://extensions/shortcuts"]');
+      await waitFor(
+        async () =>
+          activeContext.pages().filter((p) => p.url() === "chrome://extensions/shortcuts")
+            .length === 1,
+        "shortcut settings tab",
+      );
+      const shortcutTab = activeContext
+        .pages()
+        .find((p) => p.url() === "chrome://extensions/shortcuts")!;
+      await shortcutTab.close();
+      await site.bringToFront();
+      if (width === 320)
+        await site.screenshot({ path: `/tmp/less-shortcuts-${locale}-${scheme}.png` });
       const layout = await panel((d) => {
         const list = d.querySelector<HTMLElement>(".shortcuts")!;
         const rect = list.getBoundingClientRect();

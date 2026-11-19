@@ -1,3 +1,4 @@
+import { isMotionReduced } from "~shared/motion/preference";
 import { getLanguage, subscribeLocale } from "~shared/locale/preference";
 import type { PanelMessage } from "~features/record/management-messages";
 import * as stylex from "@stylexjs/stylex";
@@ -55,7 +56,18 @@ export function mountSelectionUI(onClose: () => void, onUndo: () => void): void 
 
 export function unmountSelectionUI(): void {
   disposeHighlightTheme?.();
-  disposeToolbarTheme?.();
+  const toolbar = _statusBarEl;
+  const disposeTheme = disposeToolbarTheme;
+  if (toolbar) {
+    toolbar.inert = true;
+    setContentHostStyles(toolbar, { opacity: "0", transform: "translateX(-50%) translateY(12px)" });
+    const remove = () => {
+      disposeTheme?.();
+      toolbar.remove();
+    };
+    if (isMotionReduced()) remove();
+    else setTimeout(remove, 200);
+  } else disposeTheme?.();
   disposeHighlightTheme = undefined;
   disposeToolbarTheme = undefined;
   unsubscribeLocale?.();
@@ -65,7 +77,7 @@ export function unmountSelectionUI(): void {
   statusError = null;
   _highlightEl?.remove();
   _highlightEl = null;
-  _statusBarEl?.remove();
+
   _statusBarEl = null;
   _statusInfoEl = null;
   _statusRestoreEl = null;
@@ -155,9 +167,10 @@ function buildStatusBar(
     width: "max-content",
     maxWidth: "calc(100vw - 24px)",
     userSelect: "none",
-    transition: "opacity 0.2s ease, transform 0.2s ease",
+    transition: isMotionReduced() ? "none" : "opacity 0.2s ease, transform 0.2s ease",
   });
   requestAnimationFrame(() => {
+    if (!wrapper.isConnected || wrapper.inert) return;
     setContentHostStyles(wrapper, { opacity: "1", transform: "translateX(-50%) translateY(0)" });
   });
 

@@ -36,8 +36,8 @@ const styles = stylex.create({
     inset: 0,
     pointerEvents: "none",
     opacity: { default: 0, ':is([data-phase="visible"])': 1 },
-    boxShadow: `inset 0 0 50px 12px color-mix(in srgb, ${colorVars.fgPrimary} 18%, transparent), inset 0 0 110px 35px color-mix(in srgb, ${colorVars.fgPrimary} 7%, transparent)`,
-    border: `1.5px solid ${colorVars.strokeDefault}`,
+    boxShadow: `inset 0 0 50px 12px color-mix(in srgb, ${colorVars.fgFeedbackInfo} 18%, transparent), inset 0 0 110px 35px color-mix(in srgb, ${colorVars.fgFeedbackInfo} 7%, transparent)`,
+    border: `1.5px solid ${colorVars.fgFeedbackInfo}`,
     transition: {
       default: "opacity 0.25s ease-out",
       ':is([data-phase="fading"])': "opacity 0.55s ease-in",

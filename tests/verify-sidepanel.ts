@@ -517,7 +517,10 @@ try {
     targetSession = session,
   ): Promise<T> {
     const { root } = await targetSession.send("DOM.getDocument", { depth: -1, pierce: true });
-    const host = findNode(root, (n) => n.attributes?.includes(attribute) ?? false);
+    const host = findNode(
+      root,
+      (n) => (n.attributes?.includes(attribute) ?? false) && !n.attributes?.includes("inert"),
+    );
     const surface = host?.shadowRoots?.[0]?.children?.find((n) => n.nodeName === "DIV");
     assert(surface, `${attribute}: closed shadow surface exists`);
     const { object } = await targetSession.send("DOM.resolveNode", {

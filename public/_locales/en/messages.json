@@ -334,5 +334,14 @@
   },
   "panel_failure_settings_retry": {
     "message": "Could not open settings. Try again"
+  },
+  "panel_release_1_2_2_title": {
+    "message": "Site access and shortcut improvements"
+  },
+  "panel_release_1_2_2_change_1": {
+    "message": "Learn which site access automatic hiding needs, and open extension settings when access is unavailable."
+  },
+  "panel_release_1_2_2_change_2": {
+    "message": "Chrome now registers Ctrl+Shift+E as the element selection shortcut."
   }
 }

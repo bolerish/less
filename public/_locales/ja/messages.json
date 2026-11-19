@@ -334,5 +334,14 @@
   },
   "panel_failure_settings_retry": {
     "message": "設定を開けませんでした。再試行"
+  },
+  "panel_release_1_2_2_title": {
+    "message": "サイトへのアクセスとショートカットの改善"
+  },
+  "panel_release_1_2_2_change_1": {
+    "message": "自動非表示に必要なサイトへのアクセス権限を案内し、アクセスできない場合は拡張機能の設定へのリンクを表示します。"
+  },
+  "panel_release_1_2_2_change_2": {
+    "message": "ChromeでCtrl+Shift+Eを要素選択のショートカットとして登録しました。"
   }
 }

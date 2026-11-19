@@ -334,5 +334,14 @@
   },
   "panel_failure_settings_retry": {
     "message": "No se pudo abrir la configuración. Reintentar"
+  },
+  "panel_release_1_2_2_title": {
+    "message": "Mejoras de acceso y atajos"
+  },
+  "panel_release_1_2_2_change_1": {
+    "message": "Consulta el acceso necesario para ocultar automáticamente y abre la configuración de la extensión cuando no haya acceso."
+  },
+  "panel_release_1_2_2_change_2": {
+    "message": "Chrome ahora registra Ctrl+Shift+E como atajo para seleccionar elementos."
   }
 }

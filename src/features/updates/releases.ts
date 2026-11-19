@@ -10,6 +10,13 @@ export interface ProductUpdate {
 
 export const productUpdates: readonly ProductUpdate[] = [
   {
+    version: "1.2.2",
+    date: "2026-11-19",
+    status: "unreleased",
+    titleKey: "panel_release_1_2_2_title",
+    changeKeys: ["panel_release_1_2_2_change_1", "panel_release_1_2_2_change_2"],
+  },
+  {
     version: "1.2.1",
     date: "2026-11-17",
     status: "released",

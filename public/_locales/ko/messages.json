@@ -334,5 +334,14 @@
   },
   "panel_failure_settings_retry": {
     "message": "설정을 열지 못했어요. 다시 시도"
+  },
+  "panel_release_1_2_2_title": {
+    "message": "접근 안내와 단축키 개선"
+  },
+  "panel_release_1_2_2_change_1": {
+    "message": "자동 숨김에 필요한 사이트 접근 권한을 안내하고, 접근할 수 없을 때 확장 프로그램 설정 링크를 제공해요."
+  },
+  "panel_release_1_2_2_change_2": {
+    "message": "Chrome에서 Ctrl+Shift+E를 요소 선택 단축키로 등록했어요."
   }
 }

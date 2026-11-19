@@ -31,6 +31,7 @@ function App() {
   const message = usePanelMessage();
   const [error, setError] = useState(false);
   const [settingsFailed, setSettingsFailed] = useState(false);
+  const [shortcutsFailed, setShortcutsFailed] = useState(false);
   const t = translations[locale];
 
   useEffect(() => {
@@ -119,6 +120,25 @@ function App() {
                       </span>
                     </div>
                   )}
+                  {i === 2 && import.meta.env.BROWSER === "chrome" ? (
+                    <Link
+                      variant="current"
+                      href="chrome://extensions/shortcuts"
+                      onClick={async (event) => {
+                        event.preventDefault();
+                        try {
+                          await browser.tabs.create({ url: "chrome://extensions/shortcuts" });
+                          setShortcutsFailed(false);
+                        } catch {
+                          setShortcutsFailed(true);
+                        }
+                      }}
+                    >
+                      {shortcutsFailed
+                        ? message("panel_failure_settings_retry")
+                        : t.shortcutSettings}
+                    </Link>
+                  ) : null}
                 </TimelineContent>
               </TimelineItem>
             );

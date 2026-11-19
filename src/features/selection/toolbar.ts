@@ -143,7 +143,7 @@ function buildStatusBar(
   } = createSelectionSurface(STATUS_BAR_ATTR, styles.toolbar);
   disposeToolbarTheme = disposeTheme;
   setContentHostStyles(wrapper, {
-    bottom: "24px",
+    bottom: "74px",
     left: "50%",
     transform: "translateX(-50%) translateY(12px)",
     opacity: "0",

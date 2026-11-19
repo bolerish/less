@@ -1,3 +1,4 @@
+import { Banner, BannerContent, BannerTitle, BannerDescription } from "@bolerish/ui/banner";
 import * as stylex from "@stylexjs/stylex";
 import { colorVars, spacingVars, typo } from "@bolerish/tokens/semantic.stylex";
 import { Heading } from "@bolerish/ui/heading";
@@ -59,6 +60,14 @@ function App() {
         {error ? <p role="alert">{message("panel_language_error")}</p> : null}
         <Separator className="welcome-divider" xstyle={styles.divider} />
 
+        {import.meta.env.BROWSER === "chrome" ? (
+          <Banner size="md" xstyle={styles.notice}>
+            <BannerContent>
+              <BannerTitle>{t.accessTitle}</BannerTitle>
+              <BannerDescription>{t.accessDescription}</BannerDescription>
+            </BannerContent>
+          </Banner>
+        ) : null}
         <Timeline>
           {t.steps.map((step, i) => {
             const shortcut = STEP_SHORTCUTS[i];
@@ -110,6 +119,7 @@ const styles = stylex.create({
     padding: `calc(${spacingVars.space8} * 2) ${spacingVars.space8}`,
     background: "var(--less-app-background)",
   },
+  notice: { marginBottom: spacingVars.space8 },
   content: { width: "100%", maxWidth: 672 },
   header: {
     display: "flex",

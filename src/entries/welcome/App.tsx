@@ -68,6 +68,7 @@ function App() {
               <BannerTitle>{t.accessTitle}</BannerTitle>
               <BannerDescription>{t.accessDescription}</BannerDescription>
               <Link
+                variant="current"
                 href={`chrome://extensions/?id=${browser.runtime.id}`}
                 onClick={async (event) => {
                   event.preventDefault();

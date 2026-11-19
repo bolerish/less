@@ -322,5 +322,17 @@
   },
   "panel_release_1_2_1_change_1": {
     "message": "Fixed intermittent failures when opening the panel, including clicks while a page is loading."
+  },
+  "panel_failure_access": {
+    "message": "Less cannot access this site. Allow site access in the extension settings, then reload this page."
+  },
+  "panel_failure_temporary": {
+    "message": "Reload this page to use Less now. To hide elements automatically on future visits, allow site access in the extension settings."
+  },
+  "panel_failure_settings": {
+    "message": "Open site access settings"
+  },
+  "panel_failure_settings_retry": {
+    "message": "Could not open settings. Try again"
   }
 }

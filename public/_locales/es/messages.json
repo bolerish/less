@@ -322,5 +322,17 @@
   },
   "panel_release_1_2_1_change_1": {
     "message": "Corregimos los fallos ocasionales al abrir el panel, incluso al pulsar el icono mientras se carga una página."
+  },
+  "panel_failure_access": {
+    "message": "Less no tiene acceso a este sitio. Permite el acceso en la configuración de la extensión y recarga la página."
+  },
+  "panel_failure_temporary": {
+    "message": "Recarga la página para usar Less ahora. Para ocultar elementos automáticamente en futuras visitas, permite el acceso al sitio en la configuración de la extensión."
+  },
+  "panel_failure_settings": {
+    "message": "Abrir configuración de acceso"
+  },
+  "panel_failure_settings_retry": {
+    "message": "No se pudo abrir la configuración. Reintentar"
   }
 }

@@ -12,7 +12,7 @@ const action: ToolbarAction =
     ? (browser.browserAction as unknown as ToolbarAction)
     : browser.action;
 const failureDocument = browser.runtime.getURL("/failure.html");
-type FailureReason = "protected" | "reload" | "generic";
+type FailureReason = "protected" | "reload" | "access" | "temporary" | "generic";
 
 export function registerPanelAction(): void {
   const requests = new Map<number, symbol>();
@@ -101,6 +101,39 @@ export function registerPanelAction(): void {
           if (!response?.ok) reason = "generic";
         } catch (error) {
           reason = classifyFailure(url, error);
+          const message = error instanceof Error ? error.message : String(error);
+          if (
+            reason === "reload" &&
+            /receiving end does not exist|could not establish connection/i.test(message) &&
+            url
+          ) {
+            try {
+              const persistent = await browser.permissions.contains({
+                origins: [`${new URL(url).origin}/*`],
+              });
+              if (!latest() || !(await isCurrentTab(tab)) || !latest()) return;
+              if (!persistent) {
+                try {
+                  await browser.scripting.executeScript({
+                    target: { tabId, frameIds: [0] },
+                    func: () => true,
+                  });
+                  reason = "temporary";
+                } catch (probeError) {
+                  const detail =
+                    probeError instanceof Error ? probeError.message : String(probeError);
+                  if (
+                    /cannot access contents of (?:the page|url)|missing host permission|access (?:is )?denied/i.test(
+                      detail,
+                    )
+                  )
+                    reason = "access";
+                }
+              }
+            } catch {
+              // Permission lookup failure leaves the original recovery guidance intact.
+            }
+          }
         }
         if (!latest() || !(await isCurrentTab(tab)) || !latest()) return;
         if (!reason) {

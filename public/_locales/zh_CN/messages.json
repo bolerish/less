@@ -322,5 +322,17 @@
   },
   "panel_release_1_2_1_change_1": {
     "message": "修复了面板偶尔无法打开的问题，包括在页面加载时点击图标的情况。"
+  },
+  "panel_failure_access": {
+    "message": "Less 无权访问此网站。请在扩展程序设置中允许网站访问，然后刷新页面。"
+  },
+  "panel_failure_temporary": {
+    "message": "请刷新页面以使用 Less。要在下次访问时自动隐藏元素，请在扩展程序设置中允许网站访问。"
+  },
+  "panel_failure_settings": {
+    "message": "打开网站访问设置"
+  },
+  "panel_failure_settings_retry": {
+    "message": "无法打开设置，请重试"
   }
 }

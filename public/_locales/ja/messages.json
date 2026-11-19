@@ -322,5 +322,17 @@
   },
   "panel_release_1_2_1_change_1": {
     "message": "ページの読み込み中にアイコンを押したときなど、パネルが開かないことがある問題を修正しました。"
+  },
+  "panel_failure_access": {
+    "message": "このサイトへのアクセス権限がありません。拡張機能の設定でアクセスを許可してから再読み込みしてください。"
+  },
+  "panel_failure_temporary": {
+    "message": "今すぐLessを使うには再読み込みしてください。次回の訪問時にも自動で非表示にするには、拡張機能の設定でサイトへのアクセスを許可してください。"
+  },
+  "panel_failure_settings": {
+    "message": "サイトアクセス設定を開く"
+  },
+  "panel_failure_settings_retry": {
+    "message": "設定を開けませんでした。再試行"
   }
 }

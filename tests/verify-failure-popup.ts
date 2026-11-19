@@ -319,6 +319,37 @@ try {
   );
 
   const documentPage = await context.newPage();
+  await documentPage.goto(`chrome-extension://${id}/failure.html?reason=access`);
+  const permissionsBefore = await worker.evaluate(() => chrome.permissions.getAll());
+  const tabsBeforeSettings = await worker.evaluate(() => chrome.tabs.query({}));
+  await documentPage.getByRole("button").waitFor();
+  assert.equal(
+    (await worker.evaluate(() => chrome.tabs.query({}))).length,
+    tabsBeforeSettings.length,
+  );
+  await documentPage.getByRole("button").click();
+  await waitFor(
+    async () =>
+      (await worker.evaluate(() => chrome.tabs.query({}))).length === tabsBeforeSettings.length + 1,
+    "settings opens once on click",
+  );
+  const settingsTabs = await worker.evaluate(() => chrome.tabs.query({}));
+  const settingsTab = settingsTabs.find(
+    (tab) => !tabsBeforeSettings.some((before) => before.id === tab.id),
+  );
+  await waitFor(
+    () =>
+      Promise.resolve(
+        context.pages().some((page) => page.url() === `chrome://extensions/?id=${id}`),
+      ),
+    "exact extension settings URL",
+  );
+  assert.deepEqual(await worker.evaluate(() => chrome.permissions.getAll()), permissionsBefore);
+  await worker.evaluate((tabId) => chrome.tabs.remove(tabId!), settingsTab!.id);
+  console.log(
+    "PASS site settings: no automatic tab, one tab on click, exact extension URL and unchanged permissions",
+  );
+
   for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
     const catalog = JSON.parse(
       await readFile(join(values.build, "_locales", locale, "messages.json"), "utf8"),
@@ -326,13 +357,17 @@ try {
     await worker.evaluate((locale) => chrome.storage.local.set({ "less:locale": locale }), locale);
     for (const theme of ["light", "dark"] as const) {
       await documentPage.emulateMedia({ colorScheme: theme });
-      for (const reason of ["protected", "reload", "generic"]) {
+      for (const reason of ["protected", "reload", "generic", "access", "temporary"]) {
         await documentPage.setViewportSize({ width: 320, height: 300 });
         await documentPage.goto(`chrome-extension://${id}/failure.html?reason=${reason}`);
         await documentPage
           .getByRole("status")
           .filter({ hasText: catalog[`panel_failure_${reason}`].message })
           .waitFor();
+        if (reason === "access" || reason === "temporary")
+          await documentPage
+            .getByRole("button", { name: catalog.panel_failure_settings.message, exact: true })
+            .waitFor();
         const layout = await documentPage.evaluate(() => {
           const p = document.querySelector("p")!;
           return {
@@ -351,7 +386,7 @@ try {
           theme === "light" ? "rgb(255, 255, 255)" : "rgb(17, 17, 17)",
         );
         assert(layout.size >= 14 && layout.bottom < 300);
-        assert.equal(layout.controls, 0);
+        assert.equal(layout.controls, reason === "access" || reason === "temporary" ? 1 : 0);
         await documentPage.keyboard.press("Tab");
         if (reason === "reload")
           await documentPage.screenshot({ path: `/tmp/less-failure-${locale}-${theme}.png` });
@@ -359,7 +394,7 @@ try {
     }
   }
   console.log(
-    "PASS all three failure documents in five locales at 320px, light/dark, readable text, semantic status and keyboard Escape on real popup",
+    "PASS all five failure documents in five locales at 320px, light/dark, readable text, semantic status and keyboard Escape on real popup",
   );
   await documentPage.close();
 } finally {

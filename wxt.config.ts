@@ -37,6 +37,15 @@ export default defineConfig({
       },
     },
 
+    commands:
+      browser === "chrome"
+        ? {
+            "toggle-selection": {
+              suggested_key: { default: "Ctrl+Shift+E", mac: "MacCtrl+Shift+E" },
+              description: "Toggle element selection",
+            },
+          }
+        : undefined,
     permissions: ["storage", "activeTab", "webNavigation", "scripting"],
   }),
   vite: () => ({

@@ -179,7 +179,11 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
       return;
     }
 
-    if (message.type === "TOGGLE_PAGE_PANEL" || message.type === "SET_SELECTION_ENABLED") {
+    if (
+      message.type === "TOGGLE_PAGE_PANEL" ||
+      message.type === "TOGGLE_SELECTION" ||
+      message.type === "SET_SELECTION_ENABLED"
+    ) {
       if (
         (message.requestId !== undefined && typeof message.requestId !== "string") ||
         (message.url !== undefined && typeof message.url !== "string") ||
@@ -223,6 +227,14 @@ async function bootstrap(ctx: ContentScriptContext): Promise<void> {
             }
             if (!valid() || !panel) {
               cancel();
+              return;
+            }
+            if (message.type === "TOGGLE_SELECTION") {
+              if (!panel.isOpen && hidingEnabled) {
+                if (selectionActive) stopSelectionMode();
+                else startSelectionMode();
+              }
+              respond({ ok: true });
               return;
             }
             if (message.type === "SET_SELECTION_ENABLED") {
@@ -330,7 +342,7 @@ function onSpaNavigation(): void {
 function handleGlobalKeyDown(event: KeyboardEvent): void {
   if (panel?.isOpen) return;
   if (event.shiftKey && event.ctrlKey) {
-    if (event.key === "E") {
+    if (event.key === "E" && import.meta.env.BROWSER !== "chrome") {
       event.preventDefault();
       if (event.repeat) return;
       if (!hidingEnabled) return;

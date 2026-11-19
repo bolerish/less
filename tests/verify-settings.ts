@@ -477,6 +477,25 @@ try {
   console.log(
     "PASS real Chrome: four theme options, storage, reopen/reload, tab sync, page signals, unavailable/ambiguous fallback, unchanged page geometry",
   );
+  for (const locale of ["en", "ko", "ja", "es", "zh_CN"]) {
+    await store("less:locale", locale);
+    for (const scheme of ["light", "dark"] as const) {
+      await store("less:theme", scheme);
+      await welcome.setViewportSize({ width: 320, height: 900 });
+      await welcome.reload();
+      await welcome.getByRole("combobox").waitFor();
+      assert(
+        await welcome.evaluate(() => document.documentElement.scrollWidth <= 320),
+        "welcome fits 320px",
+      );
+      await welcome.screenshot({
+        path: `/tmp/less-welcome-${locale}-${scheme}-320.png`,
+        fullPage: true,
+      });
+    }
+  }
+  await store("less:locale", "en");
+  console.log("PASS welcome five locales at 320px, light/dark; screenshots captured");
   await welcome.emulateMedia({ colorScheme: "light" });
   const failure = await activeContext.newPage();
   await failure.emulateMedia({ colorScheme: "light" });
@@ -506,7 +525,11 @@ try {
     async () => (await site.locator("[data-less-panel]").count()) === 0,
     "closed for selection",
   );
-  await site.keyboard.press("Control+Shift+E");
+  await site.bringToFront();
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await waitFor(() => site.locator("[data-less-ui]").count(), "selection toolbar");
   const toolbarTheme = () =>
     evaluateNode(

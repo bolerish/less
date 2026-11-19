@@ -40,7 +40,7 @@ export function registerPanelAction(): void {
     });
   }
 
-  action.onClicked.addListener((tab) => {
+  function invoke(tab: Browser.tabs.Tab, selection = false): void {
     if (tab.id === undefined) return;
     const tabId = tab.id;
     const request = Symbol();
@@ -87,7 +87,12 @@ export function registerPanelAction(): void {
               void browser.tabs
                 .sendMessage(
                   tabId,
-                  { type: "TOGGLE_PAGE_PANEL", requestId, url, expiresAt },
+                  {
+                    type: selection ? "TOGGLE_SELECTION" : "TOGGLE_PAGE_PANEL",
+                    requestId,
+                    url,
+                    expiresAt,
+                  },
                   { frameId: 0 },
                 )
                 .then(resolve, reject)
@@ -163,6 +168,16 @@ export function registerPanelAction(): void {
         if (requests.get(tabId) === request) requests.delete(tabId);
       }
     });
+  }
+
+  action.onClicked.addListener((tab) => invoke(tab));
+  browser.commands?.onCommand.addListener((command, tab) => {
+    if (command !== "toggle-selection") return;
+    if (tab) invoke(tab, true);
+    else
+      void browser.tabs.query({ active: true, currentWindow: true }).then(([active]) => {
+        if (active) invoke(active, true);
+      });
   });
 
   function cancelPending(tabId?: number): void {

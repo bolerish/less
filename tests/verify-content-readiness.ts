@@ -95,7 +95,7 @@ function fixture() {
     reconcileUndoStack: () => {},
     getUndoCount: () => 0,
   };
-  vm.runInNewContext(source, {
+  vm.runInNewContext(source.replaceAll("import.meta.env.BROWSER", '"firefox"'), {
     require: () => stub,
     exports: {},
     document,

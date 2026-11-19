@@ -571,7 +571,10 @@ try {
       async () => (await site.locator("[data-less-panel]").count()) === 0,
       "panel closed before shortcut",
     );
-    await site.keyboard.press("Control+Shift+E");
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+    });
     await site.locator(selector).click(options);
     await site.keyboard.press("Escape");
     await hidden(selector);
@@ -586,6 +589,10 @@ try {
     );
   }
 
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.keyboard.down("Control");
   await site.keyboard.down("Shift");
   await site.keyboard.down("E");
@@ -602,6 +609,10 @@ try {
     );
   }
   await site.keyboard.up("E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.keyboard.down("E");
   await waitFor(
     async () => (await site.locator("[data-less-ui]").count()) === 0,
@@ -620,10 +631,13 @@ try {
   await site.keyboard.up("Control");
   assert.equal(await count(), 0, "holding the shortcut never creates records");
   console.log(
-    "PASS selection shortcut toggles once per physical key press, including held enable/disable",
+    "PASS selection command messages toggle; DOM key repeats do not duplicate Chrome commands (hardware shortcut unverified)",
   );
 
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#two").click();
   await hidden("#two");
   await site.locator("#one").click();
@@ -689,8 +703,8 @@ try {
   );
   const commands = await worker.evaluate(() => chrome.commands?.getAll?.() ?? []);
   assert(
-    !commands.some((command) => command.shortcut),
-    "no configured browser command supplies a selection shortcut",
+    commands.some((command) => command.name === "toggle-selection" && command.shortcut),
+    "browser assigns the registered selection shortcut",
   );
   assert.equal(
     await panel((d) => d.querySelector(".select-button kbd")),
@@ -1607,7 +1621,10 @@ try {
     }, aria);
     const originalStyle = await site.locator("#a11y-target").getAttribute("style");
     await site.locator("#a11y-button").focus();
-    await site.keyboard.press("Control+Shift+E");
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+    });
     await site.locator("#a11y-button").click({ modifiers: ["Shift"] });
     assert.equal(
       await site.locator("#a11y-target").getAttribute("data-veil-hidden"),
@@ -1733,7 +1750,10 @@ try {
       link.addEventListener(type, () => link.setAttribute(`data-site-${type}`, "ran"), true);
     }
   });
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#formatted-link span").click({ modifiers: ["Shift"] });
   await site.waitForTimeout(150);
   assert.equal(site.url(), beforeShiftURL, "Shift+click prevents site navigation");
@@ -1848,7 +1868,10 @@ try {
     async () => (await site.locator("[data-less-panel]").count()) === 0,
     "panel closes before keyboard parent selection",
   );
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#single").hover();
   await site.keyboard.press("ArrowUp");
   const childBox = await site.locator("#single").boundingBox();
@@ -1985,7 +2008,10 @@ try {
     for (const colorScheme of ["light", "dark"] as const) {
       await site.setViewportSize({ width, height: 720 });
       await site.emulateMedia({ colorScheme });
-      await site.keyboard.press("Control+Shift+E");
+      await worker.evaluate(async () => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+      });
       await site.locator("#single").hover();
       const highlight = await selectionSurface("data-less-highlight", (e) => {
         const s = getComputedStyle(e);
@@ -2042,7 +2068,10 @@ try {
   }
   await site.setViewportSize({ width: 1100, height: 800 });
   await site.emulateMedia({ colorScheme: "light" });
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#formatted-link span").hover();
   assert.deepEqual(
     await site.locator("[data-less-highlight]").boundingBox(),
@@ -2055,7 +2084,10 @@ try {
   await hidden("#formatted-link", false);
   await waitFor(async () => (await count()) === 0, "formatted inline link restores its one record");
   await site.keyboard.press("Escape");
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#mobile-main strong").click();
   await site.keyboard.press("Escape");
   await hidden("#mobile-main");
@@ -2087,7 +2119,10 @@ try {
   assert.equal(collapsed.border, "0px");
   assert.equal(collapsed.margin, "16px");
   assert.equal(await count(), 1, "collapsing a region never automatically saves the parent");
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   for (const selector of [
     "#empty-region",
     "#inset-region",
@@ -2179,7 +2214,10 @@ try {
     "PASS border-only fixture: selected child is hidden, enclosing border remains; one record, no automatic ancestor mutation",
   );
 
-  await site.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await site.locator("#middle").hover();
   await site.keyboard.press("ArrowUp");
   await site.keyboard.press("Enter");
@@ -3033,7 +3071,10 @@ try {
   );
   const siblingSession = await activeContext.newCDPSession(sibling);
   await sibling.bringToFront();
-  await sibling.keyboard.press("Control+Shift+E");
+  await worker.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+  });
   await sibling.locator("[data-less-ui]").waitFor();
   await welcomePage.getByRole("combobox", { name: "言語" }).click();
   await welcomePage.getByRole("option", { name: "Español" }).click();
@@ -3081,7 +3122,10 @@ try {
       "close before locale switch",
     );
     await worker.evaluate((locale) => chrome.storage.local.set({ "less:locale": locale }), locale);
-    await site.keyboard.press("Control+Shift+E");
+    await worker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await chrome.tabs.sendMessage(tab.id!, { type: "TOGGLE_SELECTION" }, { frameId: 0 });
+    });
     for (const width of [320, 375]) {
       await site.setViewportSize({ width, height: 720 });
       const instruction = await selectionSurface("data-less-ui", (e) => {

@@ -343,5 +343,8 @@
   },
   "panel_release_1_2_2_change_2": {
     "message": "단축키로 선택 모드를 켤 수 없던 문제를 해결했어요."
+  },
+  "panel_release_1_2_2_change_3": {
+    "message": "페이지 로딩 중 패널이 열리지 않던 문제를 해결했어요."
   }
 }

@@ -343,5 +343,8 @@
   },
   "panel_release_1_2_2_change_2": {
     "message": "Fixed an issue that prevented the keyboard shortcut from starting selection mode."
+  },
+  "panel_release_1_2_2_change_3": {
+    "message": "Fixed an issue that prevented the panel from opening while a page was loading."
   }
 }

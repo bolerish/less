@@ -196,8 +196,7 @@ export function registerPanelAction(): void {
       if (pending.windowId !== windowId) cancelPending(id);
     }
   });
-  browser.tabs.onUpdated.addListener((tabId, change) => {
-    if (change.url === undefined && change.status !== "loading") return;
+  function cancelNavigation(tabId: number): void {
     cancelPending(tabId);
     requests.delete(tabId);
     enqueue(tabId, async () => {
@@ -205,6 +204,12 @@ export function registerPanelAction(): void {
       await action.setBadgeText({ tabId, text: "" });
       await action.setTitle({ tabId, title: "Less" });
     });
+  }
+  browser.webNavigation.onBeforeNavigate.addListener(({ tabId, frameId }) => {
+    if (frameId === 0) cancelNavigation(tabId);
+  });
+  browser.tabs.onUpdated.addListener((tabId, change) => {
+    if (change.url !== undefined) cancelNavigation(tabId);
   });
   browser.tabs.onRemoved.addListener((tabId) => {
     cancelPending(tabId);

@@ -96,10 +96,17 @@ export function stopReapplyWatcher(): void {
 }
 
 export function setupNavigationListener(onNavigate: () => void): void {
+  let currentURL = window.location.href;
+  const handleNavigation = () => {
+    const nextURL = window.location.href;
+    if (nextURL === currentURL) return;
+    currentURL = nextURL;
+    onNavigate();
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = (window as any).navigation as EventTarget | undefined;
   if (nav) {
-    nav.addEventListener("currententrychange", onNavigate);
+    nav.addEventListener("currententrychange", handleNavigation);
     return;
   }
 
@@ -107,11 +114,11 @@ export function setupNavigationListener(onNavigate: () => void): void {
   const origReplace = history.replaceState.bind(history);
   history.pushState = function (...args: Parameters<typeof history.pushState>) {
     origPush(...args);
-    onNavigate();
+    handleNavigation();
   };
   history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
     origReplace(...args);
-    onNavigate();
+    handleNavigation();
   };
-  window.addEventListener("popstate", onNavigate);
+  window.addEventListener("popstate", handleNavigation);
 }

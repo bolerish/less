@@ -225,6 +225,7 @@ try {
       windows: { onFocusChanged: event("focus") },
       storage: { onChanged: event("storage") },
       webNavigation: {
+        onBeforeNavigate: event("beforeNavigate"),
         onCommitted: event("committed"),
         onHistoryStateUpdated: event("navigation"),
       },

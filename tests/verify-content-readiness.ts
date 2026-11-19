@@ -8,10 +8,16 @@ import { randomUUID } from "node:crypto";
 const source = ts.transpileModule(await readFile("src/entries/content.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
+const watcherSource = ts.transpileModule(
+  await readFile("src/features/element-hiding/watcher.ts", "utf8"),
+  {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  },
+).outputText;
 const drain = async () => {
   for (let i = 0; i < 12; i++) await new Promise((resolve) => setImmediate(resolve));
 };
-function fixture() {
+function fixture(useNavigationAPI = true) {
   const documentEvents = new EventTarget();
   const windowEvents = new EventTarget();
   const invalidated: (() => void)[] = [];
@@ -48,6 +54,23 @@ function fixture() {
   const window = Object.assign(windowEvents, {
     location: { origin: "https://test.example", href: "https://test.example/one" },
   });
+  const navigation = new EventTarget();
+  const history = {
+    pushState: (_data: unknown, _unused: string, url?: string | URL | null) => {
+      if (url) window.location.href = new URL(url, window.location.href).href;
+    },
+    replaceState: (_data: unknown, _unused: string, url?: string | URL | null) => {
+      if (url) window.location.href = new URL(url, window.location.href).href;
+    },
+  };
+  if (useNavigationAPI) Object.assign(window, { navigation });
+  const watcherExports: Record<string, any> = {};
+  vm.runInNewContext(watcherSource, {
+    require: () => ({}),
+    exports: watcherExports,
+    window,
+    history,
+  });
   const subscribe = async () => {
     subscriptions++;
     return () => {
@@ -80,7 +103,11 @@ function fixture() {
     createHiddenItemPreview: () => ({ clear: () => {} }),
     subscribeSelection: () => () => {},
     setupNavigationListener: (callback: () => void) => {
-      navigate = callback;
+      watcherExports.setupNavigationListener(callback);
+      navigate = () => {
+        if (useNavigationAPI) navigation.dispatchEvent(new Event("currententrychange"));
+        else window.dispatchEvent(new Event("popstate"));
+      };
     },
     applyStoredHiding: async () => {
       appliedHiding++;
@@ -138,6 +165,10 @@ function fixture() {
       document.readyState = "interactive";
       document.dispatchEvent(new Event("DOMContentLoaded"));
     },
+    replaceSameURL: () => {
+      history.replaceState({}, "", window.location.href);
+      if (useNavigationAPI) navigate();
+    },
     navigate: () => {
       window.location.href += "/next";
       navigate();
@@ -188,6 +219,19 @@ function fixture() {
   assert.equal(f.timers.size, 0);
   f.invalidate();
   assert.equal(f.subscriptions, 0);
+}
+for (const useNavigationAPI of [true, false]) {
+  const f = fixture(useNavigationAPI);
+  f.deferStyles();
+  f.ready();
+  await drain();
+  const response = f.send({ type: "TOGGLE_PAGE_PANEL" });
+  await drain();
+  f.replaceSameURL();
+  f.releaseStyles();
+  assert.equal((await response).ok, true, "same URL history update preserves pending open");
+  assert.equal(f.toggles, 1);
+  f.invalidate();
 }
 for (const action of ["navigate", "hide", "invalidate", "expire", "cancel"] as const) {
   const f = fixture();

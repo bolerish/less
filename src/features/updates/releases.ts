@@ -14,7 +14,11 @@ export const productUpdates: readonly ProductUpdate[] = [
     date: "2026-11-19",
     status: "unreleased",
     titleKey: "panel_release_1_2_2_title",
-    changeKeys: ["panel_release_1_2_2_change_1", "panel_release_1_2_2_change_2"],
+    changeKeys: [
+      "panel_release_1_2_2_change_1",
+      "panel_release_1_2_2_change_2",
+      "panel_release_1_2_2_change_3",
+    ],
   },
   {
     version: "1.2.1",

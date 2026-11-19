@@ -343,5 +343,8 @@
   },
   "panel_release_1_2_2_change_2": {
     "message": "Solucionamos un problema que impedía activar el modo de selección con el atajo de teclado."
+  },
+  "panel_release_1_2_2_change_3": {
+    "message": "Solucionamos un problema que impedía abrir el panel mientras se cargaba una página."
   }
 }

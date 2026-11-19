@@ -343,5 +343,8 @@
   },
   "panel_release_1_2_2_change_2": {
     "message": "修复了无法通过快捷键开启选择模式的问题。"
+  },
+  "panel_release_1_2_2_change_3": {
+    "message": "修复了页面加载时无法打开面板的问题。"
   }
 }

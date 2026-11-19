@@ -87,6 +87,7 @@ for (const [engine, bundle] of [
     i18n: { getUILanguage: () => "en-US" },
     storage: { local: { get: async () => ({}) }, onChanged: event("storage") },
     webNavigation: {
+      onBeforeNavigate: event("beforeNavigate"),
       onCommitted: { addListener() {} },
       onHistoryStateUpdated: event("history"),
       getFrame: async ({ tabId }: { tabId: number }) => getFrame(tabId),
@@ -139,6 +140,26 @@ for (const [engine, bundle] of [
     "matching activation/focus cannot cancel this tab's click",
   );
   let releaseFrame: (() => void) | undefined;
+  getFrame = async (tabId) => {
+    await new Promise<void>((done) => {
+      releaseFrame = done;
+    });
+    return { url: tabs.get(tabId)!.url };
+  };
+  receiver = () => new Promise(() => {});
+  getFrame = async (tabId) => ({ url: tabs.get(tabId)!.url });
+  click();
+  await drain();
+  emit("update", 1, { status: "loading" });
+  await drain();
+  assert.equal(timers.size, 1, "same-document loading preserves pending request");
+  emit("beforeNavigate", { tabId: 1, frameId: 1, url: tabs.get(1)!.url });
+  await drain();
+  assert.equal(timers.size, 1, "subframe navigation preserves pending request");
+  emit("beforeNavigate", { tabId: 1, frameId: 0, url: tabs.get(1)!.url });
+  await drain();
+  assert.equal(timers.size, 0, "top-level same-URL reload cancels pending request");
+  receiver = async () => ({ ok: true });
   getFrame = async (tabId) => {
     await new Promise<void>((done) => {
       releaseFrame = done;
